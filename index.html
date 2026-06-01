@@ -180,6 +180,7 @@
       <div style="font-size:22px;font-weight:600;color:var(--text)">Crece<span style="color:#1D9E75">App</span></div>
       <div style="font-size:13px;color:var(--text2);margin-top:4px">Control financiero para tu negocio</div>
     </div>
+    <div id="loading-supabase" style="text-align:center;padding:8px;font-size:12px;color:var(--text3)">Conectando...</div>
     <div style="display:flex;gap:4px;margin-bottom:24px;background:var(--bg3);border-radius:var(--radius);padding:4px">
       <button id="tab-login" onclick="switchAuthTab('login')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;background:var(--bg);color:var(--text);font-weight:500">Iniciar sesión</button>
       <button id="tab-register" onclick="switchAuthTab('register')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;background:transparent;color:var(--text2)">Registrarse</button>
@@ -915,7 +916,7 @@ function renderAll() {
 }
 
 // Mostrar indicador de carga
-document.body.insertAdjacentHTML('afterbegin', '<div id="loading" style="position:fixed;inset:0;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;z-index:999;font-family:DM Sans,sans-serif;font-size:15px;color:#1D9E75;gap:10px"><span style="font-size:24px">📈</span> Cargando CreceApp...</div>');
+// loading removed
 
 // ─── AUTH FUNCTIONS ───────────────────────────────────────
 function switchAuthTab(tab) {
@@ -992,6 +993,11 @@ async function init() {
   // Mostrar auth screen de inmediato sin esperar
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('main-app').style.display = 'none';
+  // Ocultar mensaje de conexión después de 2 segundos pase lo que pase
+  setTimeout(() => {
+    const el = document.getElementById('loading-supabase');
+    if(el) el.style.display = 'none';
+  }, 2000);
 
   // Verificar sesión en background
   try {
