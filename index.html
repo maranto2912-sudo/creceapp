@@ -989,13 +989,13 @@ async function cargarPerfil(userId) {
 
 // ─── INIT ─────────────────────────────────────────────────
 async function init() {
-  // Mostrar loader
-  document.body.insertAdjacentHTML('afterbegin', '<div id="loading" style="position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;font-size:15px;color:#1D9E75;gap:10px"><span style="font-size:24px">📈</span> Cargando CreceApp...</div>');
+  // Mostrar auth screen de inmediato sin esperar
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('main-app').style.display = 'none';
 
-  // Escuchar cambios de sesión
-  sb.auth.onAuthStateChange(async (event, session) => {
-    const loader = document.getElementById('loading');
-    if(loader) loader.remove();
+  // Verificar sesión en background
+  try {
+    const { data: { session } } = await sb.auth.getSession();
     if(session && session.user) {
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('main-app').style.display = 'block';
@@ -1004,7 +1004,22 @@ async function init() {
       await cargarLS();
       renderAll();
       renderCalendario();
-    } else {
+    }
+  } catch(e) {
+    console.log('Auth check failed:', e);
+  }
+
+  // Escuchar cambios de sesión
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if(event === 'SIGNED_IN' && session) {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+      document.getElementById('user-info').style.display = 'flex';
+      await cargarPerfil(session.user.id);
+      await cargarLS();
+      renderAll();
+      renderCalendario();
+    } else if(event === 'SIGNED_OUT') {
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('main-app').style.display = 'none';
       document.getElementById('user-info').style.display = 'none';
