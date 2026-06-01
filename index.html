@@ -172,10 +172,48 @@
 </head>
 <body>
 <div class="app">
+<!-- PANTALLA DE AUTH -->
+<div id="auth-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3);padding:20px">
+  <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:32px;margin-bottom:8px">📈</div>
+      <div style="font-size:22px;font-weight:600;color:var(--text)">Crece<span style="color:#1D9E75">App</span></div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px">Control financiero para tu negocio</div>
+    </div>
+    <div style="display:flex;gap:4px;margin-bottom:24px;background:var(--bg3);border-radius:var(--radius);padding:4px">
+      <button id="tab-login" onclick="switchAuthTab('login')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;background:var(--bg);color:var(--text);font-weight:500">Iniciar sesión</button>
+      <button id="tab-register" onclick="switchAuthTab('register')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;background:transparent;color:var(--text2)">Registrarse</button>
+    </div>
+    <div id="auth-error" style="display:none;background:#FCEBEB;border:1px solid #F7C1C1;border-radius:var(--radius);padding:10px 12px;font-size:13px;color:#A32D2D;margin-bottom:14px"></div>
+    <div id="auth-success" style="display:none;background:#E1F5EE;border:1px solid #9FE1CB;border-radius:var(--radius);padding:10px 12px;font-size:13px;color:#0F6E56;margin-bottom:14px"></div>
+    <!-- LOGIN -->
+    <div id="form-login">
+      <div class="form-group"><label class="form-label">Correo electrónico</label><input type="email" id="login-email" placeholder="tucorreo@gmail.com"></div>
+      <div class="form-group"><label class="form-label">Contraseña</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+      <button class="btn-primary" style="width:100%;justify-content:center;padding:10px;font-size:14px;margin-top:4px" onclick="loginUser()">Entrar a CreceApp</button>
+      <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text2)">¿Olvidaste tu contraseña? <a href="#" onclick="resetPass()" style="color:#1D9E75">Recuperar</a></div>
+    </div>
+    <!-- REGISTER -->
+    <div id="form-register" style="display:none">
+      <div class="form-group"><label class="form-label">Nombre completo</label><input type="text" id="reg-nombre" placeholder="Tu nombre..."></div>
+      <div class="form-group"><label class="form-label">Nombre de tu negocio</label><input type="text" id="reg-negocio" placeholder="Peluquería, tienda..."></div>
+      <div class="form-group"><label class="form-label">Correo electrónico</label><input type="email" id="reg-email" placeholder="tucorreo@gmail.com"></div>
+      <div class="form-group"><label class="form-label">Contraseña</label><input type="password" id="reg-pass" placeholder="Mínimo 6 caracteres"></div>
+      <button class="btn-primary" style="width:100%;justify-content:center;padding:10px;font-size:14px;margin-top:4px" onclick="registerUser()">Crear cuenta gratis</button>
+      <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text3)">Al registrarte aceptas nuestros términos de uso</div>
+    </div>
+  </div>
+</div>
 
 <!-- NAV -->
+<div id="main-app" style="display:none">
 <nav class="nav">
   <div class="nav-logo">📈 Crece<span>App</span></div>
+  <div id="user-info" style="display:none;align-items:center;gap:10px;font-size:12px;color:var(--text2)">
+    <span id="user-negocio" style="font-weight:500;color:var(--text)"></span>
+    <span id="user-plan" style="background:#E1F5EE;color:#0F6E56;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500"></span>
+    <button class="btn-sm" onclick="cerrarSesion()" style="font-size:11px">Salir</button>
+  </div>
   <div class="nav-tabs">
     <button class="tab active" onclick="showPage('dashboard',this)">Dashboard</button>
     <button class="tab" onclick="showPage('transacciones',this)">Transacciones</button>
@@ -323,6 +361,7 @@
 </div>
 
 </div><!-- end app -->
+</div><!-- end main-app -->
 
 <!-- MODALES -->
 <div class="overlay" id="overlay-tx">
@@ -878,12 +917,99 @@ function renderAll() {
 // Mostrar indicador de carga
 document.body.insertAdjacentHTML('afterbegin', '<div id="loading" style="position:fixed;inset:0;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;z-index:999;font-family:DM Sans,sans-serif;font-size:15px;color:#1D9E75;gap:10px"><span style="font-size:24px">📈</span> Cargando CreceApp...</div>');
 
+// ─── AUTH FUNCTIONS ───────────────────────────────────────
+function switchAuthTab(tab) {
+  document.getElementById('form-login').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('form-register').style.display = tab==='register' ? 'block' : 'none';
+  document.getElementById('tab-login').style.background = tab==='login' ? 'var(--bg)' : 'transparent';
+  document.getElementById('tab-login').style.color = tab==='login' ? 'var(--text)' : 'var(--text2)';
+  document.getElementById('tab-register').style.background = tab==='register' ? 'var(--bg)' : 'transparent';
+  document.getElementById('tab-register').style.color = tab==='register' ? 'var(--text)' : 'var(--text2)';
+  document.getElementById('auth-error').style.display = 'none';
+  document.getElementById('auth-success').style.display = 'none';
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = 'block';
+  document.getElementById('auth-success').style.display = 'none';
+}
+function showAuthSuccess(msg) {
+  const el = document.getElementById('auth-success');
+  el.textContent = msg; el.style.display = 'block';
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+async function loginUser() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if(!email || !pass) return showAuthError('Por favor ingresa tu correo y contraseña.');
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if(error) return showAuthError('Correo o contraseña incorrectos.');
+}
+
+async function registerUser() {
+  const nombre = document.getElementById('reg-nombre').value.trim();
+  const negocio = document.getElementById('reg-negocio').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  if(!nombre || !negocio || !email || !pass) return showAuthError('Por favor completa todos los campos.');
+  if(pass.length < 6) return showAuthError('La contraseña debe tener mínimo 6 caracteres.');
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  if(error) return showAuthError('Error al registrarse: ' + error.message);
+  if(data.user) {
+    await sb.from('perfiles').insert({ id: data.user.id, nombre, negocio, plan: 'gratuito' });
+    showAuthSuccess('¡Cuenta creada! Revisa tu correo para confirmar tu registro.');
+  }
+}
+
+async function resetPass() {
+  const email = document.getElementById('login-email').value.trim();
+  if(!email) return showAuthError('Ingresa tu correo primero.');
+  await sb.auth.resetPasswordForEmail(email);
+  showAuthSuccess('Te enviamos un correo para recuperar tu contraseña.');
+}
+
+async function cerrarSesion() {
+  await sb.auth.signOut();
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('user-info').style.display = 'none';
+}
+
+async function cargarPerfil(userId) {
+  try {
+    const { data } = await sb.from('perfiles').select('*').eq('id', userId).single();
+    if(data) {
+      document.getElementById('user-negocio').textContent = data.negocio || 'Mi negocio';
+      document.getElementById('user-plan').textContent = data.plan === 'premium' ? '⭐ Premium' : '✓ Gratuito';
+    }
+  } catch(e) {}
+}
+
+// ─── INIT ─────────────────────────────────────────────────
 async function init() {
-  await cargarLS();
-  renderAll();
-  renderCalendario();
-  const loader = document.getElementById('loading');
-  if(loader) loader.remove();
+  // Mostrar loader
+  document.body.insertAdjacentHTML('afterbegin', '<div id="loading" style="position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;font-size:15px;color:#1D9E75;gap:10px"><span style="font-size:24px">📈</span> Cargando CreceApp...</div>');
+
+  // Escuchar cambios de sesión
+  sb.auth.onAuthStateChange(async (event, session) => {
+    const loader = document.getElementById('loading');
+    if(loader) loader.remove();
+    if(session && session.user) {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+      document.getElementById('user-info').style.display = 'flex';
+      await cargarPerfil(session.user.id);
+      await cargarLS();
+      renderAll();
+      renderCalendario();
+    } else {
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('main-app').style.display = 'none';
+      document.getElementById('user-info').style.display = 'none';
+    }
+  });
 }
 init();
 </script>
