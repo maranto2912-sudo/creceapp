@@ -421,7 +421,17 @@
 <div id="page-reportes" class="page content">
   <div class="section-header">
     <span class="section-title">Reportes</span>
-    <button class="btn-primary" onclick="exportar()">⬇ Exportar resumen</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="reporte-periodo" onchange="renderReportes()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid rgba(124,58,237,0.2);background:#F8F7FF;color:#1a1535">
+        <option value="mes">Este mes</option>
+        <option value="mes-1">Mes anterior</option>
+        <option value="mes-2">Hace 2 meses</option>
+        <option value="mes-3">Hace 3 meses</option>
+        <option value="semana">Esta semana</option>
+        <option value="todo">Todo el historial</option>
+      </select>
+      <button class="btn-primary" onclick="exportar()">⬇ Exportar</button>
+    </div>
   </div>
   <div class="grid3">
     <div class="metric"><div class="metric-label">Ingresos del mes</div><div class="metric-value c-green" id="r-ing">$0</div></div>
@@ -472,6 +482,7 @@
     <div class="form-group"><label class="form-label">Empleado</label><select id="tx-emp"><option value="">— ninguno —</option></select></div>
   </div>
   <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="tx-monto-principal" placeholder="0" min="0"></div>
+  <div class="form-group"><label class="form-label">Notas <span style="font-size:10px;color:var(--text3)">(opcional)</span></label><input type="text" id="tx-notas" placeholder="Observaciones, detalles adicionales..."></div>
 
   <!-- APLICAR A DEUDA (solo para egresos) -->
   <div id="deuda-selector" style="display:none">
@@ -517,6 +528,23 @@
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('tx')">Cancelar</button><button class="btn-primary" onclick="guardarTx()">Guardar</button></div>
 </div></div>
 
+<!-- MODAL EDITAR TRANSACCIÓN -->
+<div class="overlay" id="overlay-editar-tx">
+<div class="modal">
+  <div class="modal-title">✏️ Editar transacción</div>
+  <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400E;margin-bottom:14px">
+    ⚠️ Esta transacción quedará marcada como <strong>editada</strong> y se enviará una notificación al administrador.
+  </div>
+  <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="edit-desc"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="edit-monto"></div>
+    <div class="form-group"><label class="form-label">Categoría</label><select id="edit-cat"></select></div>
+  </div>
+  <div class="form-group"><label class="form-label">Notas</label><input type="text" id="edit-notas" placeholder="Razón de la edición..."></div>
+  <input type="hidden" id="edit-tx-id">
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('editar-tx')">Cancelar</button><button class="btn-primary" onclick="guardarEdicionTx()">Guardar cambios</button></div>
+</div></div>
+
 <!-- MODAL CATEGORÍA -->
 <div class="overlay" id="overlay-cat">
 <div class="modal">
@@ -555,6 +583,47 @@
     <div class="form-group"><label class="form-label">Valor cuota mensual ($)</label><input type="number" id="d-cuota" placeholder="0"></div>
   </div>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('deuda')">Cancelar</button><button class="btn-primary" onclick="guardarDeuda()">Guardar</button></div>
+</div></div>
+
+<!-- MODAL EDITAR DEUDA -->
+<div class="overlay" id="overlay-editar-deuda">
+<div class="modal">
+  <div class="modal-title">✏️ Editar deuda</div>
+  <div class="form-group"><label class="form-label">Acreedor</label><input type="text" id="ed-nombre"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Monto total ($)</label><input type="number" id="ed-total"></div>
+    <div class="form-group"><label class="form-label">Ya pagado ($)</label><input type="number" id="ed-pagado"></div>
+  </div>
+  <input type="hidden" id="ed-id">
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('editar-deuda')">Cancelar</button><button class="btn-primary" onclick="guardarEdicionDeuda()">Guardar</button></div>
+</div></div>
+
+<!-- MODAL EDITAR EMPLEADO -->
+<div class="overlay" id="overlay-editar-empleado">
+<div class="modal">
+  <div class="modal-title">✏️ Editar empleado</div>
+  <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="ee-nombre"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Cargo</label><input type="text" id="ee-cargo"></div>
+    <div class="form-group"><label class="form-label">% Comisión</label><input type="number" id="ee-comision" min="0" max="100"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Salario base ($)</label><input type="number" id="ee-salario"></div>
+  <input type="hidden" id="ee-id">
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('editar-empleado')">Cancelar</button><button class="btn-primary" onclick="guardarEdicionEmpleado()">Guardar</button></div>
+</div></div>
+
+<!-- MODAL EDITAR PRODUCTO -->
+<div class="overlay" id="overlay-editar-inv">
+<div class="modal">
+  <div class="modal-title">✏️ Editar producto</div>
+  <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="ei-nombre"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Stock</label><input type="number" id="ei-stock" min="0"></div>
+    <div class="form-group"><label class="form-label">Stock mínimo</label><input type="number" id="ei-min" min="0"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Precio ($)</label><input type="number" id="ei-precio"></div>
+  <input type="hidden" id="ei-id">
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('editar-inv')">Cancelar</button><button class="btn-primary" onclick="guardarEdicionInv()">Guardar</button></div>
 </div></div>
 
 <div class="overlay" id="overlay-empleado">
@@ -802,6 +871,7 @@ function guardarTx() {
   const empId = document.getElementById('tx-emp').value;
   const fecha = document.getElementById('tx-fecha').value;
   const monto = parseFloat(document.getElementById('tx-monto-principal').value) || 0;
+  const notas = document.getElementById('tx-notas').value.trim();
   const costoEl = document.getElementById('tx-costo');
   const costo = costoEl ? (parseFloat(costoEl.value) || 0) : 0;
   const ganancia = monto - costo;
@@ -814,8 +884,9 @@ function guardarTx() {
     alert('Por favor ingresa la descripción y el monto.');
     return;
   }
-  state.transacciones.unshift({ tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, id: Date.now() });
+  state.transacciones.unshift({ tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas, editado: false, id: Date.now() });
   document.getElementById('tx-desc').value = '';
+  document.getElementById('tx-notas').value = '';
   document.getElementById('tx-monto-principal').value = '';
   document.getElementById('tx-costo') && (document.getElementById('tx-costo').value = '');
   document.getElementById('tx-paga-con') && (document.getElementById('tx-paga-con').value = '');
@@ -928,6 +999,76 @@ function eliminarDeuda(id) {
   renderAll();
 }
 
+function editarDeuda(id) {
+  const d = state.deudas.find(x => x.id === id);
+  if(!d) return;
+  document.getElementById('ed-id').value = id;
+  document.getElementById('ed-nombre').value = d.nombre;
+  document.getElementById('ed-total').value = d.total;
+  document.getElementById('ed-pagado').value = d.pagado;
+  document.getElementById('overlay-editar-deuda').style.display = 'flex';
+}
+
+function guardarEdicionDeuda() {
+  const id = parseInt(document.getElementById('ed-id').value);
+  const d = state.deudas.find(x => x.id === id);
+  if(!d) return;
+  d.nombre = document.getElementById('ed-nombre').value.trim() || d.nombre;
+  d.total = parseFloat(document.getElementById('ed-total').value) || d.total;
+  d.pagado = parseFloat(document.getElementById('ed-pagado').value) || 0;
+  cerrarModal('editar-deuda');
+  guardarLS();
+  renderAll();
+}
+
+function editarEmpleado(id) {
+  const e = state.empleados.find(x => x.id === id);
+  if(!e) return;
+  document.getElementById('ee-id').value = id;
+  document.getElementById('ee-nombre').value = e.nombre;
+  document.getElementById('ee-cargo').value = e.cargo;
+  document.getElementById('ee-comision').value = e.comision;
+  document.getElementById('ee-salario').value = e.salario;
+  document.getElementById('overlay-editar-empleado').style.display = 'flex';
+}
+
+function guardarEdicionEmpleado() {
+  const id = parseInt(document.getElementById('ee-id').value);
+  const e = state.empleados.find(x => x.id === id);
+  if(!e) return;
+  e.nombre = document.getElementById('ee-nombre').value.trim() || e.nombre;
+  e.cargo = document.getElementById('ee-cargo').value.trim() || e.cargo;
+  e.comision = parseFloat(document.getElementById('ee-comision').value) || 0;
+  e.salario = parseFloat(document.getElementById('ee-salario').value) || 0;
+  cerrarModal('editar-empleado');
+  guardarLS();
+  renderAll();
+}
+
+function editarProducto(id) {
+  const p = state.inventario.find(x => x.id === id);
+  if(!p) return;
+  document.getElementById('ei-id').value = id;
+  document.getElementById('ei-nombre').value = p.nombre;
+  document.getElementById('ei-stock').value = p.stock;
+  document.getElementById('ei-min').value = p.min;
+  document.getElementById('ei-precio').value = p.precio;
+  document.getElementById('overlay-editar-inv').style.display = 'flex';
+}
+
+function guardarEdicionInv() {
+  const id = parseInt(document.getElementById('ei-id').value);
+  const p = state.inventario.find(x => x.id === id);
+  if(!p) return;
+  p.nombre = document.getElementById('ei-nombre').value.trim() || p.nombre;
+  p.stock = parseInt(document.getElementById('ei-stock').value) || 0;
+  p.min = parseInt(document.getElementById('ei-min').value) || 0;
+  p.precio = parseFloat(document.getElementById('ei-precio').value) || 0;
+  cerrarModal('editar-inv');
+  guardarLS();
+  renderAll();
+}
+
 function ajustarStock(id, delta) {
   const p = state.inventario.find(x => x.id === id);
   if(p) { p.stock = Math.max(0, p.stock + delta); guardarLS(); renderAll(); }
@@ -1031,10 +1172,16 @@ function txHTML(t) {
   const emp = state.empleados.find(e => e.id == t.empId);
   const extras = t.tipo === 'ingreso' && t.ganancia ? `<span style="font-size:10px;background:#EDE9FF;color:#7C3AED;padding:1px 6px;border-radius:10px;margin-left:4px">Gan: ${fmt(t.ganancia)}</span>` : '';
   const metodoLabel = t.metodo ? `<span style="font-size:10px;background:#F3F4F6;color:#6B7280;padding:1px 6px;border-radius:10px;margin-left:4px">${t.metodo}</span>` : '';
+  const editadoLabel = t.editado ? `<span style="font-size:10px;background:#FEF3C7;color:#D97706;padding:1px 6px;border-radius:10px;margin-left:4px">✏️ Editado</span>` : '';
+  const notasLabel = t.notas ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;font-style:italic">📝 ${t.notas}</div>` : '';
   return `<div class="tx-item">
     <div class="tx-icon ${t.tipo}">${t.tipo==='ingreso'?'↑':'↓'}</div>
-    <div class="tx-info"><div class="tx-name">${t.desc}${extras}${metodoLabel}</div><div class="tx-cat">${t.cat}${emp?' · '+emp.nombre:''}</div></div>
-    <div style="text-align:right"><div class="tx-amount ${t.tipo==='ingreso'?'c-green':'c-red'}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div><div class="tx-date">${t.fecha}</div></div>
+    <div class="tx-info"><div class="tx-name">${t.desc}${extras}${metodoLabel}${editadoLabel}</div><div class="tx-cat">${t.cat}${emp?' · '+emp.nombre:''}</div>${notasLabel}</div>
+    <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <div class="tx-amount ${t.tipo==='ingreso'?'c-green':'c-red'}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div>
+      <div class="tx-date">${t.fecha}</div>
+      <button class="btn-sm" style="font-size:10px;padding:2px 7px" onclick="editarTx(${t.id})">✏️</button>
+    </div>
   </div>`;
 }
 function renderDashTx() {
@@ -1078,6 +1225,7 @@ function renderDeudas() {
         <div style="font-size:14px;font-weight:600;color:var(--red)">${fmt(pend)}</div>
         <div style="font-size:11px;color:var(--text3)">de ${fmt(d.total)}</div>
         <button class="btn-sm" style="margin-top:6px" onclick="abonarDeuda(${d.id})">+ Abono</button>
+        <button class="btn-sm" style="margin-top:4px;font-size:11px" onclick="editarDeuda(${d.id})">✏️ Editar</button>
         <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarDeuda(${d.id})">✕ Eliminar</button>
       </div>
     </div>`;
@@ -1103,7 +1251,8 @@ function renderEmpleados() {
         <div class="emp-total">${fmt(total)}</div>
         <div class="emp-detail">Comisión: ${fmt(com)}</div>
         <div class="emp-detail">${txEmp.length} servicios este mes</div>
-        <button class="btn-danger" style="margin-top:6px;font-size:11px" onclick="eliminarEmpleado(${e.id})">✕ Eliminar</button>
+        <button class="btn-sm" style="margin-top:6px;font-size:11px" onclick="editarEmpleado(${e.id})">✏️ Editar</button>
+        <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarEmpleado(${e.id})">✕ Eliminar</button>
       </div>
     </div>`;
   }).join('');
@@ -1134,6 +1283,7 @@ function renderInventario() {
           <button class="btn-sm" onclick="ajustarStock(${p.id},1)">+</button>
         </div>
         <span class="badge ${badge}">${label}</span>
+        <button class="btn-sm" style="font-size:11px;padding:3px 8px" onclick="editarProducto(${p.id})">✏️</button>
         <button class="btn-danger" style="font-size:11px;padding:3px 8px" onclick="eliminarProducto(${p.id})">✕</button>
       </div>
     </div>`;
@@ -1221,13 +1371,31 @@ function renderCharts() {
 }
 
 // ─── RENDER REPORTES ──────────────────────────────────────
+function getPeriodoTx() {
+  const sel = document.getElementById('reporte-periodo');
+  const periodo = sel ? sel.value : 'mes';
+  const hoy = new Date();
+  if(periodo === 'semana') {
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - hoy.getDay() + 1);
+    const lunesStr = lunes.toISOString().split('T')[0];
+    return state.transacciones.filter(t => t.fecha >= lunesStr);
+  } else if(periodo === 'todo') {
+    return state.transacciones;
+  } else {
+    const mesesAtras = parseInt(periodo.replace('mes-','') || '0');
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - mesesAtras, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    return state.transacciones.filter(t => t.fecha.startsWith(key));
+  }
+}
+
 function renderReportes() {
-  const mes = getMes();
-  const txMes = state.transacciones.filter(t => t.fecha.startsWith(mes));
+  const txMes = getPeriodoTx();
   const ing = txMes.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
   const egr = txMes.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
   const bal = ing - egr;
-  const serv = txMes.filter(t=>t.tipo==='ingreso'&&t.cat==='Servicios');
+  const serv = txMes.filter(t=>t.tipo==='ingreso');
   const ticket = serv.length ? ing/serv.length : 0;
   const ratio = ing > 0 ? Math.round(egr/ing*100) : 0;
   const totalDeuda = state.deudas.reduce((s,d)=>s+(d.total-d.pagado),0);
@@ -1335,8 +1503,53 @@ async function renderAdmin() {
 
 
 function aplicarRestricciones(plan) {
-  // Las restricciones se manejan al entrar a cada seccion
-  // Por ahora permitir acceso completo para pruebas
+  if(plan === 'admin' || plan === 'premium' || plan === 'gratuito_total') return;
+  // Plan gratuito básico: pueden VER todo pero no usar secciones premium
+  const premiumPages = ['deudas','empleados','inventario','responsabilidades','calendario','reportes'];
+  document.querySelectorAll('.tab').forEach(tab => {
+    const onclick = tab.getAttribute('onclick') || '';
+    premiumPages.forEach(p => {
+      if(onclick.includes("'"+p+"'")) {
+        tab.style.position = 'relative';
+        tab.innerHTML = tab.textContent + ' <span style="font-size:9px;background:#7C3AED;color:white;padding:1px 5px;border-radius:10px;margin-left:3px">PRO</span>';
+        tab.onclick = (e) => {
+          e.preventDefault();
+          mostrarUpgrade();
+        };
+      }
+    });
+  });
+  // También bloquear el botón Registrar
+  const btnRegistrar = document.querySelector('.btn-primary');
+  if(btnRegistrar && btnRegistrar.textContent.includes('Registrar')) {
+    const originalOnclick = btnRegistrar.onclick;
+    btnRegistrar.onclick = () => {
+      // Solo permitir ingresos y egresos
+      abrirModal('tx');
+    };
+  }
+}
+
+function mostrarUpgrade() {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:28px;width:100%;max-width:360px;text-align:center;border:2px solid #7C3AED">
+      <div style="font-size:36px;margin-bottom:12px">⭐</div>
+      <div style="font-size:18px;font-weight:600;color:#1a1535;margin-bottom:8px;font-family:Cormorant Garamond,serif">Función Premium</div>
+      <div style="font-size:13px;color:#9B8EC4;margin-bottom:20px;line-height:1.6">Esta función está disponible en el plan Premium. Actualiza por solo <strong style="color:#7C3AED">$20.000/mes</strong> y desbloquea todo CreceApp.</div>
+      <div style="background:#F0EDFF;border-radius:10px;padding:14px;margin-bottom:16px;text-align:left;font-size:12px;color:#5B21B6;line-height:1.8">
+        ✓ Control de deudas<br>
+        ✓ Gestión de empleados<br>
+        ✓ Inventario completo<br>
+        ✓ Responsabilidades mensuales<br>
+        ✓ Reportes y gráficas<br>
+        ✓ Análisis con IA
+      </div>
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:11px;border-radius:10px;background:#7C3AED;color:white;border:none;font-size:14px;font-family:Outfit,sans-serif;cursor:pointer;font-weight:500;margin-bottom:8px">¡Quiero el plan Premium!</button>
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:8px;border-radius:10px;background:transparent;color:#9B8EC4;border:1px solid rgba(124,58,237,0.2);font-size:13px;font-family:Outfit,sans-serif;cursor:pointer">Continuar con plan gratuito</button>
+    </div>`;
+  document.body.appendChild(overlay);
 }
 
 function mostrarUpgrade() {
@@ -1427,6 +1640,57 @@ function renderTopProductos() {
       <div style="font-size:13px;font-weight:600;color:#7C3AED">${fmt(d.total)}</div>
     </div>`).join('');
 }
+
+// ─── EDITAR TRANSACCIÓN ──────────────────────────────────
+function editarTx(id) {
+  const t = state.transacciones.find(x => x.id === id);
+  if(!t) return;
+  document.getElementById('edit-tx-id').value = id;
+  document.getElementById('edit-desc').value = t.desc;
+  document.getElementById('edit-monto').value = t.monto;
+  document.getElementById('edit-notas').value = t.notas || '';
+  const sel = document.getElementById('edit-cat');
+  const cats = state.categorias || ['Servicios','Productos','Arriendo','Servicios públicos','Nómina','Insumos','Otros'];
+  sel.innerHTML = cats.map(c => `<option ${c===t.cat?'selected':''}>${c}</option>`).join('');
+  document.getElementById('overlay-editar-tx').style.display = 'flex';
+}
+
+function guardarEdicionTx() {
+  const id = parseInt(document.getElementById('edit-tx-id').value);
+  const t = state.transacciones.find(x => x.id === id);
+  if(!t) return;
+  const montoAnterior = t.monto;
+  const descAnterior = t.desc;
+  t.desc = document.getElementById('edit-desc').value.trim() || t.desc;
+  t.monto = parseFloat(document.getElementById('edit-monto').value) || t.monto;
+  t.cat = document.getElementById('edit-cat').value;
+  t.notas = document.getElementById('edit-notas').value.trim();
+  t.editado = true;
+  t.fechaEdicion = new Date().toISOString();
+  t.historialEdicion = t.historialEdicion || [];
+  t.historialEdicion.push({ montoAnterior, descAnterior, fecha: new Date().toISOString() });
+  document.getElementById('overlay-editar-tx').style.display = 'none';
+  guardarLS();
+  renderAll();
+  // Notificacion visual
+  const msg = document.createElement('div');
+  msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D97706;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:400;font-family:Outfit,sans-serif;white-space:nowrap';
+  msg.textContent = '✏️ Transacción editada — quedó marcada en el historial';
+  document.body.appendChild(msg);
+  setTimeout(() => msg.remove(), 4000);
+}
+
+// ─── CIERRE AUTOMÁTICO 2 HORAS ────────────────────────────
+let inactivityTimer;
+function resetTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(async () => {
+    await sb.auth.signOut();
+    alert('Sesión cerrada por inactividad (2 horas). Por seguridad debes volver a iniciar sesión.');
+  }, 2 * 60 * 60 * 1000);
+}
+['click','keypress','scroll','touchstart','mousemove'].forEach(e => document.addEventListener(e, resetTimer, {passive:true}));
+resetTimer();
 
 function renderAll() {
   renderAlertas();
