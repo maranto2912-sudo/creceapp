@@ -921,6 +921,13 @@ function abonarDeuda(id) {
   if(d) { d.pagado = Math.min(d.pagado + monto, d.total); guardarLS(); renderAll(); }
 }
 
+function eliminarDeuda(id) {
+  if(!confirm('¿Seguro que quieres eliminar esta deuda?')) return;
+  state.deudas = state.deudas.filter(x => x.id !== id);
+  guardarLS();
+  renderAll();
+}
+
 function ajustarStock(id, delta) {
   const p = state.inventario.find(x => x.id === id);
   if(p) { p.stock = Math.max(0, p.stock + delta); guardarLS(); renderAll(); }
@@ -1071,6 +1078,7 @@ function renderDeudas() {
         <div style="font-size:14px;font-weight:600;color:var(--red)">${fmt(pend)}</div>
         <div style="font-size:11px;color:var(--text3)">de ${fmt(d.total)}</div>
         <button class="btn-sm" style="margin-top:6px" onclick="abonarDeuda(${d.id})">+ Abono</button>
+        <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarDeuda(${d.id})">✕ Eliminar</button>
       </div>
     </div>`;
   }).join('');
@@ -1095,9 +1103,17 @@ function renderEmpleados() {
         <div class="emp-total">${fmt(total)}</div>
         <div class="emp-detail">Comisión: ${fmt(com)}</div>
         <div class="emp-detail">${txEmp.length} servicios este mes</div>
+        <button class="btn-danger" style="margin-top:6px;font-size:11px" onclick="eliminarEmpleado(${e.id})">✕ Eliminar</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function eliminarEmpleado(id) {
+  if(!confirm('¿Seguro que quieres eliminar este empleado?')) return;
+  state.empleados = state.empleados.filter(x => x.id !== id);
+  guardarLS();
+  renderAll();
 }
 
 // ─── RENDER INVENTARIO ────────────────────────────────────
@@ -1118,9 +1134,17 @@ function renderInventario() {
           <button class="btn-sm" onclick="ajustarStock(${p.id},1)">+</button>
         </div>
         <span class="badge ${badge}">${label}</span>
+        <button class="btn-danger" style="font-size:11px;padding:3px 8px" onclick="eliminarProducto(${p.id})">✕</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function eliminarProducto(id) {
+  if(!confirm('¿Seguro que quieres eliminar este producto?')) return;
+  state.inventario = state.inventario.filter(x => x.id !== id);
+  guardarLS();
+  renderAll();
 }
 
 // ─── RENDER CALENDARIO ────────────────────────────────────
@@ -1143,18 +1167,26 @@ function renderCalendario() {
   }
   document.getElementById('cal-grid').innerHTML = html;
   const todos = [
-    ...state.eventos.map(e => ({desc:e.desc, monto:e.monto, dia:e.dia, tipo:e.tipo})),
-    ...state.deudas.filter(d=>d.pagado<d.total).map(d => ({desc:`Deuda: ${d.nombre}`, monto:d.total-d.pagado, dia:new Date(d.fecha+'T12:00:00').getDate(), tipo:'pago'}))
+    ...state.eventos.map(e => ({desc:e.desc, monto:e.monto, dia:e.dia, tipo:e.tipo, id:e.id})),
+    ...state.deudas.filter(d=>d.pagado<d.total&&d.fecha).map(d => ({desc:`Deuda: ${d.nombre}`, monto:d.total-d.pagado, dia:new Date(d.fecha+'T12:00:00').getDate(), tipo:'pago', id:null}))
   ].sort((a,b) => a.dia - b.dia);
   const pp = document.getElementById('proximos');
   pp.innerHTML = todos.length ? todos.map(p =>
-    `<div class="alert alert-${p.tipo==='cobro'?'success':'warning'}" style="margin-bottom:6px">
+    `<div class="alert alert-${p.tipo==='cobro'?'success':'warning'}" style="margin-bottom:6px;display:flex;align-items:center;gap:8px">
       <span>${p.tipo==='cobro'?'💰':'📅'}</span>
-      <div><div class="alert-title" style="font-size:12px">${p.desc}</div><div class="alert-sub">Día ${p.dia} · ${fmt(p.monto)}</div></div>
+      <div style="flex:1"><div class="alert-title" style="font-size:12px">${p.desc}</div><div class="alert-sub">Día ${p.dia} · ${fmt(p.monto)}</div></div>
+      ${p.id ? `<button class="btn-danger" style="font-size:11px;padding:3px 8px;flex-shrink:0" onclick="eliminarEvento(${p.id})">✕</button>` : ''}
     </div>`
   ).join('') : '<div class="empty-state">Sin eventos este mes.</div>';
 }
 function cambiarMes(d) { calFecha.setMonth(calFecha.getMonth()+d); renderCalendario(); }
+
+function eliminarEvento(id) {
+  if(!confirm('¿Seguro que quieres eliminar este pago fijo?')) return;
+  state.eventos = state.eventos.filter(x => x.id !== id);
+  guardarLS();
+  renderCalendario();
+}
 
 // ─── RENDER CHARTS ────────────────────────────────────────
 function renderCharts() {
