@@ -1,0 +1,29 @@
+{
+  "name": "CreceApp — Control financiero",
+  "short_name": "CreceApp",
+  "description": "Plataforma financiera para tu negocio",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F0EDFF",
+  "theme_color": "#7C3AED",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f4c8.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f4c8.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f4c8.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["finance", "business", "productivity"]
+}
+
