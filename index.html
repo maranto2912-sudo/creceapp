@@ -233,7 +233,7 @@
     <button class="tab" onclick="showPage('responsabilidades',this)">Responsabilidades</button>
     <button class="tab" onclick="showPage('calendario',this)">Calendario</button>
     <button class="tab" onclick="showPage('reportes',this)">Reportes</button>
-    <button class="tab" id="tab-admin" style="display:none" onclick="showPage('admin',this)">👑 Admin</button>
+    <button class="tab" id="tab-admin" onclick="intentarAdmin(this)">👑 Admin</button>
   </div>
   <button class="btn-primary" onclick="abrirModal('tx')">+ Registrar</button>
 </nav>
@@ -644,6 +644,17 @@ let filtroTx = 'todas';
 let calFecha = new Date();
 
 // ─── NAVEGACIÓN ───────────────────────────────────────────
+function intentarAdmin(btn) {
+  sb.auth.getSession().then(({data}) => {
+    const email = data?.session?.user?.email || '';
+    if(email === 'maranto2912@gmail.com') {
+      showPage('admin', btn);
+    } else {
+      alert('Acceso solo para administradores.');
+    }
+  });
+}
+
 function showPage(id, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
