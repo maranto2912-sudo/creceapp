@@ -1444,6 +1444,12 @@ async function init() {
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('main-app').style.display = 'block';
       document.getElementById('user-info').style.display = 'flex';
+      const userEmail = session.user.email || '';
+      const isAdmin = userEmail === 'maranto2912@gmail.com';
+      const adminTab = document.getElementById('tab-admin');
+      if(adminTab) adminTab.style.display = isAdmin ? 'block' : 'none';
+      document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : userEmail.split('@')[0];
+      document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : '✓ Gratuito';
       await cargarPerfil(session.user.id);
       await cargarLS();
       renderAll();
@@ -1464,6 +1470,12 @@ async function init() {
       document.getElementById('reset-screen').style.display = 'none';
       document.getElementById('main-app').style.display = 'block';
       document.getElementById('user-info').style.display = 'flex';
+      const userEmail = session.user.email || '';
+      const isAdmin = userEmail === 'maranto2912@gmail.com';
+      const adminTab = document.getElementById('tab-admin');
+      if(adminTab) adminTab.style.display = isAdmin ? 'block' : 'none';
+      document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : userEmail.split('@')[0];
+      document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : '✓ Gratuito';
       await cargarPerfil(session.user.id);
       await cargarLS();
       renderAll();
