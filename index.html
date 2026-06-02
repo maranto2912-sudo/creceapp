@@ -1415,16 +1415,18 @@ async function cerrarSesion() {
 
 async function cargarPerfil(userId) {
   try {
-    const { data: session } = await sb.auth.getSession();
-    const email = session?.session?.user?.email || '';
+    const { data: sessionData } = await sb.auth.getSession();
+    const email = sessionData?.session?.user?.email || '';
     const { data } = await sb.from('perfiles').select('*').eq('id', userId).single();
-    if(data) {
-      const isAdmin = checkAdmin(email);
-      document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : (data.negocio || 'Mi negocio');
-      document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : (data.plan === 'premium' ? '⭐ Premium' : '✓ Gratuito');
-      if(!isAdmin) aplicarRestricciones(data.plan || 'gratuito');
-    }
-  } catch(e) {}
+    const isAdmin = email === 'maranto2912@gmail.com';
+    document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : ((data && data.negocio) || 'Mi negocio');
+    document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : ((data && data.plan === 'premium') ? '⭐ Premium' : '✓ Gratuito');
+    const adminTab = document.getElementById('tab-admin');
+    if(adminTab) adminTab.style.display = isAdmin ? 'block' : 'none';
+    if(!isAdmin) aplicarRestricciones((data && data.plan) || 'gratuito');
+  } catch(e) { 
+    console.log('perfil error:', e);
+  }
 }
 
 // ─── INIT ─────────────────────────────────────────────────
