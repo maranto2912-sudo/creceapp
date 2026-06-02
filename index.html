@@ -200,6 +200,22 @@
 </div>
 
 <!-- NAV -->
+<!-- PANTALLA CAMBIO CONTRASEÑA -->
+<div id="reset-screen" style="display:none;min-height:100vh;align-items:center;justify-content:center;background:#F0EDFF;padding:20px;position:fixed;inset:0;z-index:200">
+  <div style="background:#FFFFFF;border:1px solid rgba(124,58,237,0.15);border-radius:14px;padding:32px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(124,58,237,0.1)">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:32px;margin-bottom:8px">🔐</div>
+      <div style="font-size:22px;font-weight:600;color:#1a1535;font-family:Cormorant Garamond,serif;letter-spacing:2px">Nueva contraseña</div>
+      <div style="font-size:13px;color:#9B8EC4;margin-top:4px">Escribe tu nueva contraseña</div>
+    </div>
+    <div id="reset-error" style="display:none;background:#FEE2E2;border:1px solid #FCA5A5;border-radius:10px;padding:10px 12px;font-size:13px;color:#DC2626;margin-bottom:14px"></div>
+    <div id="reset-success" style="display:none;background:#EDE9FF;border:1px solid rgba(124,58,237,0.3);border-radius:10px;padding:10px 12px;font-size:13px;color:#7C3AED;margin-bottom:14px"></div>
+    <div class="form-group"><label class="form-label">Nueva contraseña</label><input type="password" id="new-pass" placeholder="Mínimo 6 caracteres"></div>
+    <div class="form-group"><label class="form-label">Confirmar contraseña</label><input type="password" id="confirm-pass" placeholder="Repite la contraseña"></div>
+    <button style="width:100%;background:#7C3AED;color:white;border:none;border-radius:10px;padding:11px;font-size:14px;font-family:Outfit,sans-serif;font-weight:500;cursor:pointer;margin-top:4px" onclick="cambiarContrasena()">Guardar nueva contraseña</button>
+  </div>
+</div>
+
 <div id="main-app" style="display:none">
 <nav class="nav">
   <div class="nav-logo">📈 Crece<span>App</span></div>
@@ -1361,6 +1377,35 @@ async function resetPass() {
   showAuthSuccess('Te enviamos un correo para recuperar tu contraseña.');
 }
 
+async function cambiarContrasena() {
+  const newPass = document.getElementById('new-pass').value;
+  const confirmPass = document.getElementById('confirm-pass').value;
+  if(!newPass || newPass.length < 6) {
+    document.getElementById('reset-error').textContent = 'La contraseña debe tener mínimo 6 caracteres.';
+    document.getElementById('reset-error').style.display = 'block';
+    return;
+  }
+  if(newPass !== confirmPass) {
+    document.getElementById('reset-error').textContent = 'Las contraseñas no coinciden.';
+    document.getElementById('reset-error').style.display = 'block';
+    return;
+  }
+  const { error } = await sb.auth.updateUser({ password: newPass });
+  if(error) {
+    document.getElementById('reset-error').textContent = 'Error: ' + error.message;
+    document.getElementById('reset-error').style.display = 'block';
+  } else {
+    document.getElementById('reset-error').style.display = 'none';
+    document.getElementById('reset-success').textContent = '¡Contraseña cambiada! Entrando...';
+    document.getElementById('reset-success').style.display = 'block';
+    setTimeout(() => {
+      document.getElementById('reset-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+      document.getElementById('user-info').style.display = 'flex';
+    }, 1500);
+  }
+}
+
 async function cerrarSesion() {
   await sb.auth.signOut();
   document.getElementById('auth-screen').style.display = 'flex';
@@ -1411,8 +1456,13 @@ async function init() {
 
   // Escuchar cambios de sesión
   sb.auth.onAuthStateChange(async (event, session) => {
-    if(event === 'SIGNED_IN' && session) {
+    if(event === 'PASSWORD_RECOVERY') {
       document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'none';
+      document.getElementById('reset-screen').style.display = 'flex';
+    } else if(event === 'SIGNED_IN' && session) {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('reset-screen').style.display = 'none';
       document.getElementById('main-app').style.display = 'block';
       document.getElementById('user-info').style.display = 'flex';
       await cargarPerfil(session.user.id);
@@ -1422,6 +1472,7 @@ async function init() {
     } else if(event === 'SIGNED_OUT') {
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('main-app').style.display = 'none';
+      document.getElementById('reset-screen').style.display = 'none';
       document.getElementById('user-info').style.display = 'none';
     }
   });
