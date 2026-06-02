@@ -939,8 +939,28 @@ async function loginUser() {
   const email = document.getElementById('login-email').value.trim();
   const pass = document.getElementById('login-pass').value;
   if(!email || !pass) return showAuthError('Por favor ingresa tu correo y contraseña.');
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if(error) return showAuthError('Correo o contraseña incorrectos.');
+  const btn = document.querySelector('#form-login .btn-primary');
+  const originalText = btn.textContent;
+  btn.textContent = 'Entrando...';
+  btn.disabled = true;
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if(error) {
+      showAuthError('Correo o contraseña incorrectos. Verifica tus datos.');
+    } else if(data.session) {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+      document.getElementById('user-info').style.display = 'flex';
+      await cargarPerfil(data.session.user.id);
+      await cargarLS();
+      renderAll();
+      renderCalendario();
+    }
+  } catch(e) {
+    showAuthError('Error de conexión. Verifica tu internet e intenta de nuevo.');
+  }
+  btn.textContent = originalText;
+  btn.disabled = false;
 }
 
 async function registerUser() {
