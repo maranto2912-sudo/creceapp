@@ -239,6 +239,9 @@
     <button class="tab" onclick="showPage('responsabilidades',this)">Responsabilidades</button>
     <button class="tab" onclick="showPage('calendario',this)">Calendario</button>
     <button class="tab" onclick="showPage('reportes',this)">Reportes</button>
+    <button class="tab" onclick="showPage('pedidos',this)">Pedidos</button>
+    <button class="tab" onclick="showPage('clientes',this)">Clientes</button>
+    <button class="tab" onclick="showPage('proveedores',this)">Proveedores</button>
     <button class="tab" id="tab-admin" onclick="intentarAdmin(this)">👑 Admin</button>
   </div>
   <button class="btn-primary" onclick="abrirModal('tx')">+ Registrar</button>
@@ -373,6 +376,51 @@
       <div id="proximos"></div>
     </div>
   </div>
+</div>
+
+<!-- PEDIDOS -->
+<div id="page-pedidos" class="page content">
+  <div class="section-header">
+    <span class="section-title">Gestión de pedidos</span>
+    <button class="btn-primary" onclick="abrirModal('pedido')">+ Nuevo pedido</button>
+  </div>
+  <div class="filters" style="margin-bottom:14px">
+    <button class="filter-chip active" onclick="filtrarPedidos('todos',this)">Todos</button>
+    <button class="filter-chip" onclick="filtrarPedidos('recibido',this)">Recibidos</button>
+    <button class="filter-chip" onclick="filtrarPedidos('proceso',this)">En proceso</button>
+    <button class="filter-chip" onclick="filtrarPedidos('enviado',this)">Enviados</button>
+    <button class="filter-chip" onclick="filtrarPedidos('entregado',this)">Entregados</button>
+    <button class="filter-chip" onclick="filtrarPedidos('cancelado',this)">Cancelados</button>
+  </div>
+  <div class="grid3" style="margin-bottom:14px">
+    <div class="metric"><div class="metric-label">📦 Total pedidos</div><div class="metric-value" style="color:#7C3AED" id="ped-total">0</div></div>
+    <div class="metric"><div class="metric-label">💰 Ingresos pedidos</div><div class="metric-value c-green" id="ped-ingresos">$0</div></div>
+    <div class="metric"><div class="metric-label">📈 Ganancia pedidos</div><div class="metric-value" style="color:#7C3AED" id="ped-ganancia">$0</div></div>
+  </div>
+  <div id="pedidos-list"><div class="empty-state">No hay pedidos aún.</div></div>
+</div>
+
+<!-- CLIENTES -->
+<div id="page-clientes" class="page content">
+  <div class="section-header">
+    <span class="section-title">Base de clientes</span>
+    <button class="btn-primary" onclick="abrirModal('cliente')">+ Nuevo cliente</button>
+  </div>
+  <div class="grid3" style="margin-bottom:14px">
+    <div class="metric"><div class="metric-label">👥 Total clientes</div><div class="metric-value" style="color:#7C3AED" id="cli-total">0</div></div>
+    <div class="metric"><div class="metric-label">⭐ Cliente top</div><div class="metric-value" style="font-size:14px;color:#D97706" id="cli-top">—</div></div>
+    <div class="metric"><div class="metric-label">💰 Valor promedio</div><div class="metric-value c-green" id="cli-promedio">$0</div></div>
+  </div>
+  <div id="clientes-list"><div class="empty-state">Agrega tus clientes frecuentes.</div></div>
+</div>
+
+<!-- PROVEEDORES -->
+<div id="page-proveedores" class="page content">
+  <div class="section-header">
+    <span class="section-title">Proveedores</span>
+    <button class="btn-primary" onclick="abrirModal('proveedor')">+ Nuevo proveedor</button>
+  </div>
+  <div id="proveedores-list"><div class="empty-state">Agrega tus proveedores.</div></div>
 </div>
 
 <!-- ADMIN -->
@@ -528,6 +576,83 @@
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('tx')">Cancelar</button><button class="btn-primary" onclick="guardarTx()">Guardar</button></div>
 </div></div>
 
+<!-- MODAL PEDIDO -->
+<div class="overlay" id="overlay-pedido">
+<div class="modal">
+  <div class="modal-title">Nuevo pedido</div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Cliente</label><select id="ped-cliente"><option value="">— Sin cliente —</option></select></div>
+    <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="ped-fecha"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Producto / Descripción</label><input type="text" id="ped-desc" placeholder="Ej: Camiseta talla M azul..."></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Precio de venta ($)</label><input type="number" id="ped-precio" placeholder="0" oninput="calcPedido()"></div>
+    <div class="form-group"><label class="form-label">Costo ($)</label><input type="number" id="ped-costo" placeholder="0" oninput="calcPedido()"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Cantidad</label><input type="number" id="ped-cantidad" placeholder="1" min="1" value="1" oninput="calcPedido()"></div>
+    <div class="form-group"><label class="form-label">Plataforma</label>
+      <select id="ped-plataforma">
+        <option>WhatsApp</option><option>Instagram</option><option>TikTok Shop</option>
+        <option>Mercado Libre</option><option>Shopify</option><option>Facebook</option><option>Directo</option><option>Otro</option>
+      </select>
+    </div>
+  </div>
+  <div style="background:#F8F7FF;border-radius:8px;padding:10px;margin-bottom:10px;border:1px solid rgba(124,58,237,0.1)">
+    <div style="display:flex;justify-content:space-between;font-size:12px">
+      <span style="color:var(--text2)">Ganancia estimada:</span>
+      <span id="ped-ganancia-calc" style="font-weight:600;color:#7C3AED">$0</span>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Estado</label>
+      <select id="ped-estado">
+        <option value="recibido">Recibido</option>
+        <option value="proceso">En proceso</option>
+        <option value="enviado">Enviado</option>
+        <option value="entregado">Entregado</option>
+        <option value="cancelado">Cancelado</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Número de guía</label><input type="text" id="ped-guia" placeholder="Opcional..."></div>
+  </div>
+  <div class="form-group"><label class="form-label">Notas</label><input type="text" id="ped-notas" placeholder="Dirección, color, talla..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('pedido')">Cancelar</button><button class="btn-primary" onclick="guardarPedido()">Guardar</button></div>
+</div></div>
+
+<!-- MODAL CLIENTE -->
+<div class="overlay" id="overlay-cliente">
+<div class="modal">
+  <div class="modal-title">Nuevo cliente</div>
+  <div class="form-group"><label class="form-label">Nombre completo</label><input type="text" id="cl-nombre" placeholder="Nombre..."></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Teléfono / WhatsApp</label><input type="text" id="cl-telefono" placeholder="300..."></div>
+    <div class="form-group"><label class="form-label">Ciudad</label><input type="text" id="cl-ciudad" placeholder="Pereira..."></div>
+  </div>
+  <div class="form-group"><label class="form-label">Notas</label><input type="text" id="cl-notas" placeholder="Cliente frecuente, preferencias..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cliente')">Cancelar</button><button class="btn-primary" onclick="guardarCliente()">Guardar</button></div>
+</div></div>
+
+<!-- MODAL PROVEEDOR -->
+<div class="overlay" id="overlay-proveedor">
+<div class="modal">
+  <div class="modal-title">Nuevo proveedor</div>
+  <div class="form-group"><label class="form-label">Nombre / Empresa</label><input type="text" id="pv-nombre" placeholder="Nombre del proveedor..."></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Contacto</label><input type="text" id="pv-contacto" placeholder="WhatsApp, correo..."></div>
+    <div class="form-group"><label class="form-label">País / Ciudad</label><input type="text" id="pv-pais" placeholder="China, Bogotá..."></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Tiempo entrega</label><input type="text" id="pv-tiempo" placeholder="Ej: 3-5 días"></div>
+    <div class="form-group"><label class="form-label">Calificación</label>
+      <select id="pv-rating"><option>⭐⭐⭐⭐⭐</option><option>⭐⭐⭐⭐</option><option>⭐⭐⭐</option><option>⭐⭐</option><option>⭐</option></select>
+    </div>
+  </div>
+  <div class="form-group"><label class="form-label">Productos que maneja</label><input type="text" id="pv-productos" placeholder="Ropa, accesorios, tecnología..."></div>
+  <div class="form-group"><label class="form-label">Notas</label><input type="text" id="pv-notas" placeholder="Condiciones de pago, mínimo de compra..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('proveedor')">Cancelar</button><button class="btn-primary" onclick="guardarProveedor()">Guardar</button></div>
+</div></div>
+
 <!-- MODAL EDITAR TRANSACCIÓN -->
 <div class="overlay" id="overlay-editar-tx">
 <div class="modal">
@@ -571,8 +696,11 @@
   <div class="form-group">
     <label class="form-label">Tipo de deuda</label>
     <select id="d-tipo" onchange="toggleTipoDeuda()">
-      <option value="fija">Fecha fija de vencimiento</option>
-      <option value="mensual">Cuota mensual (se renueva cada mes)</option>
+        <option value="fija">Fecha fija de vencimiento</option>
+      <option value="diario">Pago diario</option>
+      <option value="semanal">Pago semanal</option>
+      <option value="quincenal">Pago quincenal (cada 15 días)</option>
+      <option value="mensual">Pago mensual</option>
     </select>
   </div>
   <div id="d-fecha-group">
@@ -706,6 +834,9 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ─── ESTADO ───────────────────────────────────────────────
+// ─── ESTADO DROPSHIPPING ──────────────────────────────────
+// pedidos, clientes, proveedores se agregan al state principal
+
 const CATS_DEFAULT = ['Servicios','Productos','Arriendo','Servicios públicos','Nómina','Insumos','Cuota banco','Préstamo','Ventas','Otros'];
 
 let state = {
@@ -717,7 +848,10 @@ let state = {
   responsabilidades: [],
   categorias: [...CATS_DEFAULT],
   meta: 0,
-  adminEmail: 'maranto2912@gmail.com'
+  adminEmail: 'maranto2912@gmail.com',
+  pedidos: [],
+  clientes: [],
+  proveedores: []
 };
 
 function getDeviceId() {
@@ -785,6 +919,12 @@ function abrirModal(id) {
     state.empleados.forEach(e => sel.innerHTML += `<option value="${e.id}">${e.nombre}</option>`);
     actualizarCategorias();
     toggleVentaFields();
+  }
+  if(id === 'pedido') {
+    document.getElementById('ped-fecha').value = new Date().toISOString().split('T')[0];
+    const sel = document.getElementById('ped-cliente');
+    sel.innerHTML = '<option value="">— Sin cliente —</option>';
+    state.clientes.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.nombre}</option>`);
   }
   if(id === 'deuda') document.getElementById('d-fecha').value = new Date().toISOString().split('T')[0];
   if(id === 'meta') document.getElementById('meta-val').value = state.meta || '';
@@ -916,7 +1056,15 @@ function guardarTx() {
 function toggleTipoDeuda() {
   const tipo = document.getElementById('d-tipo').value;
   document.getElementById('d-fecha-group').style.display = tipo === 'fija' ? 'block' : 'none';
-  document.getElementById('d-dia-group').style.display = tipo === 'mensual' ? 'block' : 'none';
+  document.getElementById('d-dia-group').style.display = tipo !== 'fija' ? 'block' : 'none';
+  // Cambiar label según tipo
+  const label = document.querySelector('#d-dia-group .form-label');
+  if(label) {
+    if(tipo === 'diario') label.textContent = 'Valor del pago diario ($)';
+    else if(tipo === 'semanal') label.textContent = 'Día de la semana (1=Lun, 7=Dom)';
+    else if(tipo === 'quincenal') label.textContent = 'Días de pago (ej: 1 y 15)';
+    else label.textContent = 'Día de pago cada mes (1-31)';
+  }
 }
 
 function guardarDeuda() {
@@ -1101,10 +1249,16 @@ function renderAlertas() {
   const hoyD = new Date();
   state.deudas.forEach(d => {
     if(d.pagado >= d.total) return;
-    if(d.tipo === 'mensual' && d.diaPago) {
+    if(d.tipo === 'diario') {
+      alertas.push({tipo:'warning', ico:'🔔', txt:`Pago diario "${d.nombre}"`, sub:`Valor: ${fmt(d.cuotaMensual||0)} · Pendiente: ${fmt(d.total-d.pagado)}`});
+    } else if(d.tipo === 'semanal' && hoyD.getDay() === (d.diaPago||1)) {
+      alertas.push({tipo:'warning', ico:'🔔', txt:`Pago semanal "${d.nombre}" es hoy`, sub:`Valor: ${fmt(d.cuotaMensual||0)} · Pendiente: ${fmt(d.total-d.pagado)}`});
+    } else if(d.tipo === 'quincenal' && (hoyD.getDate()===1||hoyD.getDate()===15)) {
+      alertas.push({tipo:'warning', ico:'🔔', txt:`Pago quincenal "${d.nombre}" es hoy`, sub:`Valor: ${fmt(d.cuotaMensual||0)} · Pendiente: ${fmt(d.total-d.pagado)}`});
+    } else if(d.tipo === 'mensual' && d.diaPago) {
       const diasRestantes = d.diaPago - hoyD.getDate();
       if(diasRestantes >= 0 && diasRestantes <= 5)
-        alertas.push({tipo:'warning', ico:'🔔', txt:`Cuota de "${d.nombre}" vence en ${diasRestantes === 0 ? 'hoy' : diasRestantes + ' días'}`, sub:`Cuota: ${fmt(d.cuotaMensual || 0)} · Pendiente total: ${fmt(d.total - d.pagado)}`});
+        alertas.push({tipo:'warning', ico:'🔔', txt:`Cuota mensual "${d.nombre}" vence en ${diasRestantes === 0 ? 'hoy' : diasRestantes + ' días'}`, sub:`Cuota: ${fmt(d.cuotaMensual || 0)} · Pendiente: ${fmt(d.total - d.pagado)}`});
     } else if(d.fecha) {
       const v = new Date(d.fecha + 'T12:00:00');
       const diff = Math.round((v - hoyD) / 86400000);
@@ -1206,11 +1360,22 @@ function renderDeudas() {
     const col = pct < 30 ? 'red' : pct < 70 ? 'amber' : '';
     let fechaInfo = '';
     let alertaVence = false;
-    if(d.tipo === 'mensual' && d.diaPago) {
+    if(d.tipo === 'diario') {
+      fechaInfo = `📅 Pago diario${d.cuotaMensual ? ' · ' + fmt(d.cuotaMensual) + '/día' : ''}`;
+      alertaVence = true;
+    } else if(d.tipo === 'semanal') {
+      const diasSemana = ['','Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+      fechaInfo = `📅 Pago semanal${d.diaPago ? ' · Día ' + (diasSemana[d.diaPago]||d.diaPago) : ''}${d.cuotaMensual ? ' · ' + fmt(d.cuotaMensual) : ''}`;
+      alertaVence = hoyD.getDay() === (d.diaPago || 1);
+    } else if(d.tipo === 'quincenal') {
+      const dia = hoyD.getDate();
+      fechaInfo = `📅 Pago quincenal · Días ${d.diaPago || '1 y 15'}${d.cuotaMensual ? ' · ' + fmt(d.cuotaMensual) : ''}`;
+      alertaVence = dia === 1 || dia === 15 || (d.diaPago && dia === parseInt(d.diaPago));
+    } else if(d.tipo === 'mensual' && d.diaPago) {
       const diasRestantes = d.diaPago - hoyD.getDate();
       const estado = diasRestantes < 0 ? 'Venció este mes' : diasRestantes === 0 ? '¡Vence hoy!' : `Vence en ${diasRestantes} días (día ${d.diaPago})`;
       alertaVence = diasRestantes <= 3;
-      fechaInfo = `📅 Cuota mensual · ${estado}${d.cuotaMensual ? ' · Cuota: ' + fmt(d.cuotaMensual) : ''}`;
+      fechaInfo = `📅 Pago mensual · ${estado}${d.cuotaMensual ? ' · ' + fmt(d.cuotaMensual) : ''}`;
     } else {
       fechaInfo = `Vence: ${d.fecha || 'Sin fecha'}`;
     }
@@ -1692,6 +1857,209 @@ function resetTimer() {
 ['click','keypress','scroll','touchstart','mousemove'].forEach(e => document.addEventListener(e, resetTimer, {passive:true}));
 resetTimer();
 
+// ─── DROPSHIPPING FUNCTIONS ──────────────────────────────
+let filtroPedido = 'todos';
+
+function calcPedido() {
+  const precio = parseFloat(document.getElementById('ped-precio').value) || 0;
+  const costo = parseFloat(document.getElementById('ped-costo').value) || 0;
+  const cant = parseInt(document.getElementById('ped-cantidad').value) || 1;
+  const gan = (precio - costo) * cant;
+  const el = document.getElementById('ped-ganancia-calc');
+  if(el) { el.textContent = fmt(gan); el.style.color = gan >= 0 ? '#7C3AED' : '#DC2626'; }
+}
+
+function guardarPedido() {
+  const desc = document.getElementById('ped-desc').value.trim();
+  const precio = parseFloat(document.getElementById('ped-precio').value) || 0;
+  const costo = parseFloat(document.getElementById('ped-costo').value) || 0;
+  const cantidad = parseInt(document.getElementById('ped-cantidad').value) || 1;
+  const clienteId = document.getElementById('ped-cliente').value;
+  const plataforma = document.getElementById('ped-plataforma').value;
+  const estado = document.getElementById('ped-estado').value;
+  const guia = document.getElementById('ped-guia').value.trim();
+  const notas = document.getElementById('ped-notas').value.trim();
+  const fecha = document.getElementById('ped-fecha').value;
+  if(!desc || !precio) return;
+  const ganancia = (precio - costo) * cantidad;
+  state.pedidos.unshift({ desc, precio, costo, cantidad, clienteId, plataforma, estado, guia, notas, fecha, ganancia, id: Date.now() });
+  ['ped-desc','ped-precio','ped-costo','ped-guia','ped-notas'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('ped-cantidad').value = '1';
+  cerrarModal('pedido');
+  guardarLS();
+  renderPedidos();
+}
+
+function guardarCliente() {
+  const nombre = document.getElementById('cl-nombre').value.trim();
+  if(!nombre) return;
+  state.clientes.push({
+    nombre,
+    telefono: document.getElementById('cl-telefono').value.trim(),
+    ciudad: document.getElementById('cl-ciudad').value.trim(),
+    notas: document.getElementById('cl-notas').value.trim(),
+    id: Date.now()
+  });
+  ['cl-nombre','cl-telefono','cl-ciudad','cl-notas'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  cerrarModal('cliente');
+  guardarLS();
+  renderClientes();
+}
+
+function guardarProveedor() {
+  const nombre = document.getElementById('pv-nombre').value.trim();
+  if(!nombre) return;
+  state.proveedores.push({
+    nombre,
+    contacto: document.getElementById('pv-contacto').value.trim(),
+    pais: document.getElementById('pv-pais').value.trim(),
+    tiempo: document.getElementById('pv-tiempo').value.trim(),
+    rating: document.getElementById('pv-rating').value,
+    productos: document.getElementById('pv-productos').value.trim(),
+    notas: document.getElementById('pv-notas').value.trim(),
+    id: Date.now()
+  });
+  ['pv-nombre','pv-contacto','pv-pais','pv-tiempo','pv-productos','pv-notas'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  cerrarModal('proveedor');
+  guardarLS();
+  renderProveedores();
+}
+
+function filtrarPedidos(f, btn) {
+  filtroPedido = f;
+  document.querySelectorAll('#page-pedidos .filter-chip').forEach(c => c.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderPedidos();
+}
+
+const estadoColors = {
+  recibido: {bg:'#EDE9FF',color:'#5B21B6',label:'📥 Recibido'},
+  proceso: {bg:'#FEF3C7',color:'#92400E',label:'⚙️ En proceso'},
+  enviado: {bg:'#DBEAFE',color:'#1E40AF',label:'🚚 Enviado'},
+  entregado: {bg:'#D1FAE5',color:'#065F46',label:'✅ Entregado'},
+  cancelado: {bg:'#FEE2E2',color:'#991B1B',label:'❌ Cancelado'}
+};
+
+function renderPedidos() {
+  const el = document.getElementById('pedidos-list');
+  if(!el) return;
+  const lista = filtroPedido === 'todos' ? state.pedidos : state.pedidos.filter(p => p.estado === filtroPedido);
+  const total = state.pedidos.length;
+  const ingresos = state.pedidos.filter(p=>p.estado!=='cancelado').reduce((s,p)=>s+(p.precio*p.cantidad),0);
+  const ganancia = state.pedidos.filter(p=>p.estado!=='cancelado').reduce((s,p)=>s+p.ganancia,0);
+  const pedTotal = document.getElementById('ped-total');
+  const pedIng = document.getElementById('ped-ingresos');
+  const pedGan = document.getElementById('ped-ganancia');
+  if(pedTotal) pedTotal.textContent = total;
+  if(pedIng) pedIng.textContent = fmt(ingresos);
+  if(pedGan) pedGan.textContent = fmt(ganancia);
+  if(!lista.length) { el.innerHTML = '<div class="empty-state">No hay pedidos en esta categoría.</div>'; return; }
+  const cli = state.clientes;
+  el.innerHTML = lista.map(p => {
+    const c = cli.find(x => x.id == p.clienteId);
+    const est = estadoColors[p.estado] || estadoColors.recibido;
+    return `<div class="tx-item" style="flex-wrap:wrap;gap:8px">
+      <div class="tx-icon ingreso" style="font-size:14px">📦</div>
+      <div class="tx-info" style="min-width:150px">
+        <div class="tx-name">${p.desc} <span style="font-size:10px;background:#F3F4F6;color:#6B7280;padding:1px 6px;border-radius:10px">${p.plataforma}</span></div>
+        <div class="tx-cat">${c?c.nombre:'Sin cliente'} · x${p.cantidad} · ${p.fecha}</div>
+        ${p.guia ? `<div style="font-size:11px;color:#7C3AED">📬 Guía: ${p.guia}</div>` : ''}
+        ${p.notas ? `<div style="font-size:11px;color:var(--text3)">📝 ${p.notas}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <div style="font-size:13px;font-weight:600;color:#1D9E75">+${fmt(p.precio * p.cantidad)}</div>
+        <div style="font-size:11px;color:#7C3AED">Gan: ${fmt(p.ganancia)}</div>
+        <span style="font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;background:${est.bg};color:${est.color}">${est.label}</span>
+        <div style="display:flex;gap:4px;margin-top:2px">
+          <select style="font-size:10px;padding:2px 4px;border-radius:6px;border:1px solid rgba(124,58,237,0.2);background:#F8F7FF" onchange="cambiarEstadoPedido(${p.id},this.value)">
+            ${['recibido','proceso','enviado','entregado','cancelado'].map(e=>`<option ${e===p.estado?'selected':''}>${e}</option>`).join('')}
+          </select>
+          <button class="btn-danger" style="font-size:10px;padding:2px 6px" onclick="eliminarPedido(${p.id})">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function cambiarEstadoPedido(id, estado) {
+  const p = state.pedidos.find(x => x.id === id);
+  if(p) { p.estado = estado; guardarLS(); renderPedidos(); }
+}
+
+function eliminarPedido(id) {
+  if(!confirm('¿Eliminar este pedido?')) return;
+  state.pedidos = state.pedidos.filter(x => x.id !== id);
+  guardarLS();
+  renderPedidos();
+}
+
+function renderClientes() {
+  const el = document.getElementById('clientes-list');
+  if(!el) return;
+  const cliTotal = document.getElementById('cli-total');
+  const cliTop = document.getElementById('cli-top');
+  const cliProm = document.getElementById('cli-promedio');
+  if(cliTotal) cliTotal.textContent = state.clientes.length;
+  // Calcular cliente top por pedidos
+  const comprasPorCli = {};
+  state.pedidos.forEach(p => { if(p.clienteId) comprasPorCli[p.clienteId] = (comprasPorCli[p.clienteId]||0) + p.precio*p.cantidad; });
+  const topId = Object.keys(comprasPorCli).sort((a,b)=>comprasPorCli[b]-comprasPorCli[a])[0];
+  const topCli = topId ? state.clientes.find(c=>c.id==topId) : null;
+  if(cliTop) cliTop.textContent = topCli ? topCli.nombre : '—';
+  const totalCompras = Object.values(comprasPorCli).reduce((s,v)=>s+v,0);
+  if(cliProm) cliProm.textContent = state.clientes.length ? fmt(totalCompras/state.clientes.length) : '$0';
+  if(!state.clientes.length) { el.innerHTML = '<div class="empty-state">Agrega tus clientes frecuentes.</div>'; return; }
+  el.innerHTML = state.clientes.map(c => {
+    const compras = comprasPorCli[c.id] || 0;
+    const numPedidos = state.pedidos.filter(p=>p.clienteId==c.id).length;
+    return `<div class="emp-card">
+      <div class="emp-avatar">${c.nombre[0].toUpperCase()}</div>
+      <div class="emp-info">
+        <div class="emp-name">${c.nombre}</div>
+        <div class="emp-role">${c.ciudad||'Sin ciudad'} · ${c.telefono||'Sin teléfono'}</div>
+        ${c.notas?`<div style="font-size:11px;color:var(--text3);margin-top:2px">📝 ${c.notas}</div>`:''}
+      </div>
+      <div class="emp-stats">
+        <div class="emp-total">${fmt(compras)}</div>
+        <div class="emp-detail">${numPedidos} pedido${numPedidos!==1?'s':''}</div>
+        <button class="btn-danger" style="margin-top:6px;font-size:11px" onclick="eliminarCliente(${c.id})">✕ Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function eliminarCliente(id) {
+  if(!confirm('¿Eliminar este cliente?')) return;
+  state.clientes = state.clientes.filter(x => x.id !== id);
+  guardarLS();
+  renderClientes();
+}
+
+function renderProveedores() {
+  const el = document.getElementById('proveedores-list');
+  if(!el) return;
+  if(!state.proveedores.length) { el.innerHTML = '<div class="empty-state">Agrega tus proveedores.</div>'; return; }
+  el.innerHTML = state.proveedores.map(p => `
+    <div class="tx-item" style="flex-wrap:wrap;gap:8px">
+      <div style="width:38px;height:38px;border-radius:50%;background:#EDE9FF;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🏭</div>
+      <div class="tx-info">
+        <div class="tx-name">${p.nombre} <span style="font-size:12px">${p.rating}</span></div>
+        <div class="tx-cat">${p.pais||''} · Entrega: ${p.tiempo||'N/A'}</div>
+        ${p.productos?`<div style="font-size:11px;color:var(--text3)">📦 ${p.productos}</div>`:''}
+        ${p.contacto?`<div style="font-size:11px;color:#7C3AED">📱 ${p.contacto}</div>`:''}
+        ${p.notas?`<div style="font-size:11px;color:var(--text3)">📝 ${p.notas}</div>`:''}
+      </div>
+      <button class="btn-danger" style="font-size:11px;align-self:center" onclick="eliminarProveedor(${p.id})">✕</button>
+    </div>`).join('');
+}
+
+function eliminarProveedor(id) {
+  if(!confirm('¿Eliminar este proveedor?')) return;
+  state.proveedores = state.proveedores.filter(x => x.id !== id);
+  guardarLS();
+  renderProveedores();
+}
+
 function renderAll() {
   renderAlertas();
   renderMeta();
@@ -1704,6 +2072,9 @@ function renderAll() {
   renderResponsabilidades();
   renderTopProductos();
   renderCharts();
+  renderPedidos();
+  renderClientes();
+  renderProveedores();
 }
 
 // Mostrar indicador de carga
