@@ -784,6 +784,63 @@ function guardarTx() {
   cerrarModal('tx');
   guardarLS();
   renderAll();
+
+  // Si es egreso y hay deudas, preguntar si aplicar a una deuda
+  if(tipo === 'egreso' && state.deudas.length > 0) {
+    const catsBanco = ['Cuota banco', 'Préstamo', 'Deuda', 'Insumos'];
+    const esPagoDeuda = catsBanco.some(c => cat.toLowerCase().includes(c.toLowerCase())) ||
+                        desc.toLowerCase().includes('cuota') ||
+                        desc.toLowerCase().includes('deuda') ||
+                        desc.toLowerCase().includes('prestamo') ||
+                        desc.toLowerCase().includes('banco');
+    if(esPagoDeuda) {
+      setTimeout(() => mostrarModalAbonoDeuda(monto), 300);
+    }
+  }
+}
+
+function mostrarModalAbonoDeuda(monto) {
+  if(!state.deudas.length) return;
+  const deudas = state.deudas.filter(d => d.pagado < d.total);
+  if(!deudas.length) return;
+
+  const lista = deudas.map(d =>
+    `<div style="display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;border:1px solid rgba(124,58,237,0.1);margin-bottom:6px;cursor:pointer;background:#F8F7FF" onclick="aplicarAbonoDeuda(${d.id}, ${monto}, this)">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;color:#1a1535">${d.nombre}</div>
+        <div style="font-size:11px;color:#9B8EC4">Pendiente: ${fmt(d.total - d.pagado)}</div>
+      </div>
+      <div style="font-size:12px;color:#7C3AED;font-weight:500">Aplicar ${fmt(monto)}</div>
+    </div>`
+  ).join('');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'overlay-abono-auto';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:300;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:22px;width:100%;max-width:380px;border:1px solid rgba(124,58,237,0.2)">
+      <div style="font-size:15px;font-weight:500;color:#1a1535;margin-bottom:6px">💳 ¿Aplicar a una deuda?</div>
+      <div style="font-size:13px;color:#9B8EC4;margin-bottom:14px">Registraste un pago de <strong style="color:#7C3AED">${fmt(monto)}</strong>. ¿Quieres abonarlo a alguna de tus deudas?</div>
+      ${lista}
+      <button onclick="document.getElementById('overlay-abono-auto').remove()" style="width:100%;padding:9px;border-radius:8px;border:1px solid rgba(124,58,237,0.2);background:transparent;color:#9B8EC4;font-family:Outfit,sans-serif;font-size:13px;cursor:pointer;margin-top:8px">No, gracias</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function aplicarAbonoDeuda(id, monto, el) {
+  const d = state.deudas.find(x => x.id === id);
+  if(d) {
+    d.pagado = Math.min(d.pagado + monto, d.total);
+    guardarLS();
+    renderAll();
+    document.getElementById('overlay-abono-auto').remove();
+    // Mostrar confirmacion
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#7C3AED;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:400;font-family:Outfit,sans-serif';
+    msg.textContent = '✓ Abono aplicado a ' + d.nombre;
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
+  }
 }
 
 function guardarDeuda() {
