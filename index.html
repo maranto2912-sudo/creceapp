@@ -1429,14 +1429,26 @@ async function cargarPerfil(userId) {
 
 // ─── INIT ─────────────────────────────────────────────────
 async function init() {
+  // Detectar si viene de link de recuperacion de contrasena
+  const hash = window.location.hash;
+  const params = new URLSearchParams(hash.replace('#', '?'));
+  const accessToken = params.get('access_token');
+  const type = params.get('type');
+
+  if(accessToken && type === 'recovery') {
+    // Viene de link de recuperacion
+    try {
+      await sb.auth.setSession({ access_token: accessToken, refresh_token: params.get('refresh_token') || '' });
+    } catch(e) {}
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'none';
+    document.getElementById('reset-screen').style.display = 'flex';
+    return;
+  }
+
   // Mostrar auth screen de inmediato sin esperar
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('main-app').style.display = 'none';
-  // Ocultar mensaje de conexión después de 2 segundos pase lo que pase
-  setTimeout(() => {
-    const el = document.getElementById('loading-supabase');
-    if(el) el.style.display = 'none';
-  }, 2000);
 
   // Verificar sesión en background
   try {
