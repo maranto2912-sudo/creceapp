@@ -241,9 +241,6 @@
     <button class="tab" onclick="showPage('reportes',this)">Reportes</button>
     <button class="tab" onclick="showPage('fiado',this)">💰 Fiado</button>
     <button class="tab" onclick="showPage('ventas-digitales',this)" style="color:#059669;font-weight:500">🟢 Ventas digitales</button>
-    <button class="tab" onclick="showPage('pedidos',this)">Pedidos</button>
-    <button class="tab" onclick="showPage('clientes',this)">Clientes</button>
-    <button class="tab" onclick="showPage('proveedores',this)">Proveedores</button>
     <button class="tab" id="tab-admin" onclick="intentarAdmin(this)">👑 Admin</button>
   </div>
   <button class="btn-primary" onclick="abrirModal('tx')">+ Registrar</button>
@@ -425,51 +422,29 @@
     <button class="btn-primary" style="background:#059669" onclick="abrirModal('venta-digital')">+ Nueva venta</button>
   </div>
   <div id="vd-list"><div class="empty-state">Registra tus ventas digitales aquí.</div></div>
-</div>
 
-<!-- PEDIDOS -->
-<div id="page-pedidos" class="page content">
-  <div class="section-header">
-    <span class="section-title">Gestión de pedidos</span>
-    <button class="btn-primary" onclick="abrirModal('pedido')">+ Nuevo pedido</button>
+  <!-- SUBSECCIÓN CLIENTES -->
+  <div style="margin-top:24px">
+    <div class="section-header">
+      <span class="section-title" style="font-size:14px">👥 Clientes</span>
+      <button class="btn-primary" style="background:#059669;font-size:12px;padding:6px 12px" onclick="abrirModal('cliente')">+ Cliente</button>
+    </div>
+    <div class="grid3" style="margin-bottom:12px">
+      <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">👥 Total</div><div class="metric-value" style="color:#059669" id="cli-total">0</div></div>
+      <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">⭐ Top cliente</div><div class="metric-value" style="font-size:13px;color:#059669" id="cli-top">—</div></div>
+      <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">💰 Valor promedio</div><div class="metric-value" style="color:#059669" id="cli-promedio">$0</div></div>
+    </div>
+    <div id="clientes-list"><div class="empty-state">Agrega tus clientes frecuentes.</div></div>
   </div>
-  <div class="filters" style="margin-bottom:14px">
-    <button class="filter-chip active" onclick="filtrarPedidos('todos',this)">Todos</button>
-    <button class="filter-chip" onclick="filtrarPedidos('recibido',this)">Recibidos</button>
-    <button class="filter-chip" onclick="filtrarPedidos('proceso',this)">En proceso</button>
-    <button class="filter-chip" onclick="filtrarPedidos('enviado',this)">Enviados</button>
-    <button class="filter-chip" onclick="filtrarPedidos('entregado',this)">Entregados</button>
-    <button class="filter-chip" onclick="filtrarPedidos('cancelado',this)">Cancelados</button>
-  </div>
-  <div class="grid3" style="margin-bottom:14px">
-    <div class="metric"><div class="metric-label">📦 Total pedidos</div><div class="metric-value" style="color:#7C3AED" id="ped-total">0</div></div>
-    <div class="metric"><div class="metric-label">💰 Ingresos pedidos</div><div class="metric-value c-green" id="ped-ingresos">$0</div></div>
-    <div class="metric"><div class="metric-label">📈 Ganancia pedidos</div><div class="metric-value" style="color:#7C3AED" id="ped-ganancia">$0</div></div>
-  </div>
-  <div id="pedidos-list"><div class="empty-state">No hay pedidos aún.</div></div>
-</div>
 
-<!-- CLIENTES -->
-<div id="page-clientes" class="page content">
-  <div class="section-header">
-    <span class="section-title">Base de clientes</span>
-    <button class="btn-primary" onclick="abrirModal('cliente')">+ Nuevo cliente</button>
+  <!-- SUBSECCIÓN PROVEEDORES -->
+  <div style="margin-top:24px">
+    <div class="section-header">
+      <span class="section-title" style="font-size:14px">🏭 Proveedores</span>
+      <button class="btn-primary" style="background:#059669;font-size:12px;padding:6px 12px" onclick="abrirModal('proveedor')">+ Proveedor</button>
+    </div>
+    <div id="proveedores-list"><div class="empty-state">Agrega tus proveedores.</div></div>
   </div>
-  <div class="grid3" style="margin-bottom:14px">
-    <div class="metric"><div class="metric-label">👥 Total clientes</div><div class="metric-value" style="color:#7C3AED" id="cli-total">0</div></div>
-    <div class="metric"><div class="metric-label">⭐ Cliente top</div><div class="metric-value" style="font-size:14px;color:#D97706" id="cli-top">—</div></div>
-    <div class="metric"><div class="metric-label">💰 Valor promedio</div><div class="metric-value c-green" id="cli-promedio">$0</div></div>
-  </div>
-  <div id="clientes-list"><div class="empty-state">Agrega tus clientes frecuentes.</div></div>
-</div>
-
-<!-- PROVEEDORES -->
-<div id="page-proveedores" class="page content">
-  <div class="section-header">
-    <span class="section-title">Proveedores</span>
-    <button class="btn-primary" onclick="abrirModal('proveedor')">+ Nuevo proveedor</button>
-  </div>
-  <div id="proveedores-list"><div class="empty-state">Agrega tus proveedores.</div></div>
 </div>
 
 <!-- ADMIN -->
