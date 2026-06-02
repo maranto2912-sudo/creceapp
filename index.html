@@ -651,6 +651,7 @@ function showPage(id, btn) {
   if(btn) btn.classList.add('active');
   if(id === 'reportes') renderReportes();
   if(id === 'calendario') renderCalendario();
+  if(id === 'admin') renderAdmin();
 }
 
 // ─── MODALES ──────────────────────────────────────────────
@@ -1155,27 +1156,11 @@ async function renderAdmin() {
   } catch(e) { console.log('Admin error:', e); }
 }
 
-// Override showPage to load admin data
-const _origShowPage = showPage;
-function showPage(id, btn) {
-  _origShowPage(id, btn);
-  if(id === 'admin') renderAdmin();
-}
+
 
 function aplicarRestricciones(plan) {
-  if(plan === 'admin' || plan === 'premium') return;
-  // Plan gratuito: ocultar tabs premium
-  const tabs = document.querySelectorAll('.tab');
-  const premiumPages = ['deudas','empleados','inventario','responsabilidades','calendario','reportes'];
-  tabs.forEach(tab => {
-    const onclick = tab.getAttribute('onclick') || '';
-    premiumPages.forEach(p => {
-      if(onclick.includes("'"+p+"'")) {
-        tab.style.opacity = '0.5';
-        tab.onclick = () => mostrarUpgrade();
-      }
-    });
-  });
+  // Las restricciones se manejan al entrar a cada seccion
+  // Por ahora permitir acceso completo para pruebas
 }
 
 function mostrarUpgrade() {
