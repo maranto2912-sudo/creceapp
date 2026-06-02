@@ -457,59 +457,69 @@
   <div class="form-row">
     <div class="form-group"><label class="form-label">Tipo</label>
       <select id="tx-tipo" onchange="toggleVentaFields()">
-        <option value="ingreso">Ingreso / Venta</option>
-        <option value="egreso">Egreso / Gasto</option>
+        <option value="ingreso">Ingreso</option>
+        <option value="egreso">Egreso</option>
       </select>
     </div>
     <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="tx-fecha"></div>
   </div>
-  <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="tx-desc" placeholder="Ej: Corte de cabello, tinte, arriendo..."></div>
+  <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="tx-desc" placeholder="Ej: Corte, tinte, cuota banco, arriendo..."></div>
   <div class="form-row">
-    <div class="form-group"><label class="form-label">Categoría</label>
-      <select id="tx-cat"><option>Servicios</option><option>Productos</option><option>Arriendo</option><option>Servicios públicos</option><option>Nómina</option><option>Insumos</option><option>Otros</option></select>
+    <div class="form-group">
+      <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat')">+ Agregar nueva</span></label>
+      <select id="tx-cat"></select>
     </div>
     <div class="form-group"><label class="form-label">Empleado</label><select id="tx-emp"><option value="">— ninguno —</option></select></div>
   </div>
+  <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="tx-monto-principal" placeholder="0" min="0"></div>
 
-  <!-- CAMPOS DE VENTA -->
-  <div id="venta-fields">
+  <!-- DETALLES OPCIONALES -->
+  <div id="venta-fields" style="display:none">
     <div style="background:#F8F7FF;border-radius:8px;padding:12px;margin-bottom:10px;border:1px solid rgba(124,58,237,0.1)">
-      <div style="font-size:12px;font-weight:500;color:#7C3AED;margin-bottom:10px">💰 Detalle de venta</div>
+      <div style="font-size:12px;font-weight:500;color:#7C3AED;margin-bottom:8px">💰 Costo y ganancia <span style="font-weight:400;color:var(--text3)">(opcional)</span></div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Precio de venta ($)</label><input type="number" id="tx-precio-venta" placeholder="0" min="0" oninput="calcularGanancia()"></div>
         <div class="form-group"><label class="form-label">Costo ($)</label><input type="number" id="tx-costo" placeholder="0" min="0" oninput="calcularGanancia()"></div>
+        <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:10px">
+          <span style="font-size:12px;color:var(--text2)">Ganancia: <strong id="tx-ganancia-label" style="color:#7C3AED">$0</strong></span>
+        </div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0">
-        <span style="color:var(--text2)">Ganancia:</span>
-        <span id="tx-ganancia-label" style="font-weight:600;color:#7C3AED">$0</span>
-      </div>
-    </div>
-    <div style="background:#F8F7FF;border-radius:8px;padding:12px;margin-bottom:10px;border:1px solid rgba(124,58,237,0.1)">
-      <div style="font-size:12px;font-weight:500;color:#7C3AED;margin-bottom:10px">💳 Forma de pago</div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Método</label>
+        <div class="form-group"><label class="form-label">Método de pago</label>
           <select id="tx-metodo" onchange="toggleEfectivo()">
             <option value="efectivo">Efectivo</option>
             <option value="transferencia">Transferencia</option>
             <option value="tarjeta">Tarjeta</option>
             <option value="nequi">Nequi</option>
+            <option value="bancolombia">Bancolombia</option>
           </select>
         </div>
         <div class="form-group" id="campo-paga-con"><label class="form-label">Cliente paga con ($)</label><input type="number" id="tx-paga-con" placeholder="0" min="0" oninput="calcularCambio()"></div>
       </div>
-      <div id="cambio-display" style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0">
+      <div id="cambio-display" style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0">
         <span style="color:var(--text2)">Cambio a devolver:</span>
         <span id="tx-cambio-label" style="font-weight:600;color:#7C3AED">$0</span>
       </div>
     </div>
   </div>
-
-  <!-- CAMPO MONTO EGRESO -->
-  <div id="egreso-fields" style="display:none">
-    <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="tx-monto-egreso" placeholder="0" min="0"></div>
-  </div>
-
+  <button class="btn-sm" style="width:100%;justify-content:center;margin-bottom:12px;font-size:11px" onclick="toggleDetalles()">
+    <span id="detalles-btn-text">+ Agregar costo, ganancia y forma de pago</span>
+  </button>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('tx')">Cancelar</button><button class="btn-primary" onclick="guardarTx()">Guardar</button></div>
+</div></div>
+
+<!-- MODAL CATEGORÍA -->
+<div class="overlay" id="overlay-cat">
+<div class="modal">
+  <div class="modal-title">Nueva categoría</div>
+  <div class="form-group"><label class="form-label">Nombre de la categoría</label><input type="text" id="cat-nombre" placeholder="Ej: Cuota banco, préstamo, regalo..."></div>
+  <div class="form-group"><label class="form-label">Tipo</label>
+    <select id="cat-tipo">
+      <option value="ambos">Para ingresos y egresos</option>
+      <option value="ingreso">Solo ingresos</option>
+      <option value="egreso">Solo egresos</option>
+    </select>
+  </div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cat')">Cancelar</button><button class="btn-primary" onclick="guardarCategoria()">Guardar</button></div>
 </div></div>
 
 <div class="overlay" id="overlay-deuda">
@@ -604,6 +614,8 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ─── ESTADO ───────────────────────────────────────────────
+const CATS_DEFAULT = ['Servicios','Productos','Arriendo','Servicios públicos','Nómina','Insumos','Cuota banco','Préstamo','Ventas','Otros'];
+
 let state = {
   transacciones: [],
   deudas: [],
@@ -611,6 +623,7 @@ let state = {
   inventario: [],
   eventos: [],
   responsabilidades: [],
+  categorias: [...CATS_DEFAULT],
   meta: 0,
   adminEmail: 'maranto2912@gmail.com'
 };
@@ -678,6 +691,7 @@ function abrirModal(id) {
     const sel = document.getElementById('tx-emp');
     sel.innerHTML = '<option value="">— ninguno —</option>';
     state.empleados.forEach(e => sel.innerHTML += `<option value="${e.id}">${e.nombre}</option>`);
+    actualizarCategorias();
   }
   if(id === 'deuda') document.getElementById('d-fecha').value = new Date().toISOString().split('T')[0];
   if(id === 'meta') document.getElementById('meta-val').value = state.meta || '';
@@ -688,9 +702,34 @@ document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e
 
 // ─── GUARDAR DATOS ────────────────────────────────────────
 function toggleVentaFields() {
-  const tipo = document.getElementById('tx-tipo').value;
-  document.getElementById('venta-fields').style.display = tipo === 'ingreso' ? 'block' : 'none';
-  document.getElementById('egreso-fields').style.display = tipo === 'egreso' ? 'block' : 'none';
+  actualizarCategorias();
+}
+
+function toggleDetalles() {
+  const fields = document.getElementById('venta-fields');
+  const btn = document.getElementById('detalles-btn-text');
+  const visible = fields.style.display === 'block';
+  fields.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible ? '+ Agregar costo, ganancia y forma de pago' : '− Ocultar detalles';
+}
+
+function actualizarCategorias() {
+  const sel = document.getElementById('tx-cat');
+  if(!sel) return;
+  const cats = state.categorias || CATS_DEFAULT;
+  sel.innerHTML = cats.map(c => `<option>${c}</option>`).join('');
+}
+
+function guardarCategoria() {
+  const nombre = document.getElementById('cat-nombre').value.trim();
+  if(!nombre) return;
+  if(!state.categorias) state.categorias = [...CATS_DEFAULT];
+  if(!state.categorias.includes(nombre)) state.categorias.push(nombre);
+  document.getElementById('cat-nombre').value = '';
+  cerrarModal('cat');
+  guardarLS();
+  actualizarCategorias();
+  abrirModal('tx');
 }
 
 function toggleEfectivo() {
@@ -701,19 +740,19 @@ function toggleEfectivo() {
 }
 
 function calcularGanancia() {
-  const venta = parseFloat(document.getElementById('tx-precio-venta').value) || 0;
+  const monto = parseFloat(document.getElementById('tx-monto-principal').value) || 0;
   const costo = parseFloat(document.getElementById('tx-costo').value) || 0;
-  const ganancia = venta - costo;
-  document.getElementById('tx-ganancia-label').textContent = fmt(ganancia);
-  document.getElementById('tx-ganancia-label').style.color = ganancia >= 0 ? '#7C3AED' : '#DC2626';
+  const ganancia = monto - costo;
+  const el = document.getElementById('tx-ganancia-label');
+  if(el) { el.textContent = fmt(ganancia); el.style.color = ganancia >= 0 ? '#7C3AED' : '#DC2626'; }
 }
 
 function calcularCambio() {
-  const venta = parseFloat(document.getElementById('tx-precio-venta').value) || 0;
+  const monto = parseFloat(document.getElementById('tx-monto-principal').value) || 0;
   const pagaCon = parseFloat(document.getElementById('tx-paga-con').value) || 0;
-  const cambio = pagaCon - venta;
-  document.getElementById('tx-cambio-label').textContent = cambio >= 0 ? fmt(cambio) : 'Insuficiente';
-  document.getElementById('tx-cambio-label').style.color = cambio >= 0 ? '#7C3AED' : '#DC2626';
+  const cambio = pagaCon - monto;
+  const el = document.getElementById('tx-cambio-label');
+  if(el) { el.textContent = cambio >= 0 ? fmt(cambio) : 'Insuficiente'; el.style.color = cambio >= 0 ? '#7C3AED' : '#DC2626'; }
 }
 
 function guardarTx() {
@@ -722,24 +761,26 @@ function guardarTx() {
   const cat = document.getElementById('tx-cat').value;
   const empId = document.getElementById('tx-emp').value;
   const fecha = document.getElementById('tx-fecha').value;
-  let monto, costo = 0, ganancia = 0, metodo = '', pagaCon = 0, cambio = 0;
-  if(tipo === 'ingreso') {
-    monto = parseFloat(document.getElementById('tx-precio-venta').value) || 0;
-    costo = parseFloat(document.getElementById('tx-costo').value) || 0;
-    ganancia = monto - costo;
-    metodo = document.getElementById('tx-metodo').value;
-    pagaCon = parseFloat(document.getElementById('tx-paga-con').value) || 0;
-    cambio = metodo === 'efectivo' ? pagaCon - monto : 0;
-  } else {
-    monto = parseFloat(document.getElementById('tx-monto-egreso').value) || 0;
+  const monto = parseFloat(document.getElementById('tx-monto-principal').value) || 0;
+  const costoEl = document.getElementById('tx-costo');
+  const costo = costoEl ? (parseFloat(costoEl.value) || 0) : 0;
+  const ganancia = monto - costo;
+  const metodoEl = document.getElementById('tx-metodo');
+  const metodo = metodoEl ? metodoEl.value : '';
+  const pagaConEl = document.getElementById('tx-paga-con');
+  const pagaCon = pagaConEl ? (parseFloat(pagaConEl.value) || 0) : 0;
+  const cambio = metodo === 'efectivo' && pagaCon > 0 ? pagaCon - monto : 0;
+  if(!monto || !desc) {
+    alert('Por favor ingresa la descripción y el monto.');
+    return;
   }
-  if(!monto || !desc) return;
   state.transacciones.unshift({ tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, id: Date.now() });
   document.getElementById('tx-desc').value = '';
-  document.getElementById('tx-precio-venta') && (document.getElementById('tx-precio-venta').value = '');
+  document.getElementById('tx-monto-principal').value = '';
   document.getElementById('tx-costo') && (document.getElementById('tx-costo').value = '');
-  document.getElementById('tx-monto-egreso') && (document.getElementById('tx-monto-egreso').value = '');
   document.getElementById('tx-paga-con') && (document.getElementById('tx-paga-con').value = '');
+  document.getElementById('venta-fields').style.display = 'none';
+  document.getElementById('detalles-btn-text').textContent = '+ Agregar costo, ganancia y forma de pago';
   cerrarModal('tx');
   guardarLS();
   renderAll();
