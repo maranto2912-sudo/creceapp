@@ -9,30 +9,29 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap');
   :root {
-    --green: #A78BFA; --green-light: #1A1628; --green-dark: #7C3AED;
-    --red: #F87171; --red-light: #2D1515;
-    --amber: #FBBF24; --amber-light: #2D2010;
-    --blue: #60A5FA; --blue-light: #0f1a2e;
-    --gray: #6B7280; --gray-light: #1a1628;
-    --bg: #12101A; --bg2: #1A1628; --bg3: #0D0B14;
-    --text: #E8E4FF; --text2: #9080C0; --text3: #4a4060;
-    --border: rgba(167,139,250,0.12); --border2: rgba(167,139,250,0.25);
+    --green: #7C3AED; --green-light: #EDE9FF; --green-dark: #5B21B6;
+    --red: #DC2626; --red-light: #FEE2E2;
+    --amber: #D97706; --amber-light: #FEF3C7;
+    --blue: #2563EB; --blue-light: #DBEAFE;
+    --gray: #6B7280; --gray-light: #F3F4F6;
+    --bg: #FFFFFF; --bg2: #F8F7FF; --bg3: #F0EDFF;
+    --text: #1a1535; --text2: #6B5F9E; --text3: #9B8EC4;
+    --border: rgba(124,58,237,0.12); --border2: rgba(124,58,237,0.25);
     --radius: 10px; --radius-lg: 14px;
-    --shadow: 0 1px 4px rgba(0,0,0,0.4);
-    --accent: #A78BFA; --accent-dark: #7C3AED; --accent-light: #1A1628;
-    --gold: #A78BFA;
+    --shadow: 0 1px 4px rgba(124,58,237,0.08);
+    --accent: #7C3AED; --accent-dark: #5B21B6; --accent-light: #EDE9FF;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Outfit', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  body { font-family: 'Outfit', sans-serif; background: #F0EDFF; color: var(--text); min-height: 100vh; }
   .app { max-width: 1100px; margin: 0 auto; padding: 0 0 40px; }
 
   /* NAV */
-  .nav { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 50; }
-  .nav-logo { font-size: 16px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; padding: 14px 0; font-family: 'Cormorant Garamond', serif; letter-spacing: 1px; }
+  .nav { background: #FFFFFF; border-bottom: 1px solid rgba(124,58,237,0.12); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 50; }
+  .nav-logo { font-size: 18px; font-weight: 600; color: #1a1535; display: flex; align-items: center; gap: 8px; padding: 14px 0; font-family: 'Cormorant Garamond', serif; letter-spacing: 1px; }
   .nav-logo span { color: var(--green); }
   .nav-tabs { display: flex; gap: 2px; overflow-x: auto; padding: 8px 0; }
   .tab { padding: 6px 13px; font-size: 13px; font-family: 'DM Sans', sans-serif; border-radius: var(--radius); border: none; background: transparent; color: var(--text2); cursor: pointer; white-space: nowrap; transition: all .15s; }
-  .tab.active { background: rgba(124,58,237,0.2); color: #A78BFA; font-weight: 500; }
+  .tab.active { background: #EDE9FF; color: #7C3AED; font-weight: 500; }
   .tab:hover:not(.active) { background: var(--bg2); }
   .btn-primary { background: var(--accent-dark); color: white; border: none; font-size: 13px; font-family: 'Outfit', sans-serif; padding: 8px 16px; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; white-space: nowrap; }
   .btn-primary:hover { background: #6D28D9; }
@@ -44,16 +43,16 @@
 
   /* METRICS */
   .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
-  .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; box-shadow: var(--shadow); }
+  .metric { background: #FFFFFF; border: 1px solid rgba(124,58,237,0.1); border-radius: var(--radius-lg); padding: 14px 16px; box-shadow: 0 1px 4px rgba(124,58,237,0.06); }
   .metric-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
   .metric-value { font-size: 22px; font-weight: 600; }
   .metric-sub { font-size: 11px; margin-top: 4px; }
-  .c-green { color: #A78BFA; } .c-red { color: var(--red); } .c-amber { color: var(--amber); } .c-blue { color: #60A5FA; }
+  .c-green { color: #7C3AED; } .c-red { color: var(--red); } .c-amber { color: var(--amber); } .c-blue { color: #60A5FA; }
 
   /* CARDS */
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow); }
+  .card { background: #FFFFFF; border: 1px solid rgba(124,58,237,0.1); border-radius: var(--radius-lg); padding: 16px; box-shadow: 0 1px 4px rgba(124,58,237,0.06); }
   .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   .card-title { font-size: 13px; font-weight: 500; color: var(--text); }
 
@@ -70,8 +69,8 @@
   .filter-chip.active { background: #7C3AED; color: white; border-color: #7C3AED; }
 
   /* META */
-  .meta-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px; box-shadow: var(--shadow); }
-  .progress-bar { height: 8px; background: rgba(167,139,250,0.1); border-radius: 4px; margin: 8px 0 4px; overflow: hidden; }
+  .meta-card { background: #FFFFFF; border: 1px solid rgba(124,58,237,0.1); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(124,58,237,0.06); }
+  .progress-bar { height: 8px; background: #EDE9FF; border-radius: 4px; margin: 8px 0 4px; overflow: hidden; }
   .progress-fill { height: 100%; border-radius: 4px; background: #A78BFA; transition: width .4s ease; }
   .progress-fill.red { background: var(--red); }
   .progress-fill.amber { background: var(--amber); }
@@ -90,10 +89,10 @@
   .alert-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
 
   /* TRANSACTIONS */
-  .tx-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 6px; background: var(--bg); transition: border-color .15s; }
+  .tx-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 6px; background: #FFFFFF; transition: border-color .15s; }
   .tx-item:hover { border-color: var(--border2); }
   .tx-icon { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
-  .tx-icon.ingreso { background: rgba(167,139,250,0.15); color: #A78BFA; }
+  .tx-icon.ingreso { background: #EDE9FF; color: #7C3AED; }
   .tx-icon.egreso { background: var(--red-light); color: #993C1D; }
   .tx-info { flex: 1; min-width: 0; }
   .tx-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -108,7 +107,7 @@
 
   /* EMPLOYEE */
   .emp-card { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: var(--radius-lg); border: 1px solid var(--border); margin-bottom: 10px; background: var(--bg); }
-  .emp-avatar { width: 42px; height: 42px; border-radius: 50%; background: rgba(124,58,237,0.2); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #A78BFA; flex-shrink: 0; }
+  .emp-avatar { width: 42px; height: 42px; border-radius: 50%; background: #EDE9FF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #7C3AED; flex-shrink: 0; }
   .emp-info { flex: 1; }
   .emp-name { font-size: 14px; font-weight: 500; color: var(--text); }
   .emp-role { font-size: 12px; color: var(--text2); margin-top: 2px; }
@@ -122,7 +121,7 @@
   .inv-name { font-size: 13px; font-weight: 500; color: var(--text); }
   .inv-cat { font-size: 11px; color: var(--text3); }
   .badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
-  .badge-ok { background: rgba(167,139,250,0.15); color: #A78BFA; }
+  .badge-ok { background: #EDE9FF; color: #7C3AED; }
   .badge-low { background: var(--amber-light); color: #854F0B; }
   .badge-out { background: var(--red-light); color: #A32D2D; }
   .stock-ctrl { display: flex; align-items: center; gap: 8px; }
@@ -145,8 +144,8 @@
   .form-label { font-size: 12px; color: var(--text2); margin-bottom: 5px; display: block; font-weight: 500; }
   .form-row { display: flex; gap: 10px; }
   .form-row .form-group { flex: 1; }
-  input, select, textarea { width: 100%; padding: 9px 11px; border-radius: var(--radius); border: 1px solid var(--border2); background: #1A1628; color: #E8E4FF; font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; }
-  input:focus, select:focus { border-color: var(--green); }
+  input, select, textarea { width: 100%; padding: 9px 11px; border-radius: var(--radius); border: 1px solid var(--border2); background: #F8F7FF; color: #1a1535; font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none; }
+  input:focus, select:focus { border-color: #7C3AED; outline: none; }
   .modal-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
 
   /* MISC */
@@ -167,16 +166,16 @@
 <body>
 <div class="app">
 <!-- PANTALLA DE AUTH -->
-<div id="auth-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0D0B14;padding:20px">
+<div id="auth-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F0EDFF;padding:20px">
   <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
     <div style="text-align:center;margin-bottom:28px">
       <div style="font-size:32px;margin-bottom:8px">📈</div>
-      <div style="font-size:26px;font-weight:600;color:#E8E4FF;font-family:Cormorant Garamond,serif;letter-spacing:2px">Crece<span style="color:#1D9E75">App</span></div>
-      <div style="font-size:13px;color:var(--text2);margin-top:4px">Control financiero para tu negocio</div>
+      <div style="font-size:26px;font-weight:600;color:#1a1535;font-family:Cormorant Garamond,serif;letter-spacing:2px">Crece<span style="color:#1D9E75">App</span></div>
+      <div style="font-size:13px;color:#9B8EC4;margin-top:4px">Control financiero para tu negocio</div>
     </div>
     <div id="loading-supabase" style="text-align:center;padding:8px;font-size:12px;color:var(--text3)">Conectando...</div>
-    <div style="display:flex;gap:4px;margin-bottom:24px;background:#1A1628;border-radius:var(--radius);padding:4px">
-      <button id="tab-login" onclick="switchAuthTab('login')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;background:#2D1F4A;color:#A78BFA;font-weight:500">Iniciar sesión</button>
+    <div style="display:flex;gap:4px;margin-bottom:24px;background:#EDE9FF;border-radius:var(--radius);padding:4px">
+      <button id="tab-login" onclick="switchAuthTab('login')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;background:#FFFFFF;color:#7C3AED;font-weight:500">Iniciar sesión</button>
       <button id="tab-register" onclick="switchAuthTab('register')" style="flex:1;padding:8px;border:none;border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;cursor:pointer;background:transparent;color:var(--text2)">Registrarse</button>
     </div>
     <div id="auth-error" style="display:none;background:#FCEBEB;border:1px solid #F7C1C1;border-radius:var(--radius);padding:10px 12px;font-size:13px;color:#A32D2D;margin-bottom:14px"></div>
@@ -206,7 +205,7 @@
   <div class="nav-logo">📈 Crece<span>App</span></div>
   <div id="user-info" style="display:none;align-items:center;gap:10px;font-size:12px;color:var(--text2)">
     <span id="user-negocio" style="font-weight:500;color:var(--text)"></span>
-    <span id="user-plan" style="background:#E1F5EE;color:#0F6E56;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500"></span>
+    <span id="user-plan" style="background:#EDE9FF;color:#7C3AED;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500"></span>
     <button class="btn-sm" onclick="cerrarSesion()" style="font-size:11px">Salir</button>
   </div>
   <div class="nav-tabs">
@@ -215,8 +214,10 @@
     <button class="tab" onclick="showPage('deudas',this)">Deudas</button>
     <button class="tab" onclick="showPage('empleados',this)">Empleados</button>
     <button class="tab" onclick="showPage('inventario',this)">Inventario</button>
+    <button class="tab" onclick="showPage('responsabilidades',this)">Responsabilidades</button>
     <button class="tab" onclick="showPage('calendario',this)">Calendario</button>
     <button class="tab" onclick="showPage('reportes',this)">Reportes</button>
+    <button class="tab" id="tab-admin" style="display:none" onclick="showPage('admin',this)">👑 Admin</button>
   </div>
   <button class="btn-primary" onclick="abrirModal('tx')">+ Registrar</button>
 </nav>
@@ -254,12 +255,18 @@
       <div style="position:relative;height:180px"><canvas id="chartDias"></canvas></div>
     </div>
   </div>
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">Últimas transacciones</span>
-      <button class="btn-sm" onclick="showPage('transacciones',document.querySelectorAll('.tab')[1])">Ver todas →</button>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Últimas transacciones</span>
+        <button class="btn-sm" onclick="showPage('transacciones',document.querySelectorAll('.tab')[1])">Ver todas →</button>
+      </div>
+      <div id="dash-tx"></div>
     </div>
-    <div id="dash-tx"></div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">🏆 Más vendido del mes</span></div>
+      <div id="top-productos"></div>
+    </div>
   </div>
 </div>
 
@@ -303,6 +310,27 @@
   <div id="inv-list"></div>
 </div>
 
+<!-- RESPONSABILIDADES -->
+<div id="page-responsabilidades" class="page content">
+  <div class="section-header">
+    <span class="section-title">Responsabilidades mensuales</span>
+    <button class="btn-primary" onclick="abrirModal('resp')">+ Nueva responsabilidad</button>
+  </div>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="metric">
+      <div class="metric-label">💸 Total compromisos</div>
+      <div class="metric-value" id="resp-total" style="color:#A78BFA">$0</div>
+      <div class="metric-sub" style="color:var(--text2)" id="resp-count">0 responsabilidades</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">✅ Ya pagado este mes</div>
+      <div class="metric-value c-green" id="resp-pagado">$0</div>
+      <div class="metric-sub" style="color:var(--text2)" id="resp-pendiente-text">$0 pendiente</div>
+    </div>
+  </div>
+  <div id="resp-list"><div class="empty-state">Agrega tus gastos fijos mensuales.</div></div>
+</div>
+
 <!-- CALENDARIO -->
 <div id="page-calendario" class="page content">
   <div class="section-header">
@@ -321,6 +349,48 @@
     <div class="card">
       <div class="card-header"><span class="card-title">Próximos vencimientos</span></div>
       <div id="proximos"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="page-admin" class="page content">
+  <div class="section-header">
+    <span class="section-title">👑 Panel de administración</span>
+    <span style="font-size:12px;background:#EDE9FF;color:#7C3AED;padding:4px 12px;border-radius:20px;font-weight:500">Solo tú ves esto</span>
+  </div>
+  <div class="grid3" style="margin-bottom:16px">
+    <div class="metric"><div class="metric-label">👥 Usuarios totales</div><div class="metric-value" style="color:#7C3AED" id="adm-users">0</div></div>
+    <div class="metric"><div class="metric-label">💰 Ingresos CreceApp</div><div class="metric-value c-green" id="adm-ingresos">$0</div></div>
+    <div class="metric"><div class="metric-label">⭐ Usuarios premium</div><div class="metric-value" style="color:#D97706" id="adm-premium">0</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Gestión de usuarios</span></div>
+      <div id="adm-users-list"><div class="empty-state">Cargando usuarios...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Dar acceso gratuito</span></div>
+      <div class="form-group" style="margin-bottom:10px"><label class="form-label">Correo del usuario</label><input type="email" id="adm-email-free" placeholder="correo@gmail.com"></div>
+      <button class="btn-primary" style="width:100%;justify-content:center" onclick="darAccesoGratuito()">✓ Dar acceso gratuito</button>
+      <div style="margin-top:16px">
+        <div class="card-header" style="margin-bottom:8px"><span class="card-title">Link de suscripción</span></div>
+        <div style="background:#F8F7FF;border-radius:8px;padding:10px;font-size:12px;color:#7C3AED;word-break:break-all;border:1px solid rgba(124,58,237,0.1)" id="adm-link">Configura Wompi para generar el link</div>
+        <button class="btn-sm" style="margin-top:8px;width:100%;justify-content:center" onclick="copiarLink()">Copiar link de pago</button>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:0">
+    <div class="card-header"><span class="card-title">Configuración de planes</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="background:#F8F7FF;border-radius:10px;padding:16px;border:1px solid rgba(124,58,237,0.1)">
+        <div style="font-size:13px;font-weight:500;color:#1a1535;margin-bottom:8px">Plan Gratuito</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8">✓ Registro de ingresos<br>✓ Registro de egresos<br>✗ Deudas<br>✗ Empleados<br>✗ Inventario<br>✗ Reportes<br>✗ Responsabilidades</div>
+      </div>
+      <div style="background:#EDE9FF;border-radius:10px;padding:16px;border:1px solid rgba(124,58,237,0.2)">
+        <div style="font-size:13px;font-weight:500;color:#7C3AED;margin-bottom:8px">⭐ Plan Premium — $20.000/mes</div>
+        <div style="font-size:12px;color:#5B21B6;line-height:1.8">✓ Todo del plan gratuito<br>✓ Control de deudas<br>✓ Gestión de empleados<br>✓ Inventario completo<br>✓ Reportes y gráficas<br>✓ Responsabilidades mensuales<br>✓ Análisis con IA</div>
+      </div>
     </div>
   </div>
 </div>
@@ -363,17 +433,60 @@
 <div class="modal">
   <div class="modal-title">Registrar transacción</div>
   <div class="form-row">
-    <div class="form-group"><label class="form-label">Tipo</label><select id="tx-tipo"><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select></div>
-    <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="tx-monto" placeholder="0" min="0"></div>
+    <div class="form-group"><label class="form-label">Tipo</label>
+      <select id="tx-tipo" onchange="toggleVentaFields()">
+        <option value="ingreso">Ingreso / Venta</option>
+        <option value="egreso">Egreso / Gasto</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="tx-fecha"></div>
   </div>
-  <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="tx-desc" placeholder="Ej: Corte de cabello, arriendo..."></div>
+  <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="tx-desc" placeholder="Ej: Corte de cabello, tinte, arriendo..."></div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Categoría</label>
       <select id="tx-cat"><option>Servicios</option><option>Productos</option><option>Arriendo</option><option>Servicios públicos</option><option>Nómina</option><option>Insumos</option><option>Otros</option></select>
     </div>
     <div class="form-group"><label class="form-label">Empleado</label><select id="tx-emp"><option value="">— ninguno —</option></select></div>
   </div>
-  <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="tx-fecha"></div>
+
+  <!-- CAMPOS DE VENTA -->
+  <div id="venta-fields">
+    <div style="background:#F8F7FF;border-radius:8px;padding:12px;margin-bottom:10px;border:1px solid rgba(124,58,237,0.1)">
+      <div style="font-size:12px;font-weight:500;color:#7C3AED;margin-bottom:10px">💰 Detalle de venta</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Precio de venta ($)</label><input type="number" id="tx-precio-venta" placeholder="0" min="0" oninput="calcularGanancia()"></div>
+        <div class="form-group"><label class="form-label">Costo ($)</label><input type="number" id="tx-costo" placeholder="0" min="0" oninput="calcularGanancia()"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0">
+        <span style="color:var(--text2)">Ganancia:</span>
+        <span id="tx-ganancia-label" style="font-weight:600;color:#7C3AED">$0</span>
+      </div>
+    </div>
+    <div style="background:#F8F7FF;border-radius:8px;padding:12px;margin-bottom:10px;border:1px solid rgba(124,58,237,0.1)">
+      <div style="font-size:12px;font-weight:500;color:#7C3AED;margin-bottom:10px">💳 Forma de pago</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Método</label>
+          <select id="tx-metodo" onchange="toggleEfectivo()">
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="tarjeta">Tarjeta</option>
+            <option value="nequi">Nequi</option>
+          </select>
+        </div>
+        <div class="form-group" id="campo-paga-con"><label class="form-label">Cliente paga con ($)</label><input type="number" id="tx-paga-con" placeholder="0" min="0" oninput="calcularCambio()"></div>
+      </div>
+      <div id="cambio-display" style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0">
+        <span style="color:var(--text2)">Cambio a devolver:</span>
+        <span id="tx-cambio-label" style="font-weight:600;color:#7C3AED">$0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAMPO MONTO EGRESO -->
+  <div id="egreso-fields" style="display:none">
+    <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="tx-monto-egreso" placeholder="0" min="0"></div>
+  </div>
+
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('tx')">Cancelar</button><button class="btn-primary" onclick="guardarTx()">Guardar</button></div>
 </div></div>
 
@@ -439,6 +552,28 @@
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('meta')">Cancelar</button><button class="btn-primary" onclick="guardarMeta()">Guardar</button></div>
 </div></div>
 
+<div class="overlay" id="overlay-resp">
+<div class="modal">
+  <div class="modal-title">Nueva responsabilidad mensual</div>
+  <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="r-desc" placeholder="Arriendo, internet, nómina..."></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="r-monto" placeholder="0"></div>
+    <div class="form-group"><label class="form-label">Día de pago</label><input type="number" id="r-dia" placeholder="1-31" min="1" max="31"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Categoría</label>
+    <select id="r-cat">
+      <option>Arriendo</option>
+      <option>Servicios públicos</option>
+      <option>Nómina</option>
+      <option>Internet / Teléfono</option>
+      <option>Seguros</option>
+      <option>Impuestos</option>
+      <option>Otros</option>
+    </select>
+  </div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('resp')">Cancelar</button><button class="btn-primary" onclick="guardarResp()">Guardar</button></div>
+</div></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ─── SUPABASE ─────────────────────────────────────────────
@@ -453,7 +588,9 @@ let state = {
   empleados: [],
   inventario: [],
   eventos: [],
-  meta: 0
+  responsabilidades: [],
+  meta: 0,
+  adminEmail: 'maranto2912@gmail.com'
 };
 
 function getDeviceId() {
@@ -516,17 +653,59 @@ function cerrarModal(id) { document.getElementById('overlay-' + id).style.displa
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target === o) o.style.display = 'none'; }));
 
 // ─── GUARDAR DATOS ────────────────────────────────────────
+function toggleVentaFields() {
+  const tipo = document.getElementById('tx-tipo').value;
+  document.getElementById('venta-fields').style.display = tipo === 'ingreso' ? 'block' : 'none';
+  document.getElementById('egreso-fields').style.display = tipo === 'egreso' ? 'block' : 'none';
+}
+
+function toggleEfectivo() {
+  const metodo = document.getElementById('tx-metodo').value;
+  const show = metodo === 'efectivo';
+  document.getElementById('campo-paga-con').style.display = show ? 'block' : 'none';
+  document.getElementById('cambio-display').style.display = show ? 'flex' : 'none';
+}
+
+function calcularGanancia() {
+  const venta = parseFloat(document.getElementById('tx-precio-venta').value) || 0;
+  const costo = parseFloat(document.getElementById('tx-costo').value) || 0;
+  const ganancia = venta - costo;
+  document.getElementById('tx-ganancia-label').textContent = fmt(ganancia);
+  document.getElementById('tx-ganancia-label').style.color = ganancia >= 0 ? '#7C3AED' : '#DC2626';
+}
+
+function calcularCambio() {
+  const venta = parseFloat(document.getElementById('tx-precio-venta').value) || 0;
+  const pagaCon = parseFloat(document.getElementById('tx-paga-con').value) || 0;
+  const cambio = pagaCon - venta;
+  document.getElementById('tx-cambio-label').textContent = cambio >= 0 ? fmt(cambio) : 'Insuficiente';
+  document.getElementById('tx-cambio-label').style.color = cambio >= 0 ? '#7C3AED' : '#DC2626';
+}
+
 function guardarTx() {
   const tipo = document.getElementById('tx-tipo').value;
-  const monto = parseFloat(document.getElementById('tx-monto').value);
   const desc = document.getElementById('tx-desc').value.trim();
   const cat = document.getElementById('tx-cat').value;
   const empId = document.getElementById('tx-emp').value;
   const fecha = document.getElementById('tx-fecha').value;
+  let monto, costo = 0, ganancia = 0, metodo = '', pagaCon = 0, cambio = 0;
+  if(tipo === 'ingreso') {
+    monto = parseFloat(document.getElementById('tx-precio-venta').value) || 0;
+    costo = parseFloat(document.getElementById('tx-costo').value) || 0;
+    ganancia = monto - costo;
+    metodo = document.getElementById('tx-metodo').value;
+    pagaCon = parseFloat(document.getElementById('tx-paga-con').value) || 0;
+    cambio = metodo === 'efectivo' ? pagaCon - monto : 0;
+  } else {
+    monto = parseFloat(document.getElementById('tx-monto-egreso').value) || 0;
+  }
   if(!monto || !desc) return;
-  state.transacciones.unshift({ tipo, monto, desc, cat, empId, fecha, id: Date.now() });
-  document.getElementById('tx-monto').value = '';
+  state.transacciones.unshift({ tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, id: Date.now() });
   document.getElementById('tx-desc').value = '';
+  document.getElementById('tx-precio-venta') && (document.getElementById('tx-precio-venta').value = '');
+  document.getElementById('tx-costo') && (document.getElementById('tx-costo').value = '');
+  document.getElementById('tx-monto-egreso') && (document.getElementById('tx-monto-egreso').value = '');
+  document.getElementById('tx-paga-con') && (document.getElementById('tx-paga-con').value = '');
   cerrarModal('tx');
   guardarLS();
   renderAll();
@@ -640,6 +819,13 @@ function renderAlertas() {
     else if(p.stock <= p.min) alertas.push({tipo:'warning', ico:'📦', txt:`${p.nombre} — stock bajo (${p.stock} uds)`, sub:`Mínimo recomendado: ${p.min}`});
   });
 
+  // Alertas de responsabilidades
+  const hoyNum = new Date().getDate();
+  state.responsabilidades.filter(r=>!r.pagado).forEach(r => {
+    const diff = r.dia - hoyNum;
+    if(diff >= 0 && diff <= 3) alertas.push({tipo:'warning', ico:'📋', txt:`"${r.desc}" vence en ${diff===0?'hoy':diff+' días'}`, sub:`Monto: ${fmt(r.monto)}`});
+  });
+
   document.getElementById('alertas').innerHTML = alertas.map(a =>
     `<div class="alert alert-${a.tipo}"><span style="font-size:16px">${a.ico}</span><div><div class="alert-title">${a.txt}</div><div class="alert-sub">${a.sub}</div></div></div>`
   ).join('');
@@ -686,9 +872,11 @@ function renderMetrics() {
 // ─── RENDER TX ────────────────────────────────────────────
 function txHTML(t) {
   const emp = state.empleados.find(e => e.id == t.empId);
+  const extras = t.tipo === 'ingreso' && t.ganancia ? `<span style="font-size:10px;background:#EDE9FF;color:#7C3AED;padding:1px 6px;border-radius:10px;margin-left:4px">Gan: ${fmt(t.ganancia)}</span>` : '';
+  const metodoLabel = t.metodo ? `<span style="font-size:10px;background:#F3F4F6;color:#6B7280;padding:1px 6px;border-radius:10px;margin-left:4px">${t.metodo}</span>` : '';
   return `<div class="tx-item">
     <div class="tx-icon ${t.tipo}">${t.tipo==='ingreso'?'↑':'↓'}</div>
-    <div class="tx-info"><div class="tx-name">${t.desc}</div><div class="tx-cat">${t.cat}${emp?' · '+emp.nombre:''}</div></div>
+    <div class="tx-info"><div class="tx-name">${t.desc}${extras}${metodoLabel}</div><div class="tx-cat">${t.cat}${emp?' · '+emp.nombre:''}</div></div>
     <div style="text-align:right"><div class="tx-amount ${t.tipo==='ingreso'?'c-green':'c-red'}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div><div class="tx-date">${t.fecha}</div></div>
   </div>`;
 }
@@ -897,6 +1085,176 @@ function copiarResumen() {
 }
 
 // ─── INIT ─────────────────────────────────────────────────
+// ─── ADMIN & PLANS ───────────────────────────────────────
+const ADMIN_EMAIL = 'maranto2912@gmail.com';
+const PLAN_LINK = 'https://checkout.wompi.co/l/creceapp'; // Actualizar con link real de Wompi
+
+function checkAdmin(email) {
+  const isAdmin = email === ADMIN_EMAIL;
+  const adminTab = document.getElementById('tab-admin');
+  if(adminTab) adminTab.style.display = isAdmin ? 'block' : 'none';
+  return isAdmin;
+}
+
+function getPlan(email) {
+  const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
+  if(email === ADMIN_EMAIL) return 'admin';
+  if(freeUsers.includes(email)) return 'gratuito';
+  return 'gratuito'; // Por defecto gratuito hasta pagar
+}
+
+function darAccesoGratuito() {
+  const email = document.getElementById('adm-email-free').value.trim();
+  if(!email) return;
+  const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
+  if(!freeUsers.includes(email)) freeUsers.push(email);
+  localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
+  document.getElementById('adm-email-free').value = '';
+  alert('✓ Acceso gratuito dado a ' + email);
+  renderAdmin();
+}
+
+function copiarLink() {
+  navigator.clipboard.writeText('https://creceapp-nine.vercel.app').then(() => alert('¡Link copiado!'));
+}
+
+async function renderAdmin() {
+  try {
+    const { data, error } = await sb.from('perfiles').select('*').order('created_at', {ascending: false});
+    if(error || !data) return;
+    document.getElementById('adm-users').textContent = data.length;
+    document.getElementById('adm-premium').textContent = data.filter(u=>u.plan==='premium').length;
+    document.getElementById('adm-ingresos').textContent = fmt(data.filter(u=>u.plan==='premium').length * 20000);
+    document.getElementById('adm-link').textContent = 'https://creceapp-nine.vercel.app';
+    const el = document.getElementById('adm-users-list');
+    el.innerHTML = data.length ? data.map(u => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid rgba(124,58,237,0.08)">
+        <div style="width:32px;height:32px;border-radius:50%;background:#EDE9FF;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#7C3AED;flex-shrink:0">${(u.nombre||'?')[0].toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${u.nombre||'Sin nombre'}</div>
+          <div style="font-size:11px;color:var(--text2)">${u.negocio||'Sin negocio'}</div>
+        </div>
+        <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${u.plan==='premium'?'#EDE9FF':'#F3F4F6'};color:${u.plan==='premium'?'#7C3AED':'#6B7280'};font-weight:500">${u.plan||'gratuito'}</span>
+      </div>`).join('') : '<div class="empty-state">No hay usuarios aún.</div>';
+  } catch(e) { console.log('Admin error:', e); }
+}
+
+// Override showPage to load admin data
+const _origShowPage = showPage;
+function showPage(id, btn) {
+  _origShowPage(id, btn);
+  if(id === 'admin') renderAdmin();
+}
+
+function aplicarRestricciones(plan) {
+  if(plan === 'admin' || plan === 'premium') return;
+  // Plan gratuito: ocultar tabs premium
+  const tabs = document.querySelectorAll('.tab');
+  const premiumPages = ['deudas','empleados','inventario','responsabilidades','calendario','reportes'];
+  tabs.forEach(tab => {
+    const onclick = tab.getAttribute('onclick') || '';
+    premiumPages.forEach(p => {
+      if(onclick.includes("'"+p+"'")) {
+        tab.style.opacity = '0.5';
+        tab.onclick = () => mostrarUpgrade();
+      }
+    });
+  });
+}
+
+function mostrarUpgrade() {
+  alert('⭐ Esta función es exclusiva del plan Premium.
+
+Actualiza por solo $20.000/mes y desbloquea todo CreceApp.
+
+Escríbenos para activar tu plan.');
+}
+
+function guardarResp() {
+  const desc = document.getElementById('r-desc').value.trim();
+  const monto = parseFloat(document.getElementById('r-monto').value) || 0;
+  const dia = parseInt(document.getElementById('r-dia').value) || 1;
+  const cat = document.getElementById('r-cat').value;
+  if(!desc || !monto) return;
+  state.responsabilidades.push({ desc, monto, dia, cat, pagado: false, id: Date.now() });
+  document.getElementById('r-desc').value = '';
+  document.getElementById('r-monto').value = '';
+  document.getElementById('r-dia').value = '';
+  cerrarModal('resp');
+  guardarLS();
+  renderAll();
+}
+
+function togglePago(id) {
+  const r = state.responsabilidades.find(x => x.id === id);
+  if(r) { r.pagado = !r.pagado; guardarLS(); renderAll(); }
+}
+
+function eliminarResp(id) {
+  state.responsabilidades = state.responsabilidades.filter(x => x.id !== id);
+  guardarLS();
+  renderAll();
+}
+
+function renderResponsabilidades() {
+  const el = document.getElementById('resp-list');
+  if(!state.responsabilidades.length) { 
+    el.innerHTML = '<div class="empty-state">Agrega tus gastos fijos mensuales como arriendo, servicios, nómina...</div>'; 
+    document.getElementById('resp-total').textContent = '$0';
+    document.getElementById('resp-count').textContent = '0 responsabilidades';
+    document.getElementById('resp-pagado').textContent = '$0';
+    document.getElementById('resp-pendiente-text').textContent = '$0 pendiente';
+    return; 
+  }
+  const total = state.responsabilidades.reduce((s,r) => s+r.monto, 0);
+  const pagado = state.responsabilidades.filter(r=>r.pagado).reduce((s,r) => s+r.monto, 0);
+  const pendiente = total - pagado;
+  document.getElementById('resp-total').textContent = fmt(total);
+  document.getElementById('resp-count').textContent = state.responsabilidades.length + ' responsabilidades';
+  document.getElementById('resp-pagado').textContent = fmt(pagado);
+  document.getElementById('resp-pendiente-text').textContent = fmt(pendiente) + ' pendiente';
+
+  const catIcons = {'Arriendo':'🏠','Servicios públicos':'💡','Nómina':'👥','Internet / Teléfono':'📱','Seguros':'🛡️','Impuestos':'📋','Otros':'📌'};
+  
+  el.innerHTML = state.responsabilidades.sort((a,b)=>a.dia-b.dia).map(r => `
+    <div class="tx-item" style="opacity:${r.pagado?'0.6':'1'}">
+      <div class="tx-icon" style="background:rgba(124,58,237,0.15);color:#A78BFA;font-size:16px">${catIcons[r.cat]||'📌'}</div>
+      <div class="tx-info">
+        <div class="tx-name" style="${r.pagado?'text-decoration:line-through':''}">${r.desc}</div>
+        <div class="tx-cat">${r.cat} · Día ${r.dia} de cada mes</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="text-align:right">
+          <div class="tx-amount" style="color:#A78BFA">${fmt(r.monto)}</div>
+          <div class="tx-date">${r.pagado?'✅ Pagado':'⏳ Pendiente'}</div>
+        </div>
+        <button class="btn-sm" style="font-size:11px;${r.pagado?'border-color:#A78BFA;color:#A78BFA':''}" onclick="togglePago(${r.id})">${r.pagado?'Desmarcar':'Marcar pagado'}</button>
+        <button class="btn-danger" style="font-size:11px" onclick="eliminarResp(${r.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderTopProductos() {
+  const el = document.getElementById('top-productos');
+  if(!el) return;
+  const mes = getMes();
+  const ventas = {};
+  state.transacciones.filter(t => t.tipo==='ingreso' && t.fecha.startsWith(mes)).forEach(t => {
+    if(!ventas[t.desc]) ventas[t.desc] = { cantidad: 0, total: 0, ganancia: 0 };
+    ventas[t.desc].cantidad++;
+    ventas[t.desc].total += t.monto;
+    ventas[t.desc].ganancia += (t.ganancia || 0);
+  });
+  const sorted = Object.entries(ventas).sort((a,b) => b[1].cantidad - a[1].cantidad).slice(0,5);
+  if(!sorted.length) { el.innerHTML = '<div class="empty-state">Registra ventas para ver el ranking.</div>'; return; }
+  el.innerHTML = sorted.map(([nombre, d], i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid rgba(124,58,237,0.08)">
+      <div style="width:24px;height:24px;border-radius:50%;background:${i===0?'#7C3AED':i===1?'#A78BFA':'#EDE9FF'};color:${i<2?'white':'#7C3AED'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0">${i+1}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nombre}</div><div style="font-size:11px;color:var(--text2)">${d.cantidad} venta${d.cantidad!==1?'s':''} · Gan: ${fmt(d.ganancia)}</div></div>
+      <div style="font-size:13px;font-weight:600;color:#7C3AED">${fmt(d.total)}</div>
+    </div>`).join('');
+}
+
 function renderAll() {
   renderAlertas();
   renderMeta();
@@ -906,6 +1264,8 @@ function renderAll() {
   renderDeudas();
   renderEmpleados();
   renderInventario();
+  renderResponsabilidades();
+  renderTopProductos();
   renderCharts();
 }
 
@@ -970,12 +1330,32 @@ async function registerUser() {
   const pass = document.getElementById('reg-pass').value;
   if(!nombre || !negocio || !email || !pass) return showAuthError('Por favor completa todos los campos.');
   if(pass.length < 6) return showAuthError('La contraseña debe tener mínimo 6 caracteres.');
-  const { data, error } = await sb.auth.signUp({ email, password: pass });
-  if(error) return showAuthError('Error al registrarse: ' + error.message);
-  if(data.user) {
-    await sb.from('perfiles').insert({ id: data.user.id, nombre, negocio, plan: 'gratuito' });
-    showAuthSuccess('¡Cuenta creada! Revisa tu correo para confirmar tu registro.');
+  const btn = document.querySelector('#form-register .btn-primary');
+  btn.textContent = 'Creando cuenta...';
+  btn.disabled = true;
+  try {
+    const { data, error } = await sb.auth.signUp({ email, password: pass });
+    if(error) {
+      if(error.message.includes('already registered')) {
+        showAuthError('Este correo ya tiene una cuenta. Intenta iniciar sesión.');
+      } else {
+        showAuthError('Error: ' + error.message);
+      }
+    } else if(data.user) {
+      try {
+        await sb.from('perfiles').upsert({ id: data.user.id, nombre, negocio, plan: 'gratuito' });
+      } catch(e) {}
+      // Iniciar sesión automáticamente
+      const { error: loginError } = await sb.auth.signInWithPassword({ email, password: pass });
+      if(loginError) {
+        showAuthSuccess('¡Cuenta creada! Ya puedes iniciar sesión.');
+      }
+    }
+  } catch(e) {
+    showAuthError('Error de conexión. Intenta de nuevo.');
   }
+  btn.textContent = 'Crear cuenta gratis';
+  btn.disabled = false;
 }
 
 async function resetPass() {
@@ -994,10 +1374,14 @@ async function cerrarSesion() {
 
 async function cargarPerfil(userId) {
   try {
+    const { data: session } = await sb.auth.getSession();
+    const email = session?.session?.user?.email || '';
     const { data } = await sb.from('perfiles').select('*').eq('id', userId).single();
     if(data) {
-      document.getElementById('user-negocio').textContent = data.negocio || 'Mi negocio';
-      document.getElementById('user-plan').textContent = data.plan === 'premium' ? '⭐ Premium' : '✓ Gratuito';
+      const isAdmin = checkAdmin(email);
+      document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : (data.negocio || 'Mi negocio');
+      document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : (data.plan === 'premium' ? '⭐ Premium' : '✓ Gratuito');
+      if(!isAdmin) aplicarRestricciones(data.plan || 'gratuito');
     }
   } catch(e) {}
 }
