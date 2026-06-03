@@ -1732,6 +1732,36 @@ function renderDeudas() {
 }
 
 // ─── RENDER EMPLEADOS ─────────────────────────────────────
+function getPeriodoInicio(frecuencia) {
+  const hoy = new Date();
+  if(frecuencia === 'mensual') {
+    return new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
+  } else if(frecuencia === 'quincenal') {
+    const inicio = hoy.getDate() <= 15 ? 1 : 16;
+    return new Date(hoy.getFullYear(), hoy.getMonth(), inicio).toISOString().split('T')[0];
+  } else {
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - hoy.getDay() + 1);
+    return lunes.toISOString().split('T')[0];
+  }
+}
+
+function getLabelPeriodo(frecuencia) {
+  if(frecuencia === 'mensual') return 'Este mes';
+  if(frecuencia === 'quincenal') return new Date().getDate() <= 15 ? '1ra quincena' : '2da quincena';
+  return 'Esta semana';
+}
+
+function calcHorasPeriodo(e) {
+  const inicio = getPeriodoInicio(e.frecuencia || 'semanal');
+  return (e.horasLog||[]).filter(h=>h.fecha>=inicio).reduce((s,h)=>s+h.horas,0);
+}
+
+function calcVentasPeriodo(e) {
+  const inicio = getPeriodoInicio(e.frecuencia || 'semanal');
+  return (e.comisionLog||[]).filter(v=>v.fecha>=inicio).reduce((s,v)=>s+v.venta,0);
+}
+
 function renderEmpleados() {
   const el = document.getElementById('emp-list');
   if(!el) return;
