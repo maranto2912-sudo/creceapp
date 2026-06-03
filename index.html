@@ -1660,8 +1660,8 @@ function renderMetrics() {
   const txMes = state.transacciones.filter(t => t.fecha.startsWith(mes));
   const ing = txMes.filter(t => t.tipo==='ingreso').reduce((s,t) => s+t.monto, 0);
   const egr = txMes.filter(t => t.tipo==='egreso').reduce((s,t) => s+t.monto, 0);
-  const servicios = txMes.filter(t => t.tipo==='ingreso' && t.cat==='Servicios');
-  const ticket = servicios.length ? ing / servicios.length : 0;
+  const ingresos = txMes.filter(t => t.tipo==='ingreso');
+  const ticket = ingresos.length ? ing / ingresos.length : 0;
   const totalDeuda = state.deudas.reduce((s,d) => s+(d.total-d.pagado), 0);
   document.getElementById('m-ing').textContent = fmt(ing);
   document.getElementById('m-ing-n').textContent = txMes.filter(t=>t.tipo==='ingreso').length + ' registros';
@@ -2853,10 +2853,10 @@ function renderVentasDigitales() {
   if(vmej) vmej.textContent = mejor || '—';
 
   // Gráfica plataformas
-  if(window.chartPlat) window.chartPlat.destroy();
+  if(charts.plat) charts.plat.destroy();
   const platCanvas = document.getElementById('chartPlataformas');
   if(platCanvas && Object.keys(porPlat).length) {
-    window.chartPlat = new Chart(platCanvas, {
+    charts.plat = new Chart(platCanvas, {
       type:'doughnut',
       data:{ labels:Object.keys(porPlat), datasets:[{data:Object.values(porPlat).map(v=>Math.max(0,v)), backgroundColor:['#059669','#10B981','#34D399','#6EE7B7','#A7F3D0','#D1FAE5']}] },
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}
@@ -2864,7 +2864,7 @@ function renderVentasDigitales() {
   }
 
   // Gráfica ganancia vs comisiones
-  if(window.chartGVD) window.chartGVD.destroy();
+  if(charts.gvd) charts.gvd.destroy();
   const gvdCanvas = document.getElementById('chartGananciasVD');
   const meses = [];
   const gans = [];
@@ -2877,7 +2877,7 @@ function renderVentasDigitales() {
     coms.push(ventas.filter(v=>v.fecha&&v.fecha.startsWith(key)).reduce((s,v)=>s+(v.comision||0),0));
   }
   if(gvdCanvas) {
-    window.chartGVD = new Chart(gvdCanvas, {
+    charts.gvd = new Chart(gvdCanvas, {
       type:'bar',
       data:{labels:meses,datasets:[{label:'Ganancia',data:gans,backgroundColor:'#059669',borderRadius:4},{label:'Comisiones',data:coms,backgroundColor:'#FCA5A5',borderRadius:4}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},boxWidth:10}}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>'$'+v.toLocaleString()}}}}
@@ -3118,7 +3118,6 @@ function renderAll() {
   renderResponsabilidades();
   renderTopProductos();
   renderCharts();
-  renderPedidos();
   renderClientes();
   renderProveedores();
   renderFiados();
@@ -3333,7 +3332,6 @@ async function init() {
       document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : userEmail.split('@')[0];
       document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : '✓ Gratuito';
       currentUserId = session.user.id;
-      currentUserId = session.user.id;
       await cargarPerfil(session.user.id);
       await cargarLS();
       renderAll();
@@ -3360,6 +3358,7 @@ async function init() {
       if(adminTab) adminTab.style.display = isAdmin ? 'block' : 'none';
       document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : userEmail.split('@')[0];
       document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : '✓ Gratuito';
+      currentUserId = session.user.id;
       await cargarPerfil(session.user.id);
       await cargarLS();
       renderAll();
