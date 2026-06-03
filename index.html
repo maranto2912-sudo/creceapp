@@ -1853,19 +1853,29 @@ async function darAccesoGratuito() {
   const email = document.getElementById('adm-email-free').value.trim();
   if(!email) return;
   try {
-    // Obtener el ID del usuario por email
-    const userId = await sb.rpc('get_user_id_by_email', { email_input: email });
-    if(!userId.data) {
-      alert('No se encontró ningún usuario con ese correo. Asegúrate que esté registrado en CreceApp.');
+    // Obtener ID del usuario
+    const { data: userId, error: rpcError } = await sb.rpc('get_user_id_by_email', { email_input: email });
+    console.log('userId:', userId, 'error:', rpcError);
+    
+    if(!userId) {
+      alert('No se encontró ningún usuario con ese correo. Verifica que esté registrado en CreceApp.');
       return;
     }
-    // Actualizar plan en perfiles
-    const { error } = await sb
+
+    // Actualizar plan directamente
+    const { error: updateError } = await sb
       .from('perfiles')
-      .upsert({ id: userId.data, plan: 'gratuito_total', negocio: 'Sin negocio', nombre: email })
-      .eq('id', userId.data);
-    
-    if(error) throw error;
+      .update({ plan: 'gratuito_total' })
+      .eq('id', userId);
+
+    if(updateError) {
+      console.log('Update error:', updateError);
+      // Intentar upsert si update falla
+      const { error: upsertError } = await sb
+        .from('perfiles')
+        .upsert({ id: userId, nombre: email, negocio: 'Sin negocio', plan: 'gratuito_total' });
+      if(upsertError) throw upsertError;
+    }
 
     document.getElementById('adm-email-free').value = '';
     const msg = document.createElement('div');
@@ -1875,8 +1885,8 @@ async function darAccesoGratuito() {
     setTimeout(() => msg.remove(), 3000);
     renderAdmin();
   } catch(e) {
-    console.log('Error:', e);
-    alert('Error: No se pudo activar el acceso. Verifica que el correo esté registrado en CreceApp.');
+    console.log('Error completo:', e);
+    alert('Error activando acceso: ' + (e.message || JSON.stringify(e)));
   }
 }
 
