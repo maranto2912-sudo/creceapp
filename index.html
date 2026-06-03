@@ -323,7 +323,13 @@
     <span class="section-title">Empleados</span>
     <button class="btn-primary" onclick="abrirModal('empleado')">+ Nuevo empleado</button>
   </div>
-  <div id="horas-section" style="display:none"></div>
+  <!-- CALCULADORA DE HORAS -->
+  <div id="horas-section" style="display:none;margin-bottom:16px">
+    <div style="background:linear-gradient(135deg,#F0EDFF,#EDE9FF);border-radius:12px;padding:16px;border:1px solid rgba(124,58,237,0.2)">
+      <div style="font-size:14px;font-weight:600;color:#7C3AED;margin-bottom:12px">⏱ Control de horas diarias</div>
+      <div id="horas-empleados-list"></div>
+    </div>
+  </div>
   <div id="emp-list"></div>
 </div>
 
@@ -958,6 +964,19 @@
   <div class="form-row">
     <div class="form-group"><label class="form-label">Stock actual</label><input type="number" id="i-stock" placeholder="0" min="0"></div>
     <div class="form-group"><label class="form-label">Stock mínimo</label><input type="number" id="i-min" placeholder="5" min="0"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Costo de compra ($) <span style="font-size:10px;color:var(--text3)">(opcional)</span></label>
+    <input type="number" id="i-costo" placeholder="0" min="0" oninput="calcGananciaInv()">
+  </div>
+  <div id="inv-ganancia-box" style="display:none;background:#F0EDFF;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+      <span style="color:var(--text2)">Ganancia por unidad:</span>
+      <span id="inv-gan-unit" style="font-weight:600;color:#7C3AED">$0</span>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span style="color:var(--text2)">Margen:</span>
+      <span id="inv-gan-pct" style="font-weight:600;color:#7C3AED">0%</span>
+    </div>
   </div>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('inv')">Cancelar</button><button class="btn-primary" onclick="guardarInv()">Guardar</button></div>
 </div></div>
@@ -1748,6 +1767,24 @@ function renderInventario() {
       </div>
     </div>`;
   }).join('');
+}
+
+function calcGananciaInv() {
+  const precio = parseFloat(document.getElementById('i-precio').value) || 0;
+  const costo = parseFloat(document.getElementById('i-costo').value) || 0;
+  const box = document.getElementById('inv-ganancia-box');
+  if(!box) return;
+  if(precio > 0 && costo > 0) {
+    box.style.display = 'block';
+    const gan = precio - costo;
+    const pct = Math.round((gan / precio) * 100);
+    document.getElementById('inv-gan-unit').textContent = '$' + gan.toLocaleString('es-CO');
+    document.getElementById('inv-gan-unit').style.color = gan >= 0 ? '#7C3AED' : '#DC2626';
+    document.getElementById('inv-gan-pct').textContent = pct + '%';
+    document.getElementById('inv-gan-pct').style.color = pct >= 0 ? '#7C3AED' : '#DC2626';
+  } else {
+    box.style.display = 'none';
+  }
 }
 
 function eliminarProducto(id) {
