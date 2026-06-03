@@ -954,12 +954,21 @@
     </div>
     <div class="form-group"><label class="form-label">% Comisión</label><input type="number" id="e-comision" placeholder="0" min="0" max="100"></div>
   </div>
-  <div class="form-group"><label class="form-label">Tipo de pago</label>
-    <select id="e-tipo-pago" onchange="toggleTipoPago()">
-      <option value="fijo">Salario fijo</option>
-      <option value="comision">Solo comisión</option>
-      <option value="horas">Por horas</option>
-    </select>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Tipo de pago</label>
+      <select id="e-tipo-pago" onchange="toggleTipoPago()">
+        <option value="fijo">Salario fijo</option>
+        <option value="comision">Solo comisión</option>
+        <option value="horas">Por horas</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Frecuencia de pago</label>
+      <select id="e-frecuencia">
+        <option value="semanal">Semanal</option>
+        <option value="quincenal">Quincenal</option>
+        <option value="mensual">Mensual</option>
+      </select>
+    </div>
   </div>
   <div id="e-salario-group">
     <div class="form-group"><label class="form-label">Salario base ($)</label><input type="number" id="e-salario" placeholder="0" min="0"></div>
@@ -1392,7 +1401,8 @@ function guardarEmpleado() {
   const comision = parseFloat(document.getElementById('e-comision').value) || 0;
   const salario = parseFloat(document.getElementById('e-salario').value) || 0;
   if(!nombre) return;
-  state.empleados.push({ nombre, cargo, comision, salario, tipoPago, valorHora, horasLog: [], comisionLog: [], id: Date.now() });
+  const frecuencia = document.getElementById('e-frecuencia') ? document.getElementById('e-frecuencia').value : 'semanal';
+  state.empleados.push({ nombre, cargo, comision, salario, tipoPago, frecuencia, valorHora, horasLog: [], comisionLog: [], id: Date.now() });
   ['e-nombre','e-comision','e-salario'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   const valorHoraEl = document.getElementById('e-valor-hora'); if(valorHoraEl) valorHoraEl.value = '';
   cerrarModal('empleado');
@@ -1719,11 +1729,13 @@ function renderEmpleados() {
         const ventasSemana = calcVentasSemana(e);
         const comHoy = ventasHoy * (e.comision / 100);
         const comSemana = ventasSemana * (e.comision / 100);
+        const labelPeriodoCom = getLabelPeriodo(e.frecuencia||'semanal');
+        const frecLabelCom = e.frecuencia === 'mensual' ? '📅 Mensual' : e.frecuencia === 'quincenal' ? '📅 Quincenal' : '📅 Semanal';
         return `<div style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid rgba(217,119,6,0.15)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
             <div>
               <div style="font-size:13px;font-weight:600;color:#1a1535">${e.nombre}</div>
-              <div style="font-size:11px;color:var(--text2)">${e.comision}% de comisión</div>
+              <div style="font-size:11px;color:var(--text2)">${e.comision}% comisión · <span style="color:#D97706">${frecLabelCom}</span></div>
             </div>
             <button class="btn-primary" style="font-size:12px;padding:6px 14px;background:#D97706" onclick="registrarVentaComision(${e.id})">+ Venta hoy</button>
           </div>
@@ -1734,7 +1746,7 @@ function renderEmpleados() {
               <div style="font-size:12px;color:#059669;font-weight:500">Com: ${fmt(comHoy)}</div>
             </div>
             <div style="background:#FEF3C7;border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:11px;color:var(--text2)">Ventas semana</div>
+              <div style="font-size:11px;color:var(--text2)">${labelPeriodoCom}</div>
               <div style="font-size:16px;font-weight:700;color:#D97706">${fmt(ventasSemana)}</div>
               <div style="font-size:12px;color:#059669;font-weight:500">Com: ${fmt(comSemana)}</div>
             </div>
@@ -1756,7 +1768,7 @@ function renderEmpleados() {
       <div class="emp-avatar">${iniciales(e.nombre)}</div>
       <div class="emp-info">
         <div class="emp-name">${e.nombre}</div>
-        <div class="emp-role">${e.cargo} · ${e.comision}% comisión · Salario: ${fmt(e.salario)}</div>
+        <div class="emp-role">${e.cargo} · ${e.comision}% com · ${fmt(e.salario)} · ${e.frecuencia||'semanal'}</div>
       </div>
       <div class="emp-stats">
         <div class="emp-total">${fmt(total)}</div>
@@ -1952,6 +1964,37 @@ function renderHistorialEmpleados() {
   }
 
   // Obtener todas las semanas con registros
+  function getPeriodoKey(fecha, frecuencia) {
+    const d = new Date(fecha + 'T12:00:00');
+    if(frecuencia === 'mensual') {
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    } else if(frecuencia === 'quincenal') {
+      const q = d.getDate() <= 15 ? '1' : '2';
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-Q${q}`;
+    } else {
+      const lunes = new Date(d);
+      lunes.setDate(d.getDate() - d.getDay() + 1);
+      return lunes.toISOString().split('T')[0];
+    }
+  }
+
+  function fmtPeriodo(key, frecuencia) {
+    if(frecuencia === 'mensual') {
+      const [y, m] = key.split('-');
+      const meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      return `${meses[parseInt(m)]} ${y}`;
+    } else if(frecuencia === 'quincenal') {
+      const [y, m, q] = key.split('-');
+      const meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      return q === 'Q1' ? `1-15 ${meses[parseInt(m)]} ${y}` : `16-fin ${meses[parseInt(m)]} ${y}`;
+    } else {
+      const lunes = new Date(key + 'T12:00:00');
+      const domingo = new Date(lunes);
+      domingo.setDate(lunes.getDate() + 6);
+      return `${lunes.getDate()}/${lunes.getMonth()+1} — ${domingo.getDate()}/${domingo.getMonth()+1}/${domingo.getFullYear()}`;
+    }
+  }
+
   function getLunes(fecha) {
     const d = new Date(fecha + 'T12:00:00');
     const lunes = new Date(d);
@@ -1960,10 +2003,7 @@ function renderHistorialEmpleados() {
   }
 
   function fmtSemana(lunesStr) {
-    const lunes = new Date(lunesStr + 'T12:00:00');
-    const domingo = new Date(lunes);
-    domingo.setDate(lunes.getDate() + 6);
-    return `${lunes.getDate()}/${lunes.getMonth()+1} — ${domingo.getDate()}/${domingo.getMonth()+1}/${domingo.getFullYear()}`;
+    return fmtPeriodo(lunesStr, 'semanal');
   }
 
   let html = '';
@@ -1972,20 +2012,21 @@ function renderHistorialEmpleados() {
     const semanas = {};
 
     // Horas
+    const frec = e.frecuencia || 'semanal';
     if(e.tipoPago === 'horas') {
       (e.horasLog||[]).forEach(h => {
-        const lunes = getLunes(h.fecha);
-        if(!semanas[lunes]) semanas[lunes] = { horas: 0, ventas: 0 };
-        semanas[lunes].horas += h.horas;
+        const key = getPeriodoKey(h.fecha, frec);
+        if(!semanas[key]) semanas[key] = { horas: 0, ventas: 0 };
+        semanas[key].horas += h.horas;
       });
     }
 
     // Comisiones
     if(e.tipoPago === 'comision') {
       (e.comisionLog||[]).forEach(v => {
-        const lunes = getLunes(v.fecha);
-        if(!semanas[lunes]) semanas[lunes] = { horas: 0, ventas: 0 };
-        semanas[lunes].ventas += v.venta;
+        const key = getPeriodoKey(v.fecha, frec);
+        if(!semanas[key]) semanas[key] = { horas: 0, ventas: 0 };
+        semanas[key].ventas += v.venta;
       });
     }
 
@@ -2003,7 +2044,7 @@ function renderHistorialEmpleados() {
       <div style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:12px">
           <tr style="background:#F8F7FF">
-            <th style="padding:8px;text-align:left;color:var(--text2);font-weight:500;border-bottom:1px solid rgba(124,58,237,0.1)">Semana</th>
+            <th style="padding:8px;text-align:left;color:var(--text2);font-weight:500;border-bottom:1px solid rgba(124,58,237,0.1)">Período</th>
             ${e.tipoPago === 'horas' ? '<th style="padding:8px;text-align:right;color:var(--text2);font-weight:500;border-bottom:1px solid rgba(124,58,237,0.1)">Horas</th>' : '<th style="padding:8px;text-align:right;color:var(--text2);font-weight:500;border-bottom:1px solid rgba(124,58,237,0.1)">Ventas</th>'}
             <th style="padding:8px;text-align:right;color:var(--text2);font-weight:500;border-bottom:1px solid rgba(124,58,237,0.1)">Total a pagar</th>
           </tr>
@@ -2019,7 +2060,7 @@ function renderHistorialEmpleados() {
               detalle = fmt(s.ventas);
             }
             return `<tr style="border-bottom:1px solid rgba(124,58,237,0.06)">
-              <td style="padding:8px;color:#1a1535">${fmtSemana(lunes)}</td>
+              <td style="padding:8px;color:#1a1535">${fmtPeriodo(lunes, frec)}</td>
               <td style="padding:8px;text-align:right;color:var(--text2)">${detalle}</td>
               <td style="padding:8px;text-align:right;font-weight:600;color:#7C3AED">${fmt(pago)}</td>
             </tr>`;
