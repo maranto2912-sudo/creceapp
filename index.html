@@ -1853,40 +1853,30 @@ async function darAccesoGratuito() {
   const email = document.getElementById('adm-email-free').value.trim();
   if(!email) return;
   try {
-    // Buscar usuario en Supabase por email
-    const { data: users, error } = await sb.from('perfiles').select('id, nombre, negocio').eq('id',
-      (await sb.from('perfiles').select('id')).data?.[0]?.id
-    );
-    // Actualizar plan a 'gratuito_total' para ese email en perfiles
-    const { data: authUsers } = await sb.rpc('get_user_id_by_email', { email_input: email }).catch(() => ({data: null}));
-    
-    // Alternativa: buscar en perfiles por nombre similar o actualizar directamente
-    const { data: perfil, error: perfilError } = await sb
+    // Obtener el ID del usuario por email
+    const userId = await sb.rpc('get_user_id_by_email', { email_input: email });
+    if(!userId.data) {
+      alert('No se encontró ningún usuario con ese correo. Asegúrate que esté registrado en CreceApp.');
+      return;
+    }
+    // Actualizar plan en perfiles
+    const { error } = await sb
       .from('perfiles')
-      .update({ plan: 'gratuito_total' })
-      .eq('id', authUsers?.id || '')
-      .select();
-
-    // Guardar también en localStorage como respaldo
-    const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
-    if(!freeUsers.includes(email)) freeUsers.push(email);
-    localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
+      .upsert({ id: userId.data, plan: 'gratuito_total', negocio: 'Sin negocio', nombre: email })
+      .eq('id', userId.data);
     
+    if(error) throw error;
+
     document.getElementById('adm-email-free').value = '';
     const msg = document.createElement('div');
-    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif';
-    msg.textContent = '✓ Acceso gratuito total dado a ' + email;
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap';
+    msg.textContent = '✓ Acceso completo activado para ' + email;
     document.body.appendChild(msg);
     setTimeout(() => msg.remove(), 3000);
     renderAdmin();
   } catch(e) {
-    // Si falla Supabase, guardar en localStorage
-    const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
-    if(!freeUsers.includes(email)) freeUsers.push(email);
-    localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
-    document.getElementById('adm-email-free').value = '';
-    alert('Acceso guardado para: ' + email + '. El usuario tendra acceso completo la proxima vez que inicie sesion.');
-    renderAdmin();
+    console.log('Error:', e);
+    alert('Error: No se pudo activar el acceso. Verifica que el correo esté registrado en CreceApp.');
   }
 }
 
@@ -2745,11 +2735,14 @@ async function cargarPerfil(userId) {
     const email = sessionData?.session?.user?.email || '';
     const { data } = await sb.from('perfiles').select('*').eq('id', userId).single();
     const isAdmin = email === 'maranto2912@gmail.com';
+    const plan = (data && data.plan) || 'gratuito';
     document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : ((data && data.negocio) || 'Mi negocio');
-    document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : ((data && data.plan === 'premium') ? '⭐ Premium' : '✓ Gratuito');
+    document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : 
+      plan === 'premium' ? '⭐ Premium' : 
+      plan === 'gratuito_total' ? '✓ Plan completo' : '✓ Gratuito';
     const adminTab = document.getElementById('tab-admin');
     if(adminTab) adminTab.style.display = isAdmin ? 'block' : 'none';
-    if(!isAdmin) aplicarRestricciones((data && data.plan) || 'gratuito');
+    if(!isAdmin) aplicarRestricciones(plan);
   } catch(e) { 
     console.log('perfil error:', e);
   }
