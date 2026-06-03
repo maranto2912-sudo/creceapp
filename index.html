@@ -1860,6 +1860,11 @@ async function darAccesoGratuito() {
       alert('No se encontró ningún usuario con ese correo. Verifica que esté registrado en CreceApp.');
       return;
     }
+    // Guardar también en localStorage del admin como respaldo
+    const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
+    if(!freeUsers.includes(email)) freeUsers.push(email);
+    localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
+    
     document.getElementById('adm-email-free').value = '';
     const msg = document.createElement('div');
     msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap';
@@ -1923,22 +1928,8 @@ async function renderAdmin() {
 
 
 function aplicarRestricciones(plan) {
-  if(plan === 'admin' || plan === 'premium' || plan === 'gratuito_total') return;
-  // Plan gratuito: pueden usar ingresos, egresos, deudas y responsabilidades
-  // Todo lo demás muestra popup de upgrade
-  const premiumPages = ['empleados','inventario','calendario','reportes','fiado','ventas-digitales'];
-  document.querySelectorAll('.tab').forEach(tab => {
-    const onclick = tab.getAttribute('onclick') || '';
-    premiumPages.forEach(p => {
-      if(onclick.includes("'"+p+"'")) {
-        tab.innerHTML = tab.textContent + ' <span style="font-size:9px;background:#7C3AED;color:white;padding:1px 5px;border-radius:10px;margin-left:3px">PRO</span>';
-        tab.onclick = (e) => {
-          e.preventDefault();
-          mostrarUpgrade();
-        };
-      }
-    });
-  });
+  // Temporalmente todo gratuito hasta activar Wompi
+  return;
 }
 
 function mostrarUpgrade() {
@@ -2728,10 +2719,26 @@ async function cargarPerfil(userId) {
   try {
     const { data: sessionData } = await sb.auth.getSession();
     const email = sessionData?.session?.user?.email || '';
-    const { data } = await sb.from('perfiles').select('*').eq('id', userId).single();
+    const userMeta = sessionData?.session?.user?.user_metadata || {};
     const isAdmin = email === 'maranto2912@gmail.com';
-    const plan = (data && data.plan) || 'gratuito';
-    document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : ((data && data.negocio) || 'Mi negocio');
+    
+    // Intentar leer de Supabase, si falla usar metadata o localStorage
+    let plan = 'gratuito';
+    let negocio = 'Mi negocio';
+    
+    try {
+      const { data, error } = await sb.from('perfiles').select('plan, negocio, nombre').eq('id', userId).single();
+      if(data && !error) {
+        plan = data.plan || 'gratuito';
+        negocio = data.negocio || data.nombre || 'Mi negocio';
+      }
+    } catch(e) {
+      // Si falla, verificar localStorage como respaldo
+      const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
+      if(freeUsers.includes(email)) plan = 'gratuito_total';
+    }
+
+    document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : negocio;
     document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : 
       plan === 'premium' ? '⭐ Premium' : 
       plan === 'gratuito_total' ? '✓ Plan completo' : '✓ Gratuito';
