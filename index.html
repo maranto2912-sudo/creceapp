@@ -925,6 +925,23 @@
     <div class="form-group"><label class="form-label">% Comisión</label><input type="number" id="ee-comision" min="0" max="100"></div>
   </div>
   <div class="form-group"><label class="form-label">Salario base ($)</label><input type="number" id="ee-salario"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Tipo de pago</label>
+      <select id="ee-tipo-pago">
+        <option value="fijo">Salario fijo</option>
+        <option value="comision">Solo comisión</option>
+        <option value="horas">Por horas</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Frecuencia de pago</label>
+      <select id="ee-frecuencia">
+        <option value="semanal">Semanal</option>
+        <option value="quincenal">Quincenal</option>
+        <option value="mensual">Mensual</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group"><label class="form-label">Valor por hora ($)</label><input type="number" id="ee-valor-hora" placeholder="0 (solo si paga por horas)"></div>
   <input type="hidden" id="ee-id">
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('editar-empleado')">Cancelar</button><button class="btn-primary" onclick="guardarEdicionEmpleado()">Guardar</button></div>
 </div></div>
@@ -1484,10 +1501,15 @@ function editarEmpleado(id) {
   const e = state.empleados.find(x => x.id === id);
   if(!e) return;
   document.getElementById('ee-id').value = id;
-  document.getElementById('ee-nombre').value = e.nombre;
-  document.getElementById('ee-cargo').value = e.cargo;
-  document.getElementById('ee-comision').value = e.comision;
-  document.getElementById('ee-salario').value = e.salario;
+  document.getElementById('ee-nombre').value = e.nombre || '';
+  document.getElementById('ee-cargo').value = e.cargo || '';
+  document.getElementById('ee-comision').value = e.comision || 0;
+  document.getElementById('ee-salario').value = e.salario || 0;
+  document.getElementById('ee-valor-hora').value = e.valorHora || 0;
+  const tipoPagoEl = document.getElementById('ee-tipo-pago');
+  if(tipoPagoEl) tipoPagoEl.value = e.tipoPago || 'fijo';
+  const frecuenciaEl = document.getElementById('ee-frecuencia');
+  if(frecuenciaEl) frecuenciaEl.value = e.frecuencia || 'semanal';
   document.getElementById('overlay-editar-empleado').style.display = 'flex';
 }
 
@@ -1499,6 +1521,14 @@ function guardarEdicionEmpleado() {
   e.cargo = document.getElementById('ee-cargo').value.trim() || e.cargo;
   e.comision = parseFloat(document.getElementById('ee-comision').value) || 0;
   e.salario = parseFloat(document.getElementById('ee-salario').value) || 0;
+  const tipoPagoEl = document.getElementById('ee-tipo-pago');
+  if(tipoPagoEl) e.tipoPago = tipoPagoEl.value;
+  const frecuenciaEl = document.getElementById('ee-frecuencia');
+  if(frecuenciaEl) e.frecuencia = frecuenciaEl.value;
+  const valorHoraEl = document.getElementById('ee-valor-hora');
+  if(valorHoraEl) e.valorHora = parseFloat(valorHoraEl.value) || 0;
+  if(!e.horasLog) e.horasLog = [];
+  if(!e.comisionLog) e.comisionLog = [];
   cerrarModal('editar-empleado');
   guardarLS();
   renderAll();
@@ -1804,26 +1834,53 @@ function renderEmpleados() {
   el.innerHTML = state.empleados.map(e => {
     const txEmp = state.transacciones.filter(t => t.empId == e.id && t.tipo==='ingreso' && t.fecha.startsWith(mes));
     const total = txEmp.reduce((s,t) => s+t.monto, 0);
-    const com = total * (e.comision / 100);
-    return `<div class="emp-card">
+    const com = total * ((e.comision||0) / 100);
+    const tipoPago = e.tipoPago || 'fijo';
+    const frecuencia = e.frecuencia || 'semanal';
+    const labelPer = getLabelPeriodo(frecuencia);
+    const horasHoy = tipoPago === 'horas' ? calcHorasHoy(e) : 0;
+    const horasPer = tipoPago === 'horas' ? calcHorasPeriodo(e) : 0;
+    const ventasHoy = tipoPago === 'comision' ? calcVentasHoy(e) : 0;
+    const ventasPer = tipoPago === 'comision' ? calcVentasPeriodo(e) : 0;
+    return `<div class="emp-card" style="flex-wrap:wrap">
       <div class="emp-avatar">${iniciales(e.nombre)}</div>
-      <div class="emp-info">
+      <div class="emp-info" style="min-width:160px">
         <div class="emp-name">${e.nombre}</div>
-        <div class="emp-role">${e.cargo} · ${e.comision}% com · ${fmt(e.salario)} · ${e.frecuencia||'semanal'}</div>
+        <div class="emp-role">${e.cargo||''} · ${e.comision||0}% com · ${fmt(e.salario||0)} · <span style="color:#7C3AED">${frecuencia}</span></div>
+        ${tipoPago === 'horas' ? `
+          <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div style="background:#F0EDFF;border-radius:6px;padding:8px;text-align:center">
+              <div style="font-size:10px;color:var(--text2)">Hoy</div>
+              <div style="font-size:16px;font-weight:700;color:#7C3AED">${horasHoy}h</div>
+              <div style="font-size:11px;color:#059669">${fmt(horasHoy*(e.valorHora||0))}</div>
+            </div>
+            <div style="background:#F0EDFF;border-radius:6px;padding:8px;text-align:center">
+              <div style="font-size:10px;color:var(--text2)">${labelPer}</div>
+              <div style="font-size:16px;font-weight:700;color:#7C3AED">${horasPer}h</div>
+              <div style="font-size:11px;color:#059669">${fmt(horasPer*(e.valorHora||0))}</div>
+            </div>
+          </div>
+          <button class="btn-primary" style="margin-top:6px;font-size:11px;padding:5px 12px" onclick="registrarHoras(${e.id})">+ Horas hoy</button>
+        ` : tipoPago === 'comision' ? `
+          <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div style="background:#FEF3C7;border-radius:6px;padding:8px;text-align:center">
+              <div style="font-size:10px;color:var(--text2)">Ventas hoy</div>
+              <div style="font-size:14px;font-weight:700;color:#D97706">${fmt(ventasHoy)}</div>
+              <div style="font-size:11px;color:#059669">Com: ${fmt(ventasHoy*(e.comision||0)/100)}</div>
+            </div>
+            <div style="background:#FEF3C7;border-radius:6px;padding:8px;text-align:center">
+              <div style="font-size:10px;color:var(--text2)">${labelPer}</div>
+              <div style="font-size:14px;font-weight:700;color:#D97706">${fmt(ventasPer)}</div>
+              <div style="font-size:11px;color:#059669">Com: ${fmt(ventasPer*(e.comision||0)/100)}</div>
+            </div>
+          </div>
+          <button class="btn-primary" style="margin-top:6px;font-size:11px;padding:5px 12px;background:#D97706" onclick="registrarVentaComision(${e.id})">+ Venta hoy</button>
+        ` : ''}
       </div>
       <div class="emp-stats">
         <div class="emp-total">${fmt(total)}</div>
-        <div class="emp-detail">Comisión: ${fmt(com)}</div>
-        <div class="emp-detail">${txEmp.length} servicios este mes</div>
-        ${e.tipoPago === 'horas' ? `
-          <div style="font-size:11px;color:#7C3AED;margin-top:4px">
-            ⏱ ${calcHorasHoy(e)} h hoy · ${calcHorasSemana(e)} h esta semana
-          </div>
-          <div style="font-size:11px;color:#059669;font-weight:500">
-            Semana: ${fmt(calcHorasSemana(e) * (e.valorHora||0))}
-          </div>
-          <button class="btn-primary" style="margin-top:4px;font-size:11px;padding:4px 10px" onclick="registrarHoras(${e.id})">+ Horas hoy</button>
-        ` : ''}
+        <div class="emp-detail">Comisión mes: ${fmt(com)}</div>
+        <div class="emp-detail">${txEmp.length} servicios</div>
         <button class="btn-sm" style="margin-top:6px;font-size:11px" onclick="editarEmpleado(${e.id})">✏️ Editar</button>
         <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarEmpleado(${e.id})">✕ Eliminar</button>
       </div>
