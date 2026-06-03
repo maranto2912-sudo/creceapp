@@ -793,19 +793,44 @@
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('editar-tx')">Cancelar</button><button class="btn-primary" onclick="guardarEdicionTx()">Guardar cambios</button></div>
 </div></div>
 
-<!-- MODAL CATEGORÍA -->
+<!-- MODAL CATEGORÍA TRANSACCIONES -->
 <div class="overlay" id="overlay-cat">
 <div class="modal">
   <div class="modal-title">Nueva categoría</div>
-  <div class="form-group"><label class="form-label">Nombre de la categoría</label><input type="text" id="cat-nombre" placeholder="Ej: Cuota banco, préstamo, regalo..."></div>
-  <div class="form-group"><label class="form-label">Tipo</label>
-    <select id="cat-tipo">
-      <option value="ambos">Para ingresos y egresos</option>
-      <option value="ingreso">Solo ingresos</option>
-      <option value="egreso">Solo egresos</option>
-    </select>
-  </div>
-  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cat')">Cancelar</button><button class="btn-primary" onclick="guardarCategoria()">Guardar</button></div>
+  <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="cat-nombre" placeholder="Ej: Cuota banco, préstamo..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cat')">Cancelar</button><button class="btn-primary" onclick="guardarCategoria('tx')">Guardar</button></div>
+</div></div>
+
+<!-- MODAL CATEGORÍA INVENTARIO -->
+<div class="overlay" id="overlay-cat-inv">
+<div class="modal">
+  <div class="modal-title">Nueva categoría de inventario</div>
+  <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="cat-inv-nombre" placeholder="Ej: Coloración, Herramientas..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cat-inv')">Cancelar</button><button class="btn-primary" onclick="guardarCategoria('inv')">Guardar</button></div>
+</div></div>
+
+<!-- MODAL CATEGORÍA RESPONSABILIDADES -->
+<div class="overlay" id="overlay-cat-resp">
+<div class="modal">
+  <div class="modal-title">Nueva categoría de responsabilidad</div>
+  <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="cat-resp-nombre" placeholder="Ej: Membresía, Publicidad..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cat-resp')">Cancelar</button><button class="btn-primary" onclick="guardarCategoria('resp')">Guardar</button></div>
+</div></div>
+
+<!-- MODAL CATEGORÍA DEUDAS -->
+<div class="overlay" id="overlay-cat-deuda">
+<div class="modal">
+  <div class="modal-title">Nueva categoría de deuda</div>
+  <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="cat-deuda-nombre" placeholder="Ej: Préstamo personal, Crédito..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cat-deuda')">Cancelar</button><button class="btn-primary" onclick="guardarCategoria('deuda')">Guardar</button></div>
+</div></div>
+
+<!-- MODAL CARGO EMPLEADOS -->
+<div class="overlay" id="overlay-cat-cargo">
+<div class="modal">
+  <div class="modal-title">Nuevo cargo</div>
+  <div class="form-group"><label class="form-label">Nombre del cargo</label><input type="text" id="cat-cargo-nombre" placeholder="Ej: Colorista, Recepcionista..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cat-cargo')">Cancelar</button><button class="btn-primary" onclick="guardarCategoria('cargo')">Guardar</button></div>
 </div></div>
 
 <div class="overlay" id="overlay-deuda">
@@ -815,6 +840,10 @@
   <div class="form-row">
     <div class="form-group"><label class="form-label">Monto total ($)</label><input type="number" id="d-total" placeholder="0"></div>
     <div class="form-group"><label class="form-label">Ya pagado ($)</label><input type="number" id="d-pagado" placeholder="0"></div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat-deuda')">+ Nueva</span></label>
+    <select id="d-cat"></select>
   </div>
   <div class="form-group">
     <label class="form-label">Tipo de deuda</label>
@@ -882,7 +911,10 @@
   <div class="modal-title">Nuevo empleado</div>
   <div class="form-group"><label class="form-label">Nombre completo</label><input type="text" id="e-nombre" placeholder="Nombre..."></div>
   <div class="form-row">
-    <div class="form-group"><label class="form-label">Cargo</label><input type="text" id="e-cargo" placeholder="Estilista, barbero..."></div>
+    <div class="form-group">
+      <label class="form-label">Cargo <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat-cargo')">+ Nuevo</span></label>
+      <select id="e-cargo-sel"></select>
+    </div>
     <div class="form-group"><label class="form-label">% Comisión</label><input type="number" id="e-comision" placeholder="0" min="0" max="100"></div>
   </div>
   <div class="form-group"><label class="form-label">Salario base ($)</label><input type="number" id="e-salario" placeholder="0"></div>
@@ -894,8 +926,9 @@
   <div class="modal-title">Agregar producto</div>
   <div class="form-group"><label class="form-label">Nombre del producto</label><input type="text" id="i-nombre" placeholder="Tinte, shampoo..."></div>
   <div class="form-row">
-    <div class="form-group"><label class="form-label">Categoría</label>
-      <select id="i-cat"><option>Tintes</option><option>Shampoos</option><option>Tratamientos</option><option>Herramientas</option><option>Otros</option></select>
+    <div class="form-group">
+    <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat-inv')">+ Nueva</span></label>
+    <select id="i-cat"></select>
     </div>
     <div class="form-group"><label class="form-label">Precio ($)</label><input type="number" id="i-precio" placeholder="0"></div>
   </div>
@@ -935,16 +968,9 @@
     <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="r-monto" placeholder="0"></div>
     <div class="form-group"><label class="form-label">Día de pago</label><input type="number" id="r-dia" placeholder="1-31" min="1" max="31"></div>
   </div>
-  <div class="form-group"><label class="form-label">Categoría</label>
-    <select id="r-cat">
-      <option>Arriendo</option>
-      <option>Servicios públicos</option>
-      <option>Nómina</option>
-      <option>Internet / Teléfono</option>
-      <option>Seguros</option>
-      <option>Impuestos</option>
-      <option>Otros</option>
-    </select>
+  <div class="form-group">
+    <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat-resp')">+ Nueva</span></label>
+    <select id="r-cat"></select>
   </div>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('resp')">Cancelar</button><button class="btn-primary" onclick="guardarResp()">Guardar</button></div>
 </div></div>
@@ -961,6 +987,10 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // pedidos, clientes, proveedores se agregan al state principal
 
 const CATS_DEFAULT = ['Servicios','Productos','Arriendo','Servicios públicos','Nómina','Insumos','Cuota banco','Préstamo','Ventas','Otros'];
+const CATS_INV_DEFAULT = ['Tintes','Shampoos','Tratamientos','Herramientas','Accesorios','Insumos','Otros'];
+const CATS_RESP_DEFAULT = ['Arriendo','Servicios públicos','Nómina','Internet / Teléfono','Seguros','Impuestos','Publicidad','Otros'];
+const CATS_DEUDA_DEFAULT = ['Banco','Préstamo personal','Proveedor','Tarjeta crédito','Familiar','Otros'];
+const CATS_CARGO_DEFAULT = ['Estilista','Barbero','Colorista','Manicurista','Recepcionista','Administrador','Otros'];
 
 let state = {
   transacciones: [],
@@ -970,6 +1000,10 @@ let state = {
   eventos: [],
   responsabilidades: [],
   categorias: [...CATS_DEFAULT],
+  categoriasInv: [...CATS_INV_DEFAULT],
+  categoriasResp: [...CATS_RESP_DEFAULT],
+  categoriasDeuda: [...CATS_DEUDA_DEFAULT],
+  categoriasCargo: [...CATS_CARGO_DEFAULT],
   meta: 0,
   adminEmail: 'maranto2912@gmail.com',
   pedidos: [],
@@ -1044,6 +1078,10 @@ function abrirModal(id) {
     actualizarCategorias();
     toggleVentaFields();
   }
+  if(id === 'inv') { actualizarCategoriasInv(); }
+  if(id === 'resp') { actualizarCategoriasResp(); }
+  if(id === 'deuda') { actualizarCategoriasDeuda(); }
+  if(id === 'empleado') { actualizarCategoriasCargo(); }
   if(id === 'venta-digital') {
     document.getElementById('vd-fecha').value = new Date().toISOString().split('T')[0];
     autoComision();
@@ -1100,16 +1138,60 @@ function actualizarCategorias() {
   sel.innerHTML = cats.map(c => `<option>${c}</option>`).join('');
 }
 
-function guardarCategoria() {
-  const nombre = document.getElementById('cat-nombre').value.trim();
+function guardarCategoria(tipo) {
+  const ids = {
+    tx: {input:'cat-nombre', state:'categorias', defaults:CATS_DEFAULT, modal:'cat', next:'tx'},
+    inv: {input:'cat-inv-nombre', state:'categoriasInv', defaults:CATS_INV_DEFAULT, modal:'cat-inv', next:'inv'},
+    resp: {input:'cat-resp-nombre', state:'categoriasResp', defaults:CATS_RESP_DEFAULT, modal:'cat-resp', next:'resp'},
+    deuda: {input:'cat-deuda-nombre', state:'categoriasDeuda', defaults:CATS_DEUDA_DEFAULT, modal:'cat-deuda', next:'deuda'},
+    cargo: {input:'cat-cargo-nombre', state:'categoriasCargo', defaults:CATS_CARGO_DEFAULT, modal:'cat-cargo', next:'empleado'},
+  };
+  const cfg = ids[tipo] || ids.tx;
+  const nombre = document.getElementById(cfg.input).value.trim();
   if(!nombre) return;
-  if(!state.categorias) state.categorias = [...CATS_DEFAULT];
-  if(!state.categorias.includes(nombre)) state.categorias.push(nombre);
-  document.getElementById('cat-nombre').value = '';
-  cerrarModal('cat');
+  if(!state[cfg.state]) state[cfg.state] = [...cfg.defaults];
+  if(!state[cfg.state].includes(nombre)) state[cfg.state].push(nombre);
+  document.getElementById(cfg.input).value = '';
+  cerrarModal(cfg.modal);
   guardarLS();
+  actualizarTodasCategorias();
+  abrirModal(cfg.next);
+}
+
+function actualizarTodasCategorias() {
   actualizarCategorias();
-  abrirModal('tx');
+  actualizarCategoriasInv();
+  actualizarCategoriasResp();
+  actualizarCategoriasDeuda();
+  actualizarCategoriasCargo();
+}
+
+function actualizarCategoriasInv() {
+  const sel = document.getElementById('i-cat');
+  if(!sel) return;
+  const cats = state.categoriasInv || CATS_INV_DEFAULT;
+  sel.innerHTML = cats.map(c => `<option>${c}</option>`).join('');
+}
+
+function actualizarCategoriasResp() {
+  const sel = document.getElementById('r-cat');
+  if(!sel) return;
+  const cats = state.categoriasResp || CATS_RESP_DEFAULT;
+  sel.innerHTML = cats.map(c => `<option>${c}</option>`).join('');
+}
+
+function actualizarCategoriasDeuda() {
+  const sel = document.getElementById('d-cat');
+  if(!sel) return;
+  const cats = state.categoriasDeuda || CATS_DEUDA_DEFAULT;
+  sel.innerHTML = cats.map(c => `<option>${c}</option>`).join('');
+}
+
+function actualizarCategoriasCargo() {
+  const sel = document.getElementById('e-cargo-sel');
+  if(!sel) return;
+  const cats = state.categoriasCargo || CATS_CARGO_DEFAULT;
+  sel.innerHTML = cats.map(c => `<option>${c}</option>`).join('');
 }
 
 function toggleEfectivo() {
@@ -1224,7 +1306,8 @@ function guardarDeuda() {
 
 function guardarEmpleado() {
   const nombre = document.getElementById('e-nombre').value.trim();
-  const cargo = document.getElementById('e-cargo').value.trim();
+  const cargoSel = document.getElementById('e-cargo-sel');
+  const cargo = cargoSel ? cargoSel.value : '';
   const comision = parseFloat(document.getElementById('e-comision').value) || 0;
   const salario = parseFloat(document.getElementById('e-salario').value) || 0;
   if(!nombre) return;
@@ -1766,15 +1849,45 @@ function getPlan(email) {
   return 'gratuito'; // Por defecto gratuito hasta pagar
 }
 
-function darAccesoGratuito() {
+async function darAccesoGratuito() {
   const email = document.getElementById('adm-email-free').value.trim();
   if(!email) return;
-  const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
-  if(!freeUsers.includes(email)) freeUsers.push(email);
-  localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
-  document.getElementById('adm-email-free').value = '';
-  alert('✓ Acceso gratuito dado a ' + email);
-  renderAdmin();
+  try {
+    // Buscar usuario en Supabase por email
+    const { data: users, error } = await sb.from('perfiles').select('id, nombre, negocio').eq('id',
+      (await sb.from('perfiles').select('id')).data?.[0]?.id
+    );
+    // Actualizar plan a 'gratuito_total' para ese email en perfiles
+    const { data: authUsers } = await sb.rpc('get_user_id_by_email', { email_input: email }).catch(() => ({data: null}));
+    
+    // Alternativa: buscar en perfiles por nombre similar o actualizar directamente
+    const { data: perfil, error: perfilError } = await sb
+      .from('perfiles')
+      .update({ plan: 'gratuito_total' })
+      .eq('id', authUsers?.id || '')
+      .select();
+
+    // Guardar también en localStorage como respaldo
+    const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
+    if(!freeUsers.includes(email)) freeUsers.push(email);
+    localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
+    
+    document.getElementById('adm-email-free').value = '';
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif';
+    msg.textContent = '✓ Acceso gratuito total dado a ' + email;
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
+    renderAdmin();
+  } catch(e) {
+    // Si falla Supabase, guardar en localStorage
+    const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
+    if(!freeUsers.includes(email)) freeUsers.push(email);
+    localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
+    document.getElementById('adm-email-free').value = '';
+    alert('Acceso guardado para: ' + email + '. El usuario tendra acceso completo la proxima vez que inicie sesion.');
+    renderAdmin();
+  }
 }
 
 function copiarLink() {
@@ -1806,13 +1919,13 @@ async function renderAdmin() {
 
 function aplicarRestricciones(plan) {
   if(plan === 'admin' || plan === 'premium' || plan === 'gratuito_total') return;
-  // Plan gratuito básico: pueden VER todo pero no usar secciones premium
-  const premiumPages = ['deudas','empleados','inventario','responsabilidades','calendario','reportes'];
+  // Plan gratuito: pueden usar ingresos, egresos, deudas y responsabilidades
+  // Todo lo demás muestra popup de upgrade
+  const premiumPages = ['empleados','inventario','calendario','reportes','fiado','ventas-digitales'];
   document.querySelectorAll('.tab').forEach(tab => {
     const onclick = tab.getAttribute('onclick') || '';
     premiumPages.forEach(p => {
       if(onclick.includes("'"+p+"'")) {
-        tab.style.position = 'relative';
         tab.innerHTML = tab.textContent + ' <span style="font-size:9px;background:#7C3AED;color:white;padding:1px 5px;border-radius:10px;margin-left:3px">PRO</span>';
         tab.onclick = (e) => {
           e.preventDefault();
@@ -1821,15 +1934,6 @@ function aplicarRestricciones(plan) {
       }
     });
   });
-  // También bloquear el botón Registrar
-  const btnRegistrar = document.querySelector('.btn-primary');
-  if(btnRegistrar && btnRegistrar.textContent.includes('Registrar')) {
-    const originalOnclick = btnRegistrar.onclick;
-    btnRegistrar.onclick = () => {
-      // Solo permitir ingresos y egresos
-      abrirModal('tx');
-    };
-  }
 }
 
 function mostrarUpgrade() {
@@ -1841,12 +1945,14 @@ function mostrarUpgrade() {
       <div style="font-size:18px;font-weight:600;color:#1a1535;margin-bottom:8px;font-family:Cormorant Garamond,serif">Función Premium</div>
       <div style="font-size:13px;color:#9B8EC4;margin-bottom:20px;line-height:1.6">Esta función está disponible en el plan Premium. Actualiza por solo <strong style="color:#7C3AED">$20.000/mes</strong> y desbloquea todo CreceApp.</div>
       <div style="background:#F0EDFF;border-radius:10px;padding:14px;margin-bottom:16px;text-align:left;font-size:12px;color:#5B21B6;line-height:1.8">
-        ✓ Control de deudas<br>
+        ✓ Todo del plan gratuito<br>
         ✓ Gestión de empleados<br>
         ✓ Inventario completo<br>
-        ✓ Responsabilidades mensuales<br>
-        ✓ Reportes y gráficas<br>
-        ✓ Análisis con IA
+        ✓ Calendario de pagos<br>
+        ✓ Fiado — lo que te deben<br>
+        ✓ Ventas digitales / Dropshipping<br>
+        ✓ Reportes y gráficas avanzadas<br>
+        ✓ Análisis con inteligencia artificial
       </div>
       <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:11px;border-radius:10px;background:#7C3AED;color:white;border:none;font-size:14px;font-family:Outfit,sans-serif;cursor:pointer;font-weight:500;margin-bottom:8px">¡Quiero el plan Premium!</button>
       <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:8px;border-radius:10px;background:transparent;color:#9B8EC4;border:1px solid rgba(124,58,237,0.2);font-size:13px;font-family:Outfit,sans-serif;cursor:pointer">Continuar con plan gratuito</button>
@@ -2460,6 +2566,7 @@ function eliminarProveedor(id) {
 }
 
 function renderAll() {
+  actualizarTodasCategorias();
   renderAlertas();
   renderMeta();
   renderMetrics();
