@@ -144,6 +144,7 @@
 
   /* MODAL */
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .overlay-top { z-index: 500 !important; background: rgba(0,0,0,.6) !important; }
   .modal { background: var(--bg); border-radius: var(--radius-lg); padding: 22px; width: 100%; max-width: 380px; border: 1px solid var(--border2); max-height: 90vh; overflow-y: auto; }
   .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
   .form-group { margin-bottom: 12px; }
@@ -322,6 +323,7 @@
     <span class="section-title">Empleados</span>
     <button class="btn-primary" onclick="abrirModal('empleado')">+ Nuevo empleado</button>
   </div>
+  <div id="horas-section" style="display:none"></div>
   <div id="emp-list"></div>
 </div>
 
@@ -984,7 +986,7 @@
 <div class="overlay" id="overlay-resp">
 <div class="modal">
   <div class="modal-title">Nueva responsabilidad mensual</div>
-  <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="r-desc" placeholder="Arriendo, internet, nómina..."></div>
+  <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="r-nombre" placeholder="Arriendo, internet, nómina..."></div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="r-monto" placeholder="0"></div>
     <div class="form-group"><label class="form-label">Día de pago</label><input type="number" id="r-dia" placeholder="1-31" min="1" max="31"></div>
@@ -2075,13 +2077,19 @@ function mostrarUpgrade() {
 }
 
 function guardarResp() {
-  const desc = document.getElementById('r-desc').value.trim();
+  const nombreEl = document.getElementById('r-nombre');
+  const nombre = nombreEl ? nombreEl.value.trim() : '';
   const monto = parseFloat(document.getElementById('r-monto').value) || 0;
   const dia = parseInt(document.getElementById('r-dia').value) || 1;
-  const cat = document.getElementById('r-cat').value;
-  if(!desc || !monto) return;
-  state.responsabilidades.push({ desc, monto, dia, cat, pagado: false, id: Date.now() });
-  document.getElementById('r-desc').value = '';
+  const cat = document.getElementById('r-cat') ? document.getElementById('r-cat').value : 'Otros';
+  if(!nombre || !monto) { alert('Por favor completa el nombre y monto.'); return; }
+  const newId = Date.now();
+  state.responsabilidades.push({ nombre, desc: nombre, monto, dia, cat, pagado: false, id: newId });
+  // Agregar automáticamente al calendario
+  if(!state.eventos.some(e => e.desc === nombre && e.monto === monto)) {
+    state.eventos.push({ desc: nombre, monto, dia, tipo: 'pago', respId: newId, id: Date.now()+1 });
+  }
+  if(nombreEl) nombreEl.value = '';
   document.getElementById('r-monto').value = '';
   document.getElementById('r-dia').value = '';
   cerrarModal('resp');
