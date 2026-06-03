@@ -1093,12 +1093,14 @@ function getDeviceId() {
   return id;
 }
 const DEVICE_ID = getDeviceId();
+let currentUserId = null;
 
 async function guardarLS() {
-  try { localStorage.setItem('creceapp', JSON.stringify(state)); } catch(e){}
+  try { localStorage.setItem('creceapp_' + (currentUserId||DEVICE_ID), JSON.stringify(state)); } catch(e){}
+  if(!currentUserId) return;
   try {
     await sb.from('creceapp_data').upsert({
-      device_id: DEVICE_ID,
+      device_id: currentUserId,
       data: state,
       updated_at: new Date().toISOString()
     }, { onConflict: 'device_id' });
@@ -1106,11 +1108,20 @@ async function guardarLS() {
 }
 
 async function cargarLS() {
-  try {
-    const { data } = await sb.from('creceapp_data').select('data').eq('device_id', DEVICE_ID).single();
-    if(data && data.data) { state = data.data; return; }
-  } catch(e) {}
-  try { const d = localStorage.getItem('creceapp'); if(d) state = JSON.parse(d); } catch(e){}
+  const key = currentUserId || DEVICE_ID;
+  if(currentUserId) {
+    try {
+      const { data } = await sb.from('creceapp_data').select('data').eq('device_id', currentUserId).single();
+      if(data && data.data) { 
+        state = { ...state, ...data.data };
+        return; 
+      }
+    } catch(e) {}
+  }
+  try { 
+    const d = localStorage.getItem('creceapp_' + key) || localStorage.getItem('creceapp'); 
+    if(d) state = { ...state, ...JSON.parse(d) }; 
+  } catch(e){}
 }
 
 // ─── UTILS ────────────────────────────────────────────────
@@ -1166,6 +1177,7 @@ function abrirModal(id) {
   if(id === 'venta-digital') {
     document.getElementById('vd-fecha').value = new Date().toISOString().split('T')[0];
     autoComision();
+    calcVD();
   }
   if(id === 'fiado') {
     document.getElementById('fi-fecha').value = new Date().toISOString().split('T')[0];
@@ -1364,10 +1376,13 @@ function toggleTipoDeuda() {
   if(quincenalGroup) quincenalGroup.style.display = esQuincenal ? 'block' : 'none';
   if(cuotaLabel) cuotaLabel.textContent = tipo === 'quincenal' ? 'Valor cuota quincenal ($)' : tipo === 'semanal' ? 'Valor cuota semanal ($)' : tipo === 'diario' ? 'Valor pago diario ($)' : 'Valor cuota mensual ($)';
   const diaLabel = document.getElementById('d-dia-label');
-  if(diaLabel) {
-    if(tipo === 'diario') diaLabel.textContent = 'N/A';
-    else if(tipo === 'semanal') diaLabel.textContent = 'Día de la semana (1=Lun, 7=Dom)';
-    else diaLabel.textContent = 'Día de pago cada mes (1-31)';
+  const diaInput = document.getElementById('d-dia');
+  const diaGroup = document.getElementById('d-dia-simple-group');
+  if(tipo === 'diario') {
+    if(diaGroup) diaGroup.style.display = 'none';
+  } else {
+    if(diaGroup) diaGroup.style.display = 'block';
+    if(diaLabel) diaLabel.textContent = tipo === 'semanal' ? 'Día de la semana (1=Lun, 7=Dom)' : 'Día de pago cada mes (1-31)';
   }
 }
 
@@ -1452,7 +1467,12 @@ function abonarDeuda(id) {
   const monto = parseFloat(prompt('¿Cuánto vas a abonar?'));
   if(!monto || isNaN(monto)) return;
   const d = state.deudas.find(x => x.id === id);
-  if(d) { d.pagado = Math.min(d.pagado + monto, d.total); guardarLS(); renderAll(); }
+  if(d) {
+    d.pagado = Math.min(d.pagado + monto, d.total);
+    if(!d.historialAbonos) d.historialAbonos = [];
+    d.historialAbonos.push({ monto, fecha: new Date().toISOString().split('T')[0] });
+    guardarLS(); renderAll();
+  }
 }
 
 function eliminarDeuda(id) {
@@ -2292,8 +2312,8 @@ function renderReportes() {
   const ing = txMes.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
   const egr = txMes.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
   const bal = ing - egr;
-  const serv = txMes.filter(t=>t.tipo==='ingreso');
-  const ticket = serv.length ? ing/serv.length : 0;
+  const ingresos = txMes.filter(t=>t.tipo==='ingreso');
+  const ticket = ingresos.length ? ing/ingresos.length : 0;
   const ratio = ing > 0 ? Math.round(egr/ing*100) : 0;
   const totalDeuda = state.deudas.reduce((s,d)=>s+(d.total-d.pagado),0);
   document.getElementById('r-ing').textContent = fmt(ing);
@@ -2468,9 +2488,7 @@ function mostrarUpgrade() {
   document.body.appendChild(overlay);
 }
 
-function mostrarUpgrade() {
-  alert('Plan Premium requerido. Actualiza por solo $20.000 al mes para desbloquear todas las funciones de CreceApp.');
-}
+
 
 function guardarResp() {
   const nombreEl = document.getElementById('r-nombre');
@@ -2481,8 +2499,8 @@ function guardarResp() {
   if(!nombre || !monto) { alert('Por favor completa el nombre y monto.'); return; }
   const newId = Date.now();
   state.responsabilidades.push({ nombre, desc: nombre, monto, dia, cat, pagado: false, id: newId });
-  // Agregar automáticamente al calendario
-  if(!state.eventos.some(e => e.desc === nombre && e.monto === monto)) {
+  // Agregar al calendario solo si no existe ya por respId
+  if(!state.eventos.some(e => e.respId === newId)) {
     state.eventos.push({ desc: nombre, monto, dia, tipo: 'pago', respId: newId, id: Date.now()+1 });
   }
   if(nombreEl) nombreEl.value = '';
@@ -2500,6 +2518,7 @@ function togglePago(id) {
 
 function eliminarResp(id) {
   state.responsabilidades = state.responsabilidades.filter(x => x.id !== id);
+  state.eventos = state.eventos.filter(e => e.respId !== id);
   guardarLS();
   renderAll();
 }
@@ -2633,7 +2652,12 @@ function abonarFiado(id) {
   const monto = parseFloat(prompt('¿Cuánto abonó el cliente?'));
   if(!monto || isNaN(monto)) return;
   const f = state.fiados.find(x => x.id === id);
-  if(f) { f.pagado = Math.min(f.pagado + monto, f.monto); guardarLS(); renderFiados(); }
+  if(f) {
+    f.pagado = Math.min(f.pagado + monto, f.monto);
+    if(!f.historialAbonos) f.historialAbonos = [];
+    f.historialAbonos.push({ monto, fecha: new Date().toISOString().split('T')[0] });
+    guardarLS(); renderFiados();
+  }
 }
 
 function eliminarFiado(id) {
@@ -3227,6 +3251,8 @@ async function cambiarContrasena() {
 }
 
 async function cerrarSesion() {
+  clearTimeout(inactivityTimer);
+  currentUserId = null;
   await sb.auth.signOut();
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('main-app').style.display = 'none';
@@ -3287,7 +3313,9 @@ async function init() {
     return;
   }
 
-  // Mostrar auth screen de inmediato sin esperar
+  // Ocultar "Conectando..." y mostrar auth screen
+  const loadingEl = document.getElementById('loading-supabase');
+  if(loadingEl) loadingEl.style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('main-app').style.display = 'none';
 
@@ -3304,6 +3332,8 @@ async function init() {
       if(adminTab) adminTab.style.display = isAdmin ? 'block' : 'none';
       document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : userEmail.split('@')[0];
       document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : '✓ Gratuito';
+      currentUserId = session.user.id;
+      currentUserId = session.user.id;
       await cargarPerfil(session.user.id);
       await cargarLS();
       renderAll();
