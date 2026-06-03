@@ -1853,30 +1853,13 @@ async function darAccesoGratuito() {
   const email = document.getElementById('adm-email-free').value.trim();
   if(!email) return;
   try {
-    // Obtener ID del usuario
-    const { data: userId, error: rpcError } = await sb.rpc('get_user_id_by_email', { email_input: email });
-    console.log('userId:', userId, 'error:', rpcError);
-    
-    if(!userId) {
+    // Usar función SQL que tiene permisos de service role
+    const { data, error } = await sb.rpc('activar_plan_gratuito', { email_input: email });
+    if(error) throw error;
+    if(!data) {
       alert('No se encontró ningún usuario con ese correo. Verifica que esté registrado en CreceApp.');
       return;
     }
-
-    // Actualizar plan directamente
-    const { error: updateError } = await sb
-      .from('perfiles')
-      .update({ plan: 'gratuito_total' })
-      .eq('id', userId);
-
-    if(updateError) {
-      console.log('Update error:', updateError);
-      // Intentar upsert si update falla
-      const { error: upsertError } = await sb
-        .from('perfiles')
-        .upsert({ id: userId, nombre: email, negocio: 'Sin negocio', plan: 'gratuito_total' });
-      if(upsertError) throw upsertError;
-    }
-
     document.getElementById('adm-email-free').value = '';
     const msg = document.createElement('div');
     msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap';
@@ -1885,8 +1868,8 @@ async function darAccesoGratuito() {
     setTimeout(() => msg.remove(), 3000);
     renderAdmin();
   } catch(e) {
-    console.log('Error completo:', e);
-    alert('Error activando acceso: ' + (e.message || JSON.stringify(e)));
+    console.log('Error:', e);
+    alert('Error: ' + (e.message || 'No se pudo activar el acceso'));
   }
 }
 
@@ -1897,7 +1880,7 @@ function copiarLink() {
 async function renderAdmin() {
   try {
     // Contar usuarios desde auth.users via SQL
-    const { data: countData } = await sb.rpc('count_users').catch(() => ({data: null}));
+    const { data: countData } = await sb.rpc('count_users').catch ? await sb.rpc('count_users').catch(() => ({data: null})) : {data: null};
     
     // Fallback: contar desde perfiles
     const { data, error } = await sb.from('perfiles').select('id, nombre, negocio, plan, created_at');
@@ -2481,7 +2464,7 @@ function renderPedidos() {
   if(pedIng) pedIng.textContent = fmt(ingresos);
   if(pedGan) pedGan.textContent = fmt(ganancia);
   if(!lista.length) { el.innerHTML = '<div class="empty-state">No hay pedidos en esta categoría.</div>'; return; }
-  const cli = state.clientes;
+  const cli = state.clientes || [];
   el.innerHTML = lista.map(p => {
     const c = cli.find(x => x.id == p.clienteId);
     const est = estadoColors[p.estado] || estadoColors.recibido;
