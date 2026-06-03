@@ -321,7 +321,20 @@
 <div id="page-empleados" class="page content">
   <div class="section-header">
     <span class="section-title">Empleados</span>
-    <button class="btn-primary" onclick="abrirModal('empleado')">+ Nuevo empleado</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn-sm" onclick="toggleHistorialEmpleados()">📋 Historial pagos</button>
+      <button class="btn-primary" onclick="abrirModal('empleado')">+ Nuevo empleado</button>
+    </div>
+  </div>
+  <!-- HISTORIAL PAGOS -->
+  <div id="historial-empleados" style="display:none;margin-bottom:16px">
+    <div style="background:#fff;border-radius:12px;padding:16px;border:1px solid rgba(124,58,237,0.15)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:600;color:#1a1535">📋 Historial de pagos semanales</div>
+        <button class="btn-sm" style="font-size:11px" onclick="toggleHistorialEmpleados()">✕ Cerrar</button>
+      </div>
+      <div id="historial-empleados-contenido"></div>
+    </div>
   </div>
   <!-- CALCULADORA DE HORAS -->
   <div id="horas-section" style="display:none;margin-bottom:16px">
@@ -1920,6 +1933,113 @@ function calcHorasSemana(e) {
   const lunes = new Date(hoy); lunes.setDate(hoy.getDate()-hoy.getDay()+1);
   const lunesStr = lunes.toISOString().split('T')[0];
   return (e.horasLog||[]).filter(h=>h.fecha>=lunesStr).reduce((s,h)=>s+h.horas,0);
+}
+
+function toggleHistorialEmpleados() {
+  const el = document.getElementById('historial-empleados');
+  if(!el) return;
+  const visible = el.style.display === 'block';
+  el.style.display = visible ? 'none' : 'block';
+  if(!visible) renderHistorialEmpleados();
+}
+
+function renderHistorialEmpleados() {
+  const el = document.getElementById('historial-empleados-contenido');
+  if(!el) return;
+  if(!state.empleados.length) {
+    el.innerHTML = '<div class="empty-state">No hay empleados registrados.</div>';
+    return;
+  }
+
+  // Obtener todas las semanas con registros
+  function getLunes(fecha) {
+    const d = new Date(fecha + 'T12:00:00');
+    const lunes = new Date(d);
+    lunes.setDate(d.getDate() - d.getDay() + 1);
+    return lunes.toISOString().split('T')[0];
+  }
+
+  function fmtSemana(lunesStr) {
+    const lunes = new Date(lunesStr + 'T12:00:00');
+    const domingo = new Date(lunes);
+    domingo.setDate(lunes.getDate() + 6);
+    return `${lunes.getDate()}/${lunes.getMonth()+1} — ${domingo.getDate()}/${domingo.getMonth()+1}/${domingo.getFullYear()}`;
+  }
+
+  let html = '';
+  state.empleados.forEach(e => {
+    // Agrupar por semana
+    const semanas = {};
+
+    // Horas
+    if(e.tipoPago === 'horas') {
+      (e.horasLog||[]).forEach(h => {
+        const lunes = getLunes(h.fecha);
+        if(!semanas[lunes]) semanas[lunes] = { horas: 0, ventas: 0 };
+        semanas[lunes].horas += h.horas;
+      });
+    }
+
+    // Comisiones
+    if(e.tipoPago === 'comision') {
+      (e.comisionLog||[]).forEach(v => {
+        const lunes = getLunes(v.fecha);
+        if(!semanas[lunes]) semanas[lunes] = { horas: 0, ventas: 0 };
+        semanas[lunes].ventas += v.venta;
+      });
+    }
+
+    const semanasOrdenadas = Object.keys(semanas).sort((a,b) => b.localeCompare(a));
+    if(!semanasOrdenadas.length) return;
+
+    html += `<div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:32px;height:32px;border-radius:50%;background:#EDE9FF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#7C3AED">${iniciales(e.nombre)}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#1a1535">${e.nombre}</div>
+          <div style="font-size:11px;color:var(--text2)">${e.cargo} · ${e.tipoPago === 'horas' ? fmt(e.valorHora||0)+'/h' : e.comision+'% comisión'}</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <tr style="background:#F8F7FF">
+            <th style="padding:8px;text-align:left;color:var(--text2);font-weight:500;border-bottom:1px solid rgba(124,58,237,0.1)">Semana</th>
+            ${e.tipoPago === 'horas' ? '<th style="padding:8px;text-align:right;color:var(--text2);font-weight:500;border-bottom:1px solid rgba(124,58,237,0.1)">Horas</th>' : '<th style="padding:8px;text-align:right;color:var(--text2);font-weight:500;border-bottom:1px solid rgba(124,58,237,0.1)">Ventas</th>'}
+            <th style="padding:8px;text-align:right;color:var(--text2);font-weight:500;border-bottom:1px solid rgba(124,58,237,0.1)">Total a pagar</th>
+          </tr>
+          ${semanasOrdenadas.map(lunes => {
+            const s = semanas[lunes];
+            let pago = 0;
+            let detalle = '';
+            if(e.tipoPago === 'horas') {
+              pago = s.horas * (e.valorHora||0);
+              detalle = `${s.horas}h`;
+            } else {
+              pago = s.ventas * (e.comision/100);
+              detalle = fmt(s.ventas);
+            }
+            return `<tr style="border-bottom:1px solid rgba(124,58,237,0.06)">
+              <td style="padding:8px;color:#1a1535">${fmtSemana(lunes)}</td>
+              <td style="padding:8px;text-align:right;color:var(--text2)">${detalle}</td>
+              <td style="padding:8px;text-align:right;font-weight:600;color:#7C3AED">${fmt(pago)}</td>
+            </tr>`;
+          }).join('')}
+          <tr style="background:#F0EDFF">
+            <td style="padding:8px;font-weight:600;color:#1a1535">TOTAL HISTÓRICO</td>
+            <td style="padding:8px"></td>
+            <td style="padding:8px;text-align:right;font-weight:700;color:#7C3AED;font-size:14px">${fmt(
+              semanasOrdenadas.reduce((s, lunes) => {
+                const sem = semanas[lunes];
+                return s + (e.tipoPago === 'horas' ? sem.horas*(e.valorHora||0) : sem.ventas*(e.comision/100));
+              }, 0)
+            )}</td>
+          </tr>
+        </table>
+      </div>
+    </div>`;
+  });
+
+  el.innerHTML = html || '<div class="empty-state">No hay registros de horas ni ventas aún.</div>';
 }
 
 function calcVentasHoy(e) {
