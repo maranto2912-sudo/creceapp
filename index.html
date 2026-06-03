@@ -1717,7 +1717,48 @@ function renderDeudas() {
 // ─── RENDER EMPLEADOS ─────────────────────────────────────
 function renderEmpleados() {
   const el = document.getElementById('emp-list');
-  // Render comision section
+  if(!el) return;
+
+  // ─── HORAS SECTION ───
+  const horarios = state.empleados.filter(e => e.tipoPago === 'horas');
+  const horasSection = document.getElementById('horas-section');
+  const horasListEl = document.getElementById('horas-empleados-list');
+  if(horasSection && horasListEl) {
+    if(horarios.length) {
+      horasSection.style.display = 'block';
+      horasListEl.innerHTML = horarios.map(e => {
+        const horasHoy = calcHorasHoy(e);
+        const horasSemana = calcHorasPeriodo(e);
+        const labelPeriodo = getLabelPeriodo(e.frecuencia||'semanal');
+        const frecLabel = e.frecuencia === 'mensual' ? '📅 Mensual' : e.frecuencia === 'quincenal' ? '📅 Quincenal' : '📅 Semanal';
+        return `<div style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid rgba(124,58,237,0.1)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#1a1535">${e.nombre}</div>
+              <div style="font-size:11px;color:var(--text2)">${fmt(e.valorHora||0)}/hora · <span style="color:#7C3AED">${frecLabel}</span></div>
+            </div>
+            <button class="btn-primary" style="font-size:12px;padding:6px 14px" onclick="registrarHoras(${e.id})">+ Horas hoy</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:#F0EDFF;border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:11px;color:var(--text2)">Hoy</div>
+              <div style="font-size:18px;font-weight:700;color:#7C3AED">${horasHoy}h</div>
+              <div style="font-size:12px;color:#059669;font-weight:500">${fmt(horasHoy*(e.valorHora||0))}</div>
+            </div>
+            <div style="background:#F0EDFF;border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:11px;color:var(--text2)">${labelPeriodo}</div>
+              <div style="font-size:18px;font-weight:700;color:#7C3AED">${horasSemana}h</div>
+              <div style="font-size:12px;color:#059669;font-weight:500">${fmt(horasSemana*(e.valorHora||0))}</div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    } else {
+      horasSection.style.display = 'none';
+    }
+  }
+
+  // ─── COMISION SECTION ───
   const comisionistas = state.empleados.filter(e => e.tipoPago === 'comision');
   const comisionSection = document.getElementById('comision-section');
   const comisionListEl = document.getElementById('comision-empleados-list');
