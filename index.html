@@ -1896,23 +1896,45 @@ function copiarLink() {
 
 async function renderAdmin() {
   try {
-    const { data, error } = await sb.from('perfiles').select('*').order('created_at', {ascending: false});
-    if(error || !data) return;
-    document.getElementById('adm-users').textContent = data.length;
-    document.getElementById('adm-premium').textContent = data.filter(u=>u.plan==='premium').length;
-    document.getElementById('adm-ingresos').textContent = fmt(data.filter(u=>u.plan==='premium').length * 20000);
+    // Contar usuarios desde auth.users via SQL
+    const { data: countData } = await sb.rpc('count_users').catch(() => ({data: null}));
+    
+    // Fallback: contar desde perfiles
+    const { data, error } = await sb.from('perfiles').select('id, nombre, negocio, plan, created_at');
+    
+    const total = data ? data.length : (countData || 0);
+    const premium = data ? data.filter(u=>u.plan==='premium').length : 0;
+    const gratuito_total = data ? data.filter(u=>u.plan==='gratuito_total').length : 0;
+    
+    document.getElementById('adm-users').textContent = total;
+    document.getElementById('adm-premium').textContent = premium;
+    document.getElementById('adm-ingresos').textContent = fmt(premium * 20000);
     document.getElementById('adm-link').textContent = 'https://creceapp-nine.vercel.app';
+
     const el = document.getElementById('adm-users-list');
-    el.innerHTML = data.length ? data.map(u => `
+    if(!data || !data.length) {
+      // Si no hay perfiles, mostrar solo el conteo
+      el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">
+        <div style="font-size:32px;margin-bottom:8px">👥</div>
+        <div style="font-weight:500;color:var(--text)">${total} usuario${total!==1?'s':''} registrado${total!==1?'s':''}</div>
+        <div style="font-size:11px;margin-top:4px">${premium} premium · ${gratuito_total} gratuito total · ${total-premium-gratuito_total} gratuito básico</div>
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = data.map(u => `
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid rgba(124,58,237,0.08)">
         <div style="width:32px;height:32px;border-radius:50%;background:#EDE9FF;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#7C3AED;flex-shrink:0">${(u.nombre||'?')[0].toUpperCase()}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:500;color:var(--text)">${u.nombre||'Sin nombre'}</div>
           <div style="font-size:11px;color:var(--text2)">${u.negocio||'Sin negocio'}</div>
         </div>
-        <span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${u.plan==='premium'?'#EDE9FF':'#F3F4F6'};color:${u.plan==='premium'?'#7C3AED':'#6B7280'};font-weight:500">${u.plan||'gratuito'}</span>
-      </div>`).join('') : '<div class="empty-state">No hay usuarios aún.</div>';
-  } catch(e) { console.log('Admin error:', e); }
+        <span style="font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500;background:${u.plan==='premium'?'#EDE9FF':u.plan==='gratuito_total'?'#D1FAE5':'#F3F4F6'};color:${u.plan==='premium'?'#7C3AED':u.plan==='gratuito_total'?'#059669':'#6B7280'}">${u.plan||'gratuito'}</span>
+      </div>`).join('');
+  } catch(e) { 
+    console.log('Admin error:', e);
+    document.getElementById('adm-users-list').innerHTML = '<div class="empty-state">Error cargando usuarios.</div>';
+  }
 }
 
 
