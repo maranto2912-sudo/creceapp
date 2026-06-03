@@ -2512,16 +2512,18 @@ function renderClientes() {
   if(cliTotal) cliTotal.textContent = state.clientes.length;
   // Calcular cliente top por pedidos
   const comprasPorCli = {};
-  state.pedidos.forEach(p => { if(p.clienteId) comprasPorCli[p.clienteId] = (comprasPorCli[p.clienteId]||0) + p.precio*p.cantidad; });
+  const pedidosList = state.pedidos || [];
+  pedidosList.forEach(p => { if(p.clienteId) comprasPorCli[p.clienteId] = (comprasPorCli[p.clienteId]||0) + p.precio*p.cantidad; });
   const topId = Object.keys(comprasPorCli).sort((a,b)=>comprasPorCli[b]-comprasPorCli[a])[0];
   const topCli = topId ? state.clientes.find(c=>c.id==topId) : null;
   if(cliTop) cliTop.textContent = topCli ? topCli.nombre : '—';
   const totalCompras = Object.values(comprasPorCli).reduce((s,v)=>s+v,0);
   if(cliProm) cliProm.textContent = state.clientes.length ? fmt(totalCompras/state.clientes.length) : '$0';
-  if(!state.clientes.length) { el.innerHTML = '<div class="empty-state">Agrega tus clientes frecuentes.</div>'; return; }
-  el.innerHTML = state.clientes.map(c => {
+  const clientesList = state.clientes || [];
+  if(!clientesList.length) { el.innerHTML = '<div class="empty-state">Agrega tus clientes frecuentes.</div>'; return; }
+  el.innerHTML = clientesList.map(c => {
     const compras = comprasPorCli[c.id] || 0;
-    const numPedidos = state.pedidos.filter(p=>p.clienteId==c.id).length;
+    const numPedidos = pedidosList.filter(p=>p.clienteId==c.id).length;
     return `<div class="emp-card">
       <div class="emp-avatar">${c.nombre[0].toUpperCase()}</div>
       <div class="emp-info">
