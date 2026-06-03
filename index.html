@@ -794,7 +794,7 @@
 </div></div>
 
 <!-- MODAL CATEGORÍA TRANSACCIONES -->
-<div class="overlay" id="overlay-cat">
+<div class="overlay overlay-top" id="overlay-cat">
 <div class="modal">
   <div class="modal-title">Nueva categoría</div>
   <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="cat-nombre" placeholder="Ej: Cuota banco, préstamo..."></div>
@@ -802,7 +802,7 @@
 </div></div>
 
 <!-- MODAL CATEGORÍA INVENTARIO -->
-<div class="overlay" id="overlay-cat-inv">
+<div class="overlay overlay-top" id="overlay-cat-inv">
 <div class="modal">
   <div class="modal-title">Nueva categoría de inventario</div>
   <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="cat-inv-nombre" placeholder="Ej: Coloración, Herramientas..."></div>
@@ -810,7 +810,7 @@
 </div></div>
 
 <!-- MODAL CATEGORÍA RESPONSABILIDADES -->
-<div class="overlay" id="overlay-cat-resp">
+<div class="overlay overlay-top" id="overlay-cat-resp">
 <div class="modal">
   <div class="modal-title">Nueva categoría de responsabilidad</div>
   <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="cat-resp-nombre" placeholder="Ej: Membresía, Publicidad..."></div>
@@ -818,7 +818,7 @@
 </div></div>
 
 <!-- MODAL CATEGORÍA DEUDAS -->
-<div class="overlay" id="overlay-cat-deuda">
+<div class="overlay overlay-top" id="overlay-cat-deuda">
 <div class="modal">
   <div class="modal-title">Nueva categoría de deuda</div>
   <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="cat-deuda-nombre" placeholder="Ej: Préstamo personal, Crédito..."></div>
@@ -826,7 +826,7 @@
 </div></div>
 
 <!-- MODAL CARGO EMPLEADOS -->
-<div class="overlay" id="overlay-cat-cargo">
+<div class="overlay overlay-top" id="overlay-cat-cargo">
 <div class="modal">
   <div class="modal-title">Nuevo cargo</div>
   <div class="form-group"><label class="form-label">Nombre del cargo</label><input type="text" id="cat-cargo-nombre" placeholder="Ej: Colorista, Recepcionista..."></div>
@@ -859,8 +859,17 @@
     <div class="form-group"><label class="form-label">Fecha vencimiento</label><input type="date" id="d-fecha"></div>
   </div>
   <div id="d-dia-group" style="display:none">
-    <div class="form-group"><label class="form-label">Día de pago cada mes (1-31)</label><input type="number" id="d-dia" placeholder="Ej: 5" min="1" max="31"></div>
-    <div class="form-group"><label class="form-label">Valor cuota mensual ($)</label><input type="number" id="d-cuota" placeholder="0"></div>
+    <div class="form-group" id="d-dia-simple-group">
+      <label class="form-label" id="d-dia-label">Día de pago cada mes (1-31)</label>
+      <input type="number" id="d-dia" placeholder="Ej: 5" min="1" max="31">
+    </div>
+    <div class="form-group" id="d-dias-quincenal-group" style="display:none">
+      <label class="form-label">Primer día de pago</label>
+      <input type="number" id="d-dia1" placeholder="Ej: 1" min="1" max="31">
+      <label class="form-label" style="margin-top:8px">Segundo día de pago</label>
+      <input type="number" id="d-dia2" placeholder="Ej: 15" min="1" max="31">
+    </div>
+    <div class="form-group"><label class="form-label" id="d-cuota-label">Valor de la cuota ($)</label><input type="number" id="d-cuota" placeholder="0"></div>
   </div>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('deuda')">Cancelar</button><button class="btn-primary" onclick="guardarDeuda()">Guardar</button></div>
 </div></div>
@@ -917,7 +926,19 @@
     </div>
     <div class="form-group"><label class="form-label">% Comisión</label><input type="number" id="e-comision" placeholder="0" min="0" max="100"></div>
   </div>
-  <div class="form-group"><label class="form-label">Salario base ($)</label><input type="number" id="e-salario" placeholder="0"></div>
+  <div class="form-group"><label class="form-label">Tipo de pago</label>
+    <select id="e-tipo-pago" onchange="toggleTipoPago()">
+      <option value="fijo">Salario fijo</option>
+      <option value="comision">Solo comisión</option>
+      <option value="horas">Por horas</option>
+    </select>
+  </div>
+  <div id="e-salario-group">
+    <div class="form-group"><label class="form-label">Salario base ($)</label><input type="number" id="e-salario" placeholder="0" min="0"></div>
+  </div>
+  <div id="e-horas-group" style="display:none">
+    <div class="form-group"><label class="form-label">Valor por hora ($)</label><input type="number" id="e-valor-hora" placeholder="0" min="0"></div>
+  </div>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('empleado')">Cancelar</button><button class="btn-primary" onclick="guardarEmpleado()">Guardar</button></div>
 </div></div>
 
@@ -1070,6 +1091,12 @@ function showPage(id, btn) {
 
 // ─── MODALES ──────────────────────────────────────────────
 function abrirModal(id) {
+  // Si es modal de categoría, abrir encima sin cerrar el actual
+  const catModals = ['cat','cat-inv','cat-resp','cat-deuda','cat-cargo'];
+  if(catModals.includes(id)) {
+    document.getElementById('overlay-' + id).style.display = 'flex';
+    return;
+  }
   if(id === 'tx') {
     document.getElementById('tx-fecha').value = new Date().toISOString().split('T')[0];
     const sel = document.getElementById('tx-emp');
@@ -1140,11 +1167,11 @@ function actualizarCategorias() {
 
 function guardarCategoria(tipo) {
   const ids = {
-    tx: {input:'cat-nombre', state:'categorias', defaults:CATS_DEFAULT, modal:'cat', next:'tx'},
-    inv: {input:'cat-inv-nombre', state:'categoriasInv', defaults:CATS_INV_DEFAULT, modal:'cat-inv', next:'inv'},
-    resp: {input:'cat-resp-nombre', state:'categoriasResp', defaults:CATS_RESP_DEFAULT, modal:'cat-resp', next:'resp'},
-    deuda: {input:'cat-deuda-nombre', state:'categoriasDeuda', defaults:CATS_DEUDA_DEFAULT, modal:'cat-deuda', next:'deuda'},
-    cargo: {input:'cat-cargo-nombre', state:'categoriasCargo', defaults:CATS_CARGO_DEFAULT, modal:'cat-cargo', next:'empleado'},
+    tx: {input:'cat-nombre', state:'categorias', defaults:CATS_DEFAULT, modal:'cat'},
+    inv: {input:'cat-inv-nombre', state:'categoriasInv', defaults:CATS_INV_DEFAULT, modal:'cat-inv'},
+    resp: {input:'cat-resp-nombre', state:'categoriasResp', defaults:CATS_RESP_DEFAULT, modal:'cat-resp'},
+    deuda: {input:'cat-deuda-nombre', state:'categoriasDeuda', defaults:CATS_DEUDA_DEFAULT, modal:'cat-deuda'},
+    cargo: {input:'cat-cargo-nombre', state:'categoriasCargo', defaults:CATS_CARGO_DEFAULT, modal:'cat-cargo'},
   };
   const cfg = ids[tipo] || ids.tx;
   const nombre = document.getElementById(cfg.input).value.trim();
@@ -1152,10 +1179,10 @@ function guardarCategoria(tipo) {
   if(!state[cfg.state]) state[cfg.state] = [...cfg.defaults];
   if(!state[cfg.state].includes(nombre)) state[cfg.state].push(nombre);
   document.getElementById(cfg.input).value = '';
-  cerrarModal(cfg.modal);
+  // Solo cerrar el modal de categoría, no el principal
+  document.getElementById('overlay-' + cfg.modal).style.display = 'none';
   guardarLS();
   actualizarTodasCategorias();
-  abrirModal(cfg.next);
 }
 
 function actualizarTodasCategorias() {
@@ -1275,13 +1302,18 @@ function toggleTipoDeuda() {
   const tipo = document.getElementById('d-tipo').value;
   document.getElementById('d-fecha-group').style.display = tipo === 'fija' ? 'block' : 'none';
   document.getElementById('d-dia-group').style.display = tipo !== 'fija' ? 'block' : 'none';
-  // Cambiar label según tipo
-  const label = document.querySelector('#d-dia-group .form-label');
-  if(label) {
-    if(tipo === 'diario') label.textContent = 'Valor del pago diario ($)';
-    else if(tipo === 'semanal') label.textContent = 'Día de la semana (1=Lun, 7=Dom)';
-    else if(tipo === 'quincenal') label.textContent = 'Días de pago (ej: 1 y 15)';
-    else label.textContent = 'Día de pago cada mes (1-31)';
+  const esQuincenal = tipo === 'quincenal';
+  const diasGroup = document.getElementById('d-dia-simple-group');
+  const quincenalGroup = document.getElementById('d-dias-quincenal-group');
+  const cuotaLabel = document.getElementById('d-cuota-label');
+  if(diasGroup) diasGroup.style.display = esQuincenal ? 'none' : 'block';
+  if(quincenalGroup) quincenalGroup.style.display = esQuincenal ? 'block' : 'none';
+  if(cuotaLabel) cuotaLabel.textContent = tipo === 'quincenal' ? 'Valor cuota quincenal ($)' : tipo === 'semanal' ? 'Valor cuota semanal ($)' : tipo === 'diario' ? 'Valor pago diario ($)' : 'Valor cuota mensual ($)';
+  const diaLabel = document.getElementById('d-dia-label');
+  if(diaLabel) {
+    if(tipo === 'diario') diaLabel.textContent = 'N/A';
+    else if(tipo === 'semanal') diaLabel.textContent = 'Día de la semana (1=Lun, 7=Dom)';
+    else diaLabel.textContent = 'Día de pago cada mes (1-31)';
   }
 }
 
@@ -1294,7 +1326,7 @@ function guardarDeuda() {
   const diaPago = tipo === 'mensual' ? parseInt(document.getElementById('d-dia').value) || 1 : null;
   const cuotaMensual = tipo === 'mensual' ? parseFloat(document.getElementById('d-cuota').value) || 0 : 0;
   if(!nombre || !total) return;
-  state.deudas.push({ nombre, total, pagado, fecha, tipo, diaPago, cuotaMensual, id: Date.now() });
+  state.deudas.push({ nombre, total, pagado, fecha, tipo, diaPago, dia1, dia2, cuotaMensual, id: Date.now() });
   ['d-nombre','d-total','d-pagado','d-cuota','d-dia'].forEach(id => {
     const el = document.getElementById(id);
     if(el) el.value = '';
@@ -1308,10 +1340,12 @@ function guardarEmpleado() {
   const nombre = document.getElementById('e-nombre').value.trim();
   const cargoSel = document.getElementById('e-cargo-sel');
   const cargo = cargoSel ? cargoSel.value : '';
+  const tipoPago = document.getElementById('e-tipo-pago').value;
+  const valorHora = parseFloat(document.getElementById('e-valor-hora').value) || 0;
   const comision = parseFloat(document.getElementById('e-comision').value) || 0;
   const salario = parseFloat(document.getElementById('e-salario').value) || 0;
   if(!nombre) return;
-  state.empleados.push({ nombre, cargo, comision, salario, id: Date.now() });
+  state.empleados.push({ nombre, cargo, comision, salario, tipoPago, valorHora, horasLog: [], id: Date.now() });
   ['e-nombre','e-cargo','e-comision','e-salario'].forEach(id => document.getElementById(id).value = '');
   cerrarModal('empleado');
   guardarLS();
@@ -1472,8 +1506,11 @@ function renderAlertas() {
       alertas.push({tipo:'warning', ico:'🔔', txt:`Pago diario "${d.nombre}"`, sub:`Valor: ${fmt(d.cuotaMensual||0)} · Pendiente: ${fmt(d.total-d.pagado)}`});
     } else if(d.tipo === 'semanal' && hoyD.getDay() === (d.diaPago||1)) {
       alertas.push({tipo:'warning', ico:'🔔', txt:`Pago semanal "${d.nombre}" es hoy`, sub:`Valor: ${fmt(d.cuotaMensual||0)} · Pendiente: ${fmt(d.total-d.pagado)}`});
-    } else if(d.tipo === 'quincenal' && (hoyD.getDate()===1||hoyD.getDate()===15)) {
-      alertas.push({tipo:'warning', ico:'🔔', txt:`Pago quincenal "${d.nombre}" es hoy`, sub:`Valor: ${fmt(d.cuotaMensual||0)} · Pendiente: ${fmt(d.total-d.pagado)}`});
+    } else if(d.tipo === 'quincenal') {
+      const diaHoy = hoyD.getDate();
+      const d1 = d.dia1||1; const d2 = d.dia2||15;
+      if(diaHoy===d1||diaHoy===d2||diaHoy===d1-1||diaHoy===d2-1)
+        alertas.push({tipo:'warning', ico:'🔔', txt:`Pago quincenal "${d.nombre}" ${diaHoy===d1||diaHoy===d2?'es hoy':'es mañana'}`, sub:`Valor: ${fmt(d.cuotaMensual||0)} · Pendiente: ${fmt(d.total-d.pagado)}`});
     } else if(d.tipo === 'mensual' && d.diaPago) {
       const diasRestantes = d.diaPago - hoyD.getDate();
       if(diasRestantes >= 0 && diasRestantes <= 5)
@@ -1589,8 +1626,10 @@ function renderDeudas() {
       alertaVence = hoyD.getDay() === (d.diaPago || 1);
     } else if(d.tipo === 'quincenal') {
       const dia = hoyD.getDate();
-      fechaInfo = `📅 Pago quincenal · Días ${d.diaPago || '1 y 15'}${d.cuotaMensual ? ' · ' + fmt(d.cuotaMensual) : ''}`;
-      alertaVence = dia === 1 || dia === 15 || (d.diaPago && dia === parseInt(d.diaPago));
+      const d1 = d.dia1 || 1;
+      const d2 = d.dia2 || 15;
+      fechaInfo = `📅 Pago quincenal · Días ${d1} y ${d2}${d.cuotaMensual ? ' · ' + fmt(d.cuotaMensual) : ''}`;
+      alertaVence = dia === d1 || dia === d2 || dia === d1-1 || dia === d2-1;
     } else if(d.tipo === 'mensual' && d.diaPago) {
       const diasRestantes = d.diaPago - hoyD.getDate();
       const estado = diasRestantes < 0 ? 'Venció este mes' : diasRestantes === 0 ? '¡Vence hoy!' : `Vence en ${diasRestantes} días (día ${d.diaPago})`;
@@ -1636,6 +1675,15 @@ function renderEmpleados() {
         <div class="emp-total">${fmt(total)}</div>
         <div class="emp-detail">Comisión: ${fmt(com)}</div>
         <div class="emp-detail">${txEmp.length} servicios este mes</div>
+        ${e.tipoPago === 'horas' ? `
+          <div style="font-size:11px;color:#7C3AED;margin-top:4px">
+            ⏱ ${calcHorasHoy(e)} h hoy · ${calcHorasSemana(e)} h esta semana
+          </div>
+          <div style="font-size:11px;color:#059669;font-weight:500">
+            Semana: ${fmt(calcHorasSemana(e) * (e.valorHora||0))}
+          </div>
+          <button class="btn-primary" style="margin-top:4px;font-size:11px;padding:4px 10px" onclick="registrarHoras(${e.id})">+ Horas hoy</button>
+        ` : ''}
         <button class="btn-sm" style="margin-top:6px;font-size:11px" onclick="editarEmpleado(${e.id})">✏️ Editar</button>
         <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarEmpleado(${e.id})">✕ Eliminar</button>
       </div>
@@ -1648,6 +1696,30 @@ function eliminarEmpleado(id) {
   state.empleados = state.empleados.filter(x => x.id !== id);
   guardarLS();
   renderAll();
+}
+
+function toggleTipoPago() {
+  const tipo = document.getElementById('e-tipo-pago').value;
+  document.getElementById('e-salario-group').style.display = tipo === 'horas' ? 'none' : 'block';
+  document.getElementById('e-horas-group').style.display = tipo === 'horas' ? 'block' : 'none';
+}
+
+function registrarHoras(empId) {
+  const horas = parseFloat(prompt('¿Cuántas horas trabajó hoy?'));
+  if(!horas || isNaN(horas)) return;
+  const e = state.empleados.find(x => x.id === empId);
+  if(!e) return;
+  if(!e.horasLog) e.horasLog = [];
+  const hoy = new Date().toISOString().split('T')[0];
+  e.horasLog.push({ fecha: hoy, horas });
+  guardarLS();
+  renderAll();
+  const ganado = horas * (e.valorHora || 0);
+  const msg = document.createElement('div');
+  msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#7C3AED;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:400;font-family:Outfit,sans-serif';
+  msg.textContent = `✓ ${horas}h registradas — Valor: ${fmt(ganado)}`;
+  document.body.appendChild(msg);
+  setTimeout(() => msg.remove(), 3000);
 }
 
 // ─── RENDER INVENTARIO ────────────────────────────────────
@@ -1668,6 +1740,7 @@ function renderInventario() {
           <button class="btn-sm" onclick="ajustarStock(${p.id},1)">+</button>
         </div>
         <span class="badge ${badge}">${label}</span>
+        <button class="btn-sm" style="font-size:11px;padding:3px 8px" onclick="calcGananciaProducto(${p.id})">💰</button>
         <button class="btn-sm" style="font-size:11px;padding:3px 8px" onclick="editarProducto(${p.id})">✏️</button>
         <button class="btn-danger" style="font-size:11px;padding:3px 8px" onclick="eliminarProducto(${p.id})">✕</button>
       </div>
@@ -1680,6 +1753,35 @@ function eliminarProducto(id) {
   state.inventario = state.inventario.filter(x => x.id !== id);
   guardarLS();
   renderAll();
+}
+
+function calcGananciaProducto(id) {
+  const p = state.inventario.find(x => x.id === id);
+  if(!p) return;
+  const costo = parseFloat(prompt(`Costo de compra de "${p.nombre}" ($):`));
+  if(!costo || isNaN(costo)) return;
+  const cant = parseFloat(prompt('¿Cuántas unidades vendiste?')) || 1;
+  const ganancia = (p.precio - costo) * cant;
+  const margen = Math.round((ganancia / (p.precio * cant)) * 100);
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:400;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:24px;width:100%;max-width:320px;text-align:center">
+      <div style="font-size:24px;margin-bottom:8px">💰</div>
+      <div style="font-size:16px;font-weight:600;color:#1a1535;margin-bottom:16px">${p.nombre}</div>
+      <div style="background:#F0EDFF;border-radius:10px;padding:14px;margin-bottom:14px;text-align:left;font-size:13px;line-height:2">
+        <div>Precio de venta: <strong>${fmt(p.precio)}</strong></div>
+        <div>Costo: <strong style="color:#DC2626">${fmt(costo)}</strong></div>
+        <div>Unidades: <strong>${cant}</strong></div>
+        <div>Ganancia por unidad: <strong style="color:#059669">${fmt(p.precio-costo)}</strong></div>
+        <div style="border-top:1px solid rgba(124,58,237,0.15);padding-top:8px;margin-top:4px">
+          Ganancia total: <strong style="color:#7C3AED;font-size:15px">${fmt(ganancia)}</strong>
+        </div>
+        <div>Margen: <strong style="color:#7C3AED">${margen}%</strong></div>
+      </div>
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:10px;border-radius:8px;background:#7C3AED;color:white;border:none;font-family:Outfit,sans-serif;font-size:13px;cursor:pointer">Cerrar</button>
+    </div>`;
+  document.body.appendChild(overlay);
 }
 
 // ─── RENDER CALENDARIO ────────────────────────────────────
@@ -1715,6 +1817,18 @@ function renderCalendario() {
   ).join('') : '<div class="empty-state">Sin eventos este mes.</div>';
 }
 function cambiarMes(d) { calFecha.setMonth(calFecha.getMonth()+d); renderCalendario(); }
+
+function calcHorasHoy(e) {
+  const hoy = new Date().toISOString().split('T')[0];
+  return (e.horasLog||[]).filter(h=>h.fecha===hoy).reduce((s,h)=>s+h.horas,0);
+}
+
+function calcHorasSemana(e) {
+  const hoy = new Date();
+  const lunes = new Date(hoy); lunes.setDate(hoy.getDate()-hoy.getDay()+1);
+  const lunesStr = lunes.toISOString().split('T')[0];
+  return (e.horasLog||[]).filter(h=>h.fecha>=lunesStr).reduce((s,h)=>s+h.horas,0);
+}
 
 function eliminarEvento(id) {
   if(!confirm('¿Seguro que quieres eliminar este pago fijo?')) return;
