@@ -1344,8 +1344,14 @@ function guardarDeuda() {
   const pagado = parseFloat(document.getElementById('d-pagado').value) || 0;
   const tipo = document.getElementById('d-tipo').value;
   const fecha = tipo === 'fija' ? document.getElementById('d-fecha').value : '';
-  const diaPago = tipo === 'mensual' ? parseInt(document.getElementById('d-dia').value) || 1 : null;
-  const cuotaMensual = tipo === 'mensual' ? parseFloat(document.getElementById('d-cuota').value) || 0 : 0;
+  const diaEl = document.getElementById('d-dia');
+  const diaPago = (tipo !== 'fija' && tipo !== 'quincenal') ? (parseInt(diaEl ? diaEl.value : '1') || 1) : null;
+  const dia1El = document.getElementById('d-dia1');
+  const dia2El = document.getElementById('d-dia2');
+  const dia1 = tipo === 'quincenal' ? (parseInt(dia1El ? dia1El.value : '1') || 1) : null;
+  const dia2 = tipo === 'quincenal' ? (parseInt(dia2El ? dia2El.value : '15') || 15) : null;
+  const cuotaEl = document.getElementById('d-cuota');
+  const cuotaMensual = cuotaEl ? (parseFloat(cuotaEl.value) || 0) : 0;
   if(!nombre || !total) return;
   state.deudas.push({ nombre, total, pagado, fecha, tipo, diaPago, dia1, dia2, cuotaMensual, id: Date.now() });
   ['d-nombre','d-total','d-pagado','d-cuota','d-dia'].forEach(id => {
@@ -1367,7 +1373,8 @@ function guardarEmpleado() {
   const salario = parseFloat(document.getElementById('e-salario').value) || 0;
   if(!nombre) return;
   state.empleados.push({ nombre, cargo, comision, salario, tipoPago, valorHora, horasLog: [], id: Date.now() });
-  ['e-nombre','e-cargo','e-comision','e-salario'].forEach(id => document.getElementById(id).value = '');
+  ['e-nombre','e-comision','e-salario'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  const valorHoraEl = document.getElementById('e-valor-hora'); if(valorHoraEl) valorHoraEl.value = '';
   cerrarModal('empleado');
   guardarLS();
   renderAll();
