@@ -1437,7 +1437,9 @@ function guardarInv() {
   const precio = parseFloat(document.getElementById('i-precio').value) || 0;
   if(!nombre) return;
   state.inventario.push({ nombre, cat, stock, min, precio, id: Date.now() });
-  ['i-nombre','i-stock','i-min','i-precio'].forEach(id => document.getElementById(id).value = '');
+  ['i-nombre','i-stock','i-min','i-precio','i-costo'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  const box = document.getElementById('inv-ganancia-box');
+  if(box) box.style.display = 'none';
   cerrarModal('inv');
   guardarLS();
   renderAll();
@@ -2075,12 +2077,6 @@ function calcHorasHoy(e) {
   return (e.horasLog||[]).filter(h=>h.fecha===hoy).reduce((s,h)=>s+h.horas,0);
 }
 
-function calcHorasSemana(e) {
-  const hoy = new Date();
-  const lunes = new Date(hoy); lunes.setDate(hoy.getDate()-hoy.getDay()+1);
-  const lunesStr = lunes.toISOString().split('T')[0];
-  return (e.horasLog||[]).filter(h=>h.fecha>=lunesStr).reduce((s,h)=>s+h.horas,0);
-}
 
 function toggleHistorialEmpleados() {
   const el = document.getElementById('historial-empleados');
@@ -2130,16 +2126,6 @@ function renderHistorialEmpleados() {
     }
   }
 
-  function getLunes(fecha) {
-    const d = new Date(fecha + 'T12:00:00');
-    const lunes = new Date(d);
-    lunes.setDate(d.getDate() - d.getDay() + 1);
-    return lunes.toISOString().split('T')[0];
-  }
-
-  function fmtSemana(lunesStr) {
-    return fmtPeriodo(lunesStr, 'semanal');
-  }
 
   let html = '';
   state.empleados.forEach(e => {
@@ -2362,24 +2348,10 @@ function copiarResumen() {
   navigator.clipboard.writeText(document.getElementById('resumen-texto').textContent).then(() => alert('¡Copiado al portapapeles!'));
 }
 
-// ─── INIT ─────────────────────────────────────────────────
-// ─── ADMIN & PLANS ───────────────────────────────────────
+// ─── ADMIN & PLANES ───────────────────────────────────────
 const ADMIN_EMAIL = 'maranto2912@gmail.com';
-const PLAN_LINK = 'https://checkout.wompi.co/l/creceapp'; // Actualizar con link real de Wompi
-
-function checkAdmin(email) {
-  const isAdmin = email === ADMIN_EMAIL;
-  const adminTab = document.getElementById('tab-admin');
-  if(adminTab) adminTab.style.display = isAdmin ? 'block' : 'none';
-  return isAdmin;
-}
-
-function getPlan(email) {
-  const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
-  if(email === ADMIN_EMAIL) return 'admin';
-  if(freeUsers.includes(email)) return 'gratuito';
-  return 'gratuito'; // Por defecto gratuito hasta pagar
-}
+// PLAN_LINK: actualizar con link real de Wompi cuando esté aprobado
+// const PLAN_LINK = 'https://checkout.wompi.co/l/XXXX';
 
 async function darAccesoGratuito() {
   const email = document.getElementById('adm-email-free').value.trim();
@@ -2460,8 +2432,68 @@ async function renderAdmin() {
 
 
 function aplicarRestricciones(plan) {
-  // Temporalmente todo gratuito hasta activar Wompi
-  return;
+  const esPremium = plan === 'premium' || plan === 'gratuito_total' || plan === 'admin';
+  if(esPremium) return;
+  // Tabs bloqueados para plan gratuito
+  const tabsBloqueados = ['empleados','inventario','calendario','reportes','fiado','ventas-digitales'];
+  document.querySelectorAll('.tab').forEach(tab => {
+    const onclick = tab.getAttribute('onclick') || '';
+    tabsBloqueados.forEach(nombre => {
+      if(onclick.includes("'" + nombre + "'")) {
+        tab.onclick = (e) => { e.preventDefault(); mostrarUpgrade(); };
+        tab.style.opacity = '0.5';
+        tab.title = '🔒 Función Premium';
+      }
+    });
+  });
+}
+
+async function darAccesoGratuito() {
+  const email = document.getElementById('adm-email-free').value.trim();
+  if(!email) { alert('Por favor ingresa un correo.'); return; }
+  const btn = document.querySelector('#page-admin .btn-primary');
+  if(btn) { btn.textContent = 'Activando...'; btn.disabled = true; }
+  try {
+    // Actualizar directamente en Supabase por email
+    const { data: perfilData, error: perfilError } = await sb
+      .from('perfiles')
+      .update({ plan: 'gratuito_total' })
+      .eq('email', email)
+      .select();
+
+    // Si no funciona por email, buscar por id
+    if(perfilError || !perfilData || perfilData.length === 0) {
+      // Buscar el perfil por email en auth (requiere RPC)
+      const { data: rpcData, error: rpcError } = await sb.rpc('activar_plan_gratuito', { email_input: email });
+      if(rpcError || !rpcData) {
+        // Último intento: guardar en localStorage del admin
+        const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
+        if(!freeUsers.includes(email)) freeUsers.push(email);
+        localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
+      }
+    }
+
+    document.getElementById('adm-email-free').value = '';
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap';
+    msg.textContent = '✓ Acceso completo activado para ' + email;
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
+    renderAdmin();
+  } catch(e) {
+    console.log('Error darAccesoGratuito:', e);
+    // Guardar en localStorage como respaldo aunque falle Supabase
+    const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
+    if(!freeUsers.includes(email)) freeUsers.push(email);
+    localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
+    document.getElementById('adm-email-free').value = '';
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D97706;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap';
+    msg.textContent = '⚠️ Guardado localmente para ' + email + ' (Supabase sin RPC)';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 4000);
+  }
+  if(btn) { btn.textContent = '✓ Dar acceso gratuito'; btn.disabled = false; }
 }
 
 function mostrarUpgrade() {
@@ -2473,16 +2505,17 @@ function mostrarUpgrade() {
       <div style="font-size:18px;font-weight:600;color:#1a1535;margin-bottom:8px;font-family:Cormorant Garamond,serif">Función Premium</div>
       <div style="font-size:13px;color:#9B8EC4;margin-bottom:20px;line-height:1.6">Esta función está disponible en el plan Premium. Actualiza por solo <strong style="color:#7C3AED">$20.000/mes</strong> y desbloquea todo CreceApp.</div>
       <div style="background:#F0EDFF;border-radius:10px;padding:14px;margin-bottom:16px;text-align:left;font-size:12px;color:#5B21B6;line-height:1.8">
-        ✓ Todo del plan gratuito<br>
-        ✓ Gestión de empleados<br>
-        ✓ Inventario completo<br>
-        ✓ Calendario de pagos<br>
-        ✓ Fiado — lo que te deben<br>
-        ✓ Ventas digitales / Dropshipping<br>
-        ✓ Reportes y gráficas avanzadas<br>
-        ✓ Análisis con inteligencia artificial
+        ✓ Ingresos y egresos (gratis)<br>
+        ✓ Responsabilidades (gratis)<br>
+        ✓ Deudas (gratis)<br>
+        ⭐ Gestión de empleados<br>
+        ⭐ Inventario completo<br>
+        ⭐ Calendario de pagos<br>
+        ⭐ Fiado — lo que te deben<br>
+        ⭐ Ventas digitales<br>
+        ⭐ Reportes y gráficas avanzadas
       </div>
-      <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:11px;border-radius:10px;background:#7C3AED;color:white;border:none;font-size:14px;font-family:Outfit,sans-serif;cursor:pointer;font-weight:500;margin-bottom:8px">¡Quiero el plan Premium!</button>
+      <button onclick="window.open('https://creceapp-nine.vercel.app','_blank');this.closest('div[style*=fixed]').remove()" style="width:100%;padding:11px;border-radius:10px;background:#7C3AED;color:white;border:none;font-size:14px;font-family:Outfit,sans-serif;cursor:pointer;font-weight:500;margin-bottom:8px">¡Quiero el plan Premium! — $20.000/mes</button>
       <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:8px;border-radius:10px;background:transparent;color:#9B8EC4;border:1px solid rgba(124,58,237,0.2);font-size:13px;font-family:Outfit,sans-serif;cursor:pointer">Continuar con plan gratuito</button>
     </div>`;
   document.body.appendChild(overlay);
@@ -2624,6 +2657,7 @@ function guardarEdicionTx() {
 // ─── CIERRE AUTOMÁTICO 2 HORAS ────────────────────────────
 let inactivityTimer;
 function resetTimer() {
+  if(!currentUserId) return;
   clearTimeout(inactivityTimer);
   inactivityTimer = setTimeout(async () => {
     await sb.auth.signOut();
@@ -2631,7 +2665,6 @@ function resetTimer() {
   }, 2 * 60 * 60 * 1000);
 }
 ['click','keypress','scroll','touchstart','mousemove'].forEach(e => document.addEventListener(e, resetTimer, {passive:true}));
-resetTimer();
 
 // ─── FIADO ────────────────────────────────────────────────
 function guardarFiado() {
@@ -2672,7 +2705,6 @@ function renderFiados() {
   if(!el) return;
   const total = state.fiados.reduce((s,f) => s + (f.monto - f.pagado), 0);
   const clientes = new Set(state.fiados.map(f => f.nombre)).size;
-  const mes = getMes();
   const cobrado = state.fiados.reduce((s,f) => s + (f.pagado || 0), 0);
   const ft = document.getElementById('fiad-total');
   const fc = document.getElementById('fiad-clientes');
@@ -3166,6 +3198,8 @@ async function loginUser() {
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('main-app').style.display = 'block';
       document.getElementById('user-info').style.display = 'flex';
+      currentUserId = data.session.user.id;
+      resetTimer();
       await cargarPerfil(data.session.user.id);
       await cargarLS();
       renderAll();
@@ -3201,9 +3235,11 @@ async function registerUser() {
         await sb.from('perfiles').upsert({ id: data.user.id, nombre, negocio, plan: 'gratuito' });
       } catch(e) {}
       // Iniciar sesión automáticamente
-      const { error: loginError } = await sb.auth.signInWithPassword({ email, password: pass });
+      const { data: loginData, error: loginError } = await sb.auth.signInWithPassword({ email, password: pass });
       if(loginError) {
         showAuthSuccess('¡Cuenta creada! Ya puedes iniciar sesión.');
+      } else if(loginData?.session) {
+        currentUserId = loginData.session.user.id;
       }
     }
   } catch(e) {
@@ -3241,10 +3277,18 @@ async function cambiarContrasena() {
     document.getElementById('reset-error').style.display = 'none';
     document.getElementById('reset-success').textContent = '¡Contraseña cambiada! Entrando...';
     document.getElementById('reset-success').style.display = 'block';
-    setTimeout(() => {
+    setTimeout(async () => {
+      const { data: { session } } = await sb.auth.getSession();
+      if(session) {
+        currentUserId = session.user.id;
+        await cargarPerfil(session.user.id);
+        await cargarLS();
+      }
       document.getElementById('reset-screen').style.display = 'none';
       document.getElementById('main-app').style.display = 'block';
       document.getElementById('user-info').style.display = 'flex';
+      renderAll();
+      renderCalendario();
     }, 1500);
   }
 }
@@ -3275,11 +3319,10 @@ async function cargarPerfil(userId) {
         plan = data.plan || 'gratuito';
         negocio = data.negocio || data.nombre || 'Mi negocio';
       }
-    } catch(e) {
-      // Si falla, verificar localStorage como respaldo
-      const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
-      if(freeUsers.includes(email)) plan = 'gratuito_total';
-    }
+    } catch(e) {}
+    // Respaldo: verificar localStorage (usado cuando Supabase RPC no está configurado)
+    const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
+    if(freeUsers.includes(email) && plan === 'gratuito') plan = 'gratuito_total';
 
     document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : negocio;
     document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : 
@@ -3332,6 +3375,7 @@ async function init() {
       document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : userEmail.split('@')[0];
       document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : '✓ Gratuito';
       currentUserId = session.user.id;
+      resetTimer();
       await cargarPerfil(session.user.id);
       await cargarLS();
       renderAll();
@@ -3359,6 +3403,7 @@ async function init() {
       document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : userEmail.split('@')[0];
       document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : '✓ Gratuito';
       currentUserId = session.user.id;
+      resetTimer();
       await cargarPerfil(session.user.id);
       await cargarLS();
       renderAll();
