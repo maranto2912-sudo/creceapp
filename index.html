@@ -1384,6 +1384,7 @@ function abrirModal(id) {
     document.getElementById('act-fecha').value = new Date().toISOString().split('T')[0];
     actualizarCategoriasActivos();
   }
+  if(id === 'venta-digital') {
     document.getElementById('vd-fecha').value = new Date().toISOString().split('T')[0];
     autoComision();
     calcVD();
