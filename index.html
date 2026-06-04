@@ -573,9 +573,20 @@
       <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat')">+ Agregar nueva</span></label>
       <select id="tx-cat"></select>
     </div>
-    <div class="form-group"><label class="form-label">Empleado</label><select id="tx-emp"><option value="">— ninguno —</option></select></div>
+    <div class="form-group"><label class="form-label">Empleado</label><select id="tx-emp" onchange="toggleVentaFields()"><option value="">— ninguno —</option></select></div>
   </div>
   <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="tx-monto-principal" placeholder="0" min="0"></div>
+
+  <!-- COMISIÓN SOBRE ESTA VENTA -->
+  <div id="tx-comision-box" style="display:none;background:#FEF3C7;border-radius:8px;padding:10px;margin-bottom:10px;border:1px solid rgba(217,119,6,0.2)">
+    <div style="font-size:12px;font-weight:500;color:#D97706;margin-bottom:6px">💼 Comisión sobre esta venta</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="number" id="tx-comision-pct" placeholder="% comisión" min="0" max="100" oninput="calcComisionTx()" style="width:90px;padding:6px;border:1px solid rgba(217,119,6,0.3);border-radius:6px;font-size:12px;background:#fff">
+      <span style="font-size:12px;color:var(--text2)">% →</span>
+      <span id="tx-comision-valor" style="font-size:13px;font-weight:600;color:#D97706">$0</span>
+    </div>
+  </div>
+
   <div class="form-group"><label class="form-label">Notas <span style="font-size:10px;color:var(--text3)">(opcional)</span></label><input type="text" id="tx-notas" placeholder="Observaciones, detalles adicionales..."></div>
 
   <!-- APLICAR A DEUDA (solo para egresos) -->
@@ -942,7 +953,10 @@
     <div class="form-group"><label class="form-label">Stock</label><input type="number" id="ei-stock" min="0"></div>
     <div class="form-group"><label class="form-label">Stock mínimo</label><input type="number" id="ei-min" min="0"></div>
   </div>
-  <div class="form-group"><label class="form-label">Precio ($)</label><input type="number" id="ei-precio"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Precio venta ($)</label><input type="number" id="ei-precio"></div>
+    <div class="form-group"><label class="form-label">Costo de compra ($)</label><input type="number" id="ei-costo" min="0"></div>
+  </div>
   <input type="hidden" id="ei-id">
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('editar-inv')">Cancelar</button><button class="btn-primary" onclick="guardarEdicionInv()">Guardar</button></div>
 </div></div>
@@ -1204,6 +1218,18 @@ function toggleVentaFields() {
     deudaSelector.style.display = tipo === 'egreso' ? 'block' : 'none';
     if(tipo === 'egreso') actualizarSelectorDeudas();
   }
+  // Mostrar box de comisión solo si hay empleado y es ingreso
+  const empId = document.getElementById('tx-emp').value;
+  const comBox = document.getElementById('tx-comision-box');
+  if(comBox) comBox.style.display = (tipo === 'ingreso' && empId) ? 'block' : 'none';
+}
+
+function calcComisionTx() {
+  const monto = parseFloat(document.getElementById('tx-monto-principal').value) || 0;
+  const pct = parseFloat(document.getElementById('tx-comision-pct').value) || 0;
+  const valor = monto * (pct / 100);
+  const el = document.getElementById('tx-comision-valor');
+  if(el) el.textContent = '$' + Math.round(valor).toLocaleString('es-CO');
 }
 
 function actualizarSelectorDeudas() {
@@ -1336,6 +1362,19 @@ function guardarTx() {
     return;
   }
   state.transacciones.unshift({ tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas, editado: false, id: Date.now() });
+  // Registrar comisión en el empleado si aplica
+  const comPctEl = document.getElementById('tx-comision-pct');
+  const comPct = comPctEl ? (parseFloat(comPctEl.value) || 0) : 0;
+  if(empId && tipo === 'ingreso' && comPct > 0) {
+    const emp = state.empleados.find(x => String(x.id) === String(empId));
+    if(emp) {
+      if(!emp.comisionLog) emp.comisionLog = [];
+      emp.comisionLog.push({ fecha, venta: monto, comisionPct: comPct, desc });
+    }
+    if(comPctEl) comPctEl.value = '';
+    const comBox = document.getElementById('tx-comision-box');
+    if(comBox) comBox.style.display = 'none';
+  }
   document.getElementById('tx-desc').value = '';
   document.getElementById('tx-notas').value = '';
   document.getElementById('tx-monto-principal').value = '';
@@ -1435,8 +1474,9 @@ function guardarInv() {
   const stock = parseInt(document.getElementById('i-stock').value) || 0;
   const min = parseInt(document.getElementById('i-min').value) || 5;
   const precio = parseFloat(document.getElementById('i-precio').value) || 0;
+  const costo = parseFloat(document.getElementById('i-costo').value) || 0;
   if(!nombre) return;
-  state.inventario.push({ nombre, cat, stock, min, precio, id: Date.now() });
+  state.inventario.push({ nombre, cat, stock, min, precio, costo, id: Date.now() });
   ['i-nombre','i-stock','i-min','i-precio','i-costo'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   const box = document.getElementById('inv-ganancia-box');
   if(box) box.style.display = 'none';
@@ -1472,8 +1512,29 @@ function abonarDeuda(id) {
   if(d) {
     d.pagado = Math.min(d.pagado + monto, d.total);
     if(!d.historialAbonos) d.historialAbonos = [];
-    d.historialAbonos.push({ monto, fecha: new Date().toISOString().split('T')[0] });
+    const fecha = new Date().toISOString().split('T')[0];
+    d.historialAbonos.push({ monto, fecha });
+    // Crear transacción de egreso automática
+    state.transacciones.unshift({
+      tipo: 'egreso',
+      monto,
+      desc: `Abono deuda: ${d.nombre}`,
+      cat: 'Cuota banco',
+      empId: '',
+      fecha,
+      costo: 0,
+      ganancia: 0,
+      metodo: 'efectivo',
+      notas: `Abono registrado desde sección Deudas`,
+      editado: false,
+      id: Date.now()
+    });
     guardarLS(); renderAll();
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#7C3AED;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:400;font-family:Outfit,sans-serif;white-space:nowrap';
+    msg.textContent = `✓ Abono de ${fmt(monto)} registrado como egreso en Transacciones`;
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
   }
 }
 
@@ -1551,6 +1612,7 @@ function editarProducto(id) {
   document.getElementById('ei-stock').value = p.stock;
   document.getElementById('ei-min').value = p.min;
   document.getElementById('ei-precio').value = p.precio;
+  document.getElementById('ei-costo').value = p.costo || 0;
   document.getElementById('overlay-editar-inv').style.display = 'flex';
 }
 
@@ -1562,6 +1624,7 @@ function guardarEdicionInv() {
   p.stock = parseInt(document.getElementById('ei-stock').value) || 0;
   p.min = parseInt(document.getElementById('ei-min').value) || 0;
   p.precio = parseFloat(document.getElementById('ei-precio').value) || 0;
+  p.costo = parseFloat(document.getElementById('ei-costo').value) || 0;
   cerrarModal('editar-inv');
   guardarLS();
   renderAll();
@@ -1787,146 +1850,80 @@ function calcVentasPeriodo(e) {
 function renderEmpleados() {
   const el = document.getElementById('emp-list');
   if(!el) return;
-
-  // ─── HORAS SECTION ───
-  const horarios = state.empleados.filter(e => e.tipoPago === 'horas');
+  // Ocultar secciones separadas
   const horasSection = document.getElementById('horas-section');
-  const horasListEl = document.getElementById('horas-empleados-list');
-  if(horasSection && horasListEl) {
-    if(horarios.length) {
-      horasSection.style.display = 'block';
-      horasListEl.innerHTML = horarios.map(e => {
-        const horasHoy = calcHorasHoy(e);
-        const horasSemana = calcHorasPeriodo(e);
-        const labelPeriodo = getLabelPeriodo(e.frecuencia||'semanal');
-        const frecLabel = e.frecuencia === 'mensual' ? '📅 Mensual' : e.frecuencia === 'quincenal' ? '📅 Quincenal' : '📅 Semanal';
-        return `<div style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid rgba(124,58,237,0.1)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div>
-              <div style="font-size:13px;font-weight:600;color:#1a1535">${e.nombre}</div>
-              <div style="font-size:11px;color:var(--text2)">${fmt(e.valorHora||0)}/hora · <span style="color:#7C3AED">${frecLabel}</span></div>
-            </div>
-            <button class="btn-primary" style="font-size:12px;padding:6px 14px" onclick="registrarHoras(${e.id})">+ Horas hoy</button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div style="background:#F0EDFF;border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:11px;color:var(--text2)">Hoy</div>
-              <div style="font-size:18px;font-weight:700;color:#7C3AED">${horasHoy}h</div>
-              <div style="font-size:12px;color:#059669;font-weight:500">${fmt(horasHoy*(e.valorHora||0))}</div>
-            </div>
-            <div style="background:#F0EDFF;border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:11px;color:var(--text2)">${labelPeriodo}</div>
-              <div style="font-size:18px;font-weight:700;color:#7C3AED">${horasSemana}h</div>
-              <div style="font-size:12px;color:#059669;font-weight:500">${fmt(horasSemana*(e.valorHora||0))}</div>
-            </div>
-          </div>
-        </div>`;
-      }).join('');
-    } else {
-      horasSection.style.display = 'none';
-    }
-  }
-
-  // ─── COMISION SECTION ───
-  const comisionistas = state.empleados.filter(e => e.tipoPago === 'comision');
   const comisionSection = document.getElementById('comision-section');
-  const comisionListEl = document.getElementById('comision-empleados-list');
-  if(comisionSection && comisionListEl) {
-    if(comisionistas.length) {
-      comisionSection.style.display = 'block';
-      comisionListEl.innerHTML = comisionistas.map(e => {
-        const ventasHoy = calcVentasHoy(e);
-        const ventasSemana = calcVentasSemana(e);
-        const comHoy = ventasHoy * (e.comision / 100);
-        const comSemana = ventasSemana * (e.comision / 100);
-        const labelPeriodoCom = getLabelPeriodo(e.frecuencia||'semanal');
-        const frecLabelCom = e.frecuencia === 'mensual' ? '📅 Mensual' : e.frecuencia === 'quincenal' ? '📅 Quincenal' : '📅 Semanal';
-        return `<div style="background:white;border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid rgba(217,119,6,0.15)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div>
-              <div style="font-size:13px;font-weight:600;color:#1a1535">${e.nombre}</div>
-              <div style="font-size:11px;color:var(--text2)">${e.comision}% comisión · <span style="color:#D97706">${frecLabelCom}</span></div>
-            </div>
-            <button class="btn-primary" style="font-size:12px;padding:6px 14px;background:#D97706" onclick="registrarVentaComision(${e.id})">+ Venta hoy</button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-            <div style="background:#FEF3C7;border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:11px;color:var(--text2)">Ventas hoy</div>
-              <div style="font-size:16px;font-weight:700;color:#D97706">${fmt(ventasHoy)}</div>
-              <div style="font-size:12px;color:#059669;font-weight:500">Com: ${fmt(comHoy)}</div>
-            </div>
-            <div style="background:#FEF3C7;border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:11px;color:var(--text2)">${labelPeriodoCom}</div>
-              <div style="font-size:16px;font-weight:700;color:#D97706">${fmt(ventasSemana)}</div>
-              <div style="font-size:12px;color:#059669;font-weight:500">Com: ${fmt(comSemana)}</div>
-            </div>
-          </div>
-        </div>`;
-      }).join('');
-    } else {
-      comisionSection.style.display = 'none';
-    }
-  }
+  if(horasSection) horasSection.style.display = 'none';
+  if(comisionSection) comisionSection.style.display = 'none';
 
   if(!state.empleados.length) { el.innerHTML = '<div class="empty-state">Agrega tu equipo de trabajo.</div>'; return; }
   const mes = getMes();
   el.innerHTML = state.empleados.map(e => {
-    const txEmp = state.transacciones.filter(t => t.empId == e.id && t.tipo==='ingreso' && t.fecha.startsWith(mes));
-    const total = txEmp.reduce((s,t) => s+t.monto, 0);
-    const com = total * ((e.comision||0) / 100);
     const tipoPago = e.tipoPago || 'fijo';
     const frecuencia = e.frecuencia || 'semanal';
     const labelPer = getLabelPeriodo(frecuencia);
-    const horasHoy = tipoPago === 'horas' ? calcHorasHoy(e) : 0;
-    const horasPer = tipoPago === 'horas' ? calcHorasPeriodo(e) : 0;
-    const ventasHoy = tipoPago === 'comision' ? calcVentasHoy(e) : 0;
-    const ventasPer = tipoPago === 'comision' ? calcVentasPeriodo(e) : 0;
+    const frecLabel = frecuencia === 'mensual' ? '📅 Mensual' : frecuencia === 'quincenal' ? '📅 Quincenal' : '📅 Semanal';
+    const txEmp = state.transacciones.filter(t => t.empId == e.id && t.tipo==='ingreso' && t.fecha.startsWith(mes));
+    const totalTx = txEmp.reduce((s,t) => s+t.monto, 0);
+    const comTx = totalTx * ((e.comision||0) / 100);
+    const horasHoy = calcHorasHoy(e);
+    const horasPer = calcHorasPeriodo(e);
+    const ventasHoy = calcVentasHoy(e);
+    const ventasPer = calcVentasPeriodo(e);
+    const comisionPer = ventasPer * ((e.comision||0) / 100);
+    let totalPagar = 0;
+    let detalleExtra = '';
+    if(tipoPago === 'fijo') {
+      totalPagar = e.salario || 0;
+      detalleExtra = `<div style="font-size:11px;color:var(--text2);margin-top:2px">${txEmp.length} servicios este mes</div>
+        <div style="font-size:11px;color:#7C3AED;margin-top:2px">Ventas: ${fmt(totalTx)} · Com: ${fmt(comTx)}</div>`;
+    } else if(tipoPago === 'horas') {
+      totalPagar = horasPer * (e.valorHora || 0);
+      detalleExtra = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+        <div style="background:#F0EDFF;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:var(--text2)">Hoy</div>
+          <div style="font-size:15px;font-weight:700;color:#7C3AED">${horasHoy}h</div>
+          <div style="font-size:11px;color:#059669">${fmt(horasHoy*(e.valorHora||0))}</div>
+        </div>
+        <div style="background:#F0EDFF;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:var(--text2)">${labelPer}</div>
+          <div style="font-size:15px;font-weight:700;color:#7C3AED">${horasPer}h</div>
+          <div style="font-size:11px;color:#059669">${fmt(horasPer*(e.valorHora||0))}</div>
+        </div>
+      </div>
+      <button class="btn-primary" style="margin-top:6px;font-size:11px;padding:5px 12px" onclick="registrarHoras(${e.id})">+ Horas hoy</button>`;
+    } else if(tipoPago === 'comision') {
+      totalPagar = comisionPer;
+      detalleExtra = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+        <div style="background:#FEF3C7;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:var(--text2)">Ventas hoy</div>
+          <div style="font-size:14px;font-weight:700;color:#D97706">${fmt(ventasHoy)}</div>
+          <div style="font-size:11px;color:#059669">Com: ${fmt(ventasHoy*(e.comision||0)/100)}</div>
+        </div>
+        <div style="background:#FEF3C7;border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:var(--text2)">${labelPer}</div>
+          <div style="font-size:14px;font-weight:700;color:#D97706">${fmt(ventasPer)}</div>
+          <div style="font-size:11px;color:#059669">Com: ${fmt(comisionPer)}</div>
+        </div>
+      </div>
+      <button class="btn-primary" style="margin-top:6px;font-size:11px;padding:5px 12px;background:#D97706" onclick="registrarVentaComision(${e.id})">+ Venta hoy</button>`;
+    }
     return `<div class="emp-card">
       <div class="emp-avatar">${iniciales(e.nombre)}</div>
       <div class="emp-info">
         <div class="emp-name">${e.nombre}</div>
-        <div class="emp-role">${e.cargo||''} · ${e.comision||0}% comisión · Salario: ${fmt(e.salario||0)}</div>
-        ${tipoPago === 'horas' ? `
-          <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
-            <div style="background:#F0EDFF;border-radius:6px;padding:8px;text-align:center">
-              <div style="font-size:10px;color:var(--text2)">Hoy</div>
-              <div style="font-size:16px;font-weight:700;color:#7C3AED">${horasHoy}h</div>
-              <div style="font-size:11px;color:#059669">${fmt(horasHoy*(e.valorHora||0))}</div>
-            </div>
-            <div style="background:#F0EDFF;border-radius:6px;padding:8px;text-align:center">
-              <div style="font-size:10px;color:var(--text2)">${labelPer}</div>
-              <div style="font-size:16px;font-weight:700;color:#7C3AED">${horasPer}h</div>
-              <div style="font-size:11px;color:#059669">${fmt(horasPer*(e.valorHora||0))}</div>
-            </div>
-          </div>
-          <button class="btn-primary" style="margin-top:6px;font-size:11px;padding:5px 12px" onclick="registrarHoras(${e.id})">+ Horas hoy</button>
-        ` : tipoPago === 'comision' ? `
-          <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
-            <div style="background:#FEF3C7;border-radius:6px;padding:8px;text-align:center">
-              <div style="font-size:10px;color:var(--text2)">Ventas hoy</div>
-              <div style="font-size:14px;font-weight:700;color:#D97706">${fmt(ventasHoy)}</div>
-              <div style="font-size:11px;color:#059669">Com: ${fmt(ventasHoy*(e.comision||0)/100)}</div>
-            </div>
-            <div style="background:#FEF3C7;border-radius:6px;padding:8px;text-align:center">
-              <div style="font-size:10px;color:var(--text2)">${labelPer}</div>
-              <div style="font-size:14px;font-weight:700;color:#D97706">${fmt(ventasPer)}</div>
-              <div style="font-size:11px;color:#059669">Com: ${fmt(ventasPer*(e.comision||0)/100)}</div>
-            </div>
-          </div>
-          <button class="btn-primary" style="margin-top:6px;font-size:11px;padding:5px 12px;background:#D97706" onclick="registrarVentaComision(${e.id})">+ Venta hoy</button>
-        ` : ''}
+        <div class="emp-role">${e.cargo||''} · ${e.comision||0}% comisión · ${frecLabel}</div>
+        ${detalleExtra}
       </div>
       <div class="emp-stats">
-        <div class="emp-total">${fmt(total)}</div>
-        <div class="emp-detail">Comisión: ${fmt(com)}</div>
-        <div class="emp-detail">${txEmp.length} servicios este mes</div>
+        <div class="emp-total">${fmt(totalPagar)}</div>
+        <div class="emp-detail" style="font-size:10px">A pagar ${labelPer.toLowerCase()}</div>
         <button class="btn-sm" style="margin-top:6px;font-size:11px" onclick="editarEmpleado(${e.id})">✏️ Editar</button>
         <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarEmpleado(${e.id})">✕ Eliminar</button>
       </div>
     </div>`;
   }).join('');
 }
-
 function eliminarEmpleado(id) {
   if(!confirm('¿Seguro que quieres eliminar este empleado?')) return;
   state.empleados = state.empleados.filter(x => x.id !== id);
@@ -2012,30 +2009,69 @@ function eliminarProducto(id) {
 function calcGananciaProducto(id) {
   const p = state.inventario.find(x => x.id === id);
   if(!p) return;
-  const costo = parseFloat(prompt(`Costo de compra de "${p.nombre}" ($):`));
-  if(!costo || isNaN(costo)) return;
-  const cant = parseFloat(prompt('¿Cuántas unidades vendiste?')) || 1;
-  const ganancia = (p.precio - costo) * cant;
-  const margen = Math.round((ganancia / (p.precio * cant)) * 100);
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:400;padding:20px';
+  const costoGuardado = p.costo || 0;
   overlay.innerHTML = `
-    <div style="background:#fff;border-radius:14px;padding:24px;width:100%;max-width:320px;text-align:center">
-      <div style="font-size:24px;margin-bottom:8px">💰</div>
-      <div style="font-size:16px;font-weight:600;color:#1a1535;margin-bottom:16px">${p.nombre}</div>
-      <div style="background:#F0EDFF;border-radius:10px;padding:14px;margin-bottom:14px;text-align:left;font-size:13px;line-height:2">
-        <div>Precio de venta: <strong>${fmt(p.precio)}</strong></div>
-        <div>Costo: <strong style="color:#DC2626">${fmt(costo)}</strong></div>
-        <div>Unidades: <strong>${cant}</strong></div>
-        <div>Ganancia por unidad: <strong style="color:#059669">${fmt(p.precio-costo)}</strong></div>
-        <div style="border-top:1px solid rgba(124,58,237,0.15);padding-top:8px;margin-top:4px">
-          Ganancia total: <strong style="color:#7C3AED;font-size:15px">${fmt(ganancia)}</strong>
+    <div style="background:#fff;border-radius:14px;padding:24px;width:100%;max-width:340px">
+      <div style="font-size:16px;font-weight:600;color:#1a1535;margin-bottom:16px">💰 ${p.nombre}</div>
+      <div style="background:#F8F7FF;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;line-height:2">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Precio de venta:</span><strong>${fmt(p.precio)}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Costo registrado:</span><strong style="color:#DC2626">${costoGuardado > 0 ? fmt(costoGuardado) : 'No registrado'}</strong></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Stock actual:</span><strong>${p.stock} uds</strong></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Categoría:</span><strong>${p.cat}</strong></div>
+      </div>
+      <div style="border-top:1px solid rgba(124,58,237,0.1);padding-top:12px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:500;color:#7C3AED;margin-bottom:8px">Calcular ganancia de venta</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Costo ($)</label>
+            <input type="number" id="calc-costo" placeholder="0" value="${costoGuardado||''}" oninput="recalcProd()" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Unidades</label>
+            <input type="number" id="calc-cant" placeholder="1" value="1" oninput="recalcProd()" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
+          </div>
         </div>
-        <div>Margen: <strong style="color:#7C3AED">${margen}%</strong></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">% Comisión empleado</label>
+            <input type="number" id="calc-comision" placeholder="0" value="0" min="0" max="100" oninput="recalcProd()" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Precio venta ($)</label>
+            <input type="number" id="calc-precio" value="${p.precio}" oninput="recalcProd()" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
+          </div>
+        </div>
+        <div id="calc-resultado" style="background:#F0EDFF;border-radius:8px;padding:10px;font-size:12px;line-height:1.9">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Ganancia por unidad:</span><span id="calc-gan-unit" style="font-weight:600;color:#7C3AED">$0</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Comisión empleado:</span><span id="calc-com-val" style="font-weight:600;color:#D97706">$0</span></div>
+          <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(124,58,237,0.15);padding-top:6px;margin-top:4px"><span style="color:var(--text2)">Ganancia neta total:</span><span id="calc-gan-total" style="font-weight:700;color:#7C3AED;font-size:14px">$0</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Margen:</span><span id="calc-margen" style="font-weight:600;color:#7C3AED">0%</span></div>
+        </div>
       </div>
       <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:10px;border-radius:8px;background:#7C3AED;color:white;border:none;font-family:Outfit,sans-serif;font-size:13px;cursor:pointer">Cerrar</button>
     </div>`;
   document.body.appendChild(overlay);
+  // Función para recalcular en tiempo real
+  window.recalcProd = function() {
+    const precio = parseFloat(document.getElementById('calc-precio').value) || 0;
+    const costo = parseFloat(document.getElementById('calc-costo').value) || 0;
+    const cant = parseFloat(document.getElementById('calc-cant').value) || 1;
+    const comPct = parseFloat(document.getElementById('calc-comision').value) || 0;
+    const ganUnit = precio - costo;
+    const comVal = precio * cant * (comPct / 100);
+    const ganTotal = ganUnit * cant - comVal;
+    const margen = precio > 0 ? Math.round((ganTotal / (precio * cant)) * 100) : 0;
+    const fmtL = n => '$' + Math.round(n).toLocaleString('es-CO');
+    document.getElementById('calc-gan-unit').textContent = fmtL(ganUnit);
+    document.getElementById('calc-gan-unit').style.color = ganUnit >= 0 ? '#7C3AED' : '#DC2626';
+    document.getElementById('calc-com-val').textContent = fmtL(comVal);
+    document.getElementById('calc-gan-total').textContent = fmtL(ganTotal);
+    document.getElementById('calc-gan-total').style.color = ganTotal >= 0 ? '#7C3AED' : '#DC2626';
+    document.getElementById('calc-margen').textContent = margen + '%';
+  };
+  window.recalcProd();
 }
 
 // ─── RENDER CALENDARIO ────────────────────────────────────
@@ -2688,8 +2724,29 @@ function abonarFiado(id) {
   if(f) {
     f.pagado = Math.min(f.pagado + monto, f.monto);
     if(!f.historialAbonos) f.historialAbonos = [];
-    f.historialAbonos.push({ monto, fecha: new Date().toISOString().split('T')[0] });
-    guardarLS(); renderFiados();
+    const fecha = new Date().toISOString().split('T')[0];
+    f.historialAbonos.push({ monto, fecha });
+    // Crear transacción de ingreso automática
+    state.transacciones.unshift({
+      tipo: 'ingreso',
+      monto,
+      desc: `Cobro fiado: ${f.nombre}`,
+      cat: 'Ventas',
+      empId: '',
+      fecha,
+      costo: 0,
+      ganancia: monto,
+      metodo: 'efectivo',
+      notas: `Abono cobrado desde sección Fiado`,
+      editado: false,
+      id: Date.now()
+    });
+    guardarLS(); renderFiados(); renderDashTx(); renderTransacciones();
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:400;font-family:Outfit,sans-serif;white-space:nowrap';
+    msg.textContent = `✓ Abono de ${fmt(monto)} de ${f.nombre} registrado en Transacciones`;
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
   }
 }
 
