@@ -1351,7 +1351,7 @@ function showPage(id, btn) {
 // ─── MODALES ──────────────────────────────────────────────
 function abrirModal(id) {
   // Si es modal de categoría, abrir encima sin cerrar el actual
-  const catModals = ['cat','cat-inv','cat-resp','cat-deuda','cat-cargo'];
+  const catModals = ['cat','cat-inv','cat-resp','cat-deuda','cat-cargo','cat-activo'];
   if(catModals.includes(id)) {
     document.getElementById('overlay-' + id).style.display = 'flex';
     return;
@@ -3175,44 +3175,28 @@ async function darAccesoGratuito() {
   const btn = document.querySelector('#page-admin .btn-primary');
   if(btn) { btn.textContent = 'Activando...'; btn.disabled = true; }
   try {
-    // Actualizar directamente en Supabase por email
-    const { data: perfilData, error: perfilError } = await sb
-      .from('perfiles')
-      .update({ plan: 'gratuito_total' })
-      .eq('email', email)
-      .select();
-
-    // Si no funciona por email, buscar por id
-    if(perfilError || !perfilData || perfilData.length === 0) {
-      // Buscar el perfil por email en auth (requiere RPC)
-      const { data: rpcData, error: rpcError } = await sb.rpc('activar_plan_gratuito', { email_input: email });
-      if(rpcError || !rpcData) {
-        // Último intento: guardar en localStorage del admin
-        const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
-        if(!freeUsers.includes(email)) freeUsers.push(email);
-        localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
-      }
-    }
-
+    const { data: rpcData, error: rpcError } = await sb.rpc('activar_plan_gratuito', { email_input: email });
     document.getElementById('adm-email-free').value = '';
+    const exito = !rpcError && rpcData;
     const msg = document.createElement('div');
-    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap';
-    msg.textContent = '✓ Acceso completo activado para ' + email;
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap;max-width:90%;text-align:center';
+    if(exito) {
+      msg.style.background = '#059669';
+      msg.textContent = '✓ Acceso completo activado para ' + email;
+    } else {
+      msg.style.background = '#DC2626';
+      msg.textContent = '❌ Error: Verifica que la función SQL esté configurada en Supabase. Error: ' + (rpcError?.message || 'desconocido');
+    }
     document.body.appendChild(msg);
-    setTimeout(() => msg.remove(), 3000);
-    renderAdmin();
+    setTimeout(() => msg.remove(), 5000);
+    if(exito) renderAdmin();
   } catch(e) {
     console.log('Error darAccesoGratuito:', e);
-    // Guardar en localStorage como respaldo aunque falle Supabase
-    const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
-    if(!freeUsers.includes(email)) freeUsers.push(email);
-    localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
-    document.getElementById('adm-email-free').value = '';
     const msg = document.createElement('div');
-    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#D97706;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap';
-    msg.textContent = '⚠️ Guardado localmente para ' + email + ' (Supabase sin RPC)';
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#DC2626;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap';
+    msg.textContent = '❌ Error: ' + (e.message || 'revisa la consola');
     document.body.appendChild(msg);
-    setTimeout(() => msg.remove(), 4000);
+    setTimeout(() => msg.remove(), 5000);
   }
   if(btn) { btn.textContent = '✓ Dar acceso gratuito'; btn.disabled = false; }
 }
