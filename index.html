@@ -1163,6 +1163,16 @@ async function guardarLS() {
 }
 
 async function cargarLS() {
+  // Resetear state antes de cargar para evitar mezcla con usuario anterior
+  state = {
+    transacciones: [], deudas: [], empleados: [], inventario: [],
+    eventos: [], responsabilidades: [],
+    categorias: [...CATS_DEFAULT], categoriasInv: [...CATS_INV_DEFAULT],
+    categoriasResp: [...CATS_RESP_DEFAULT], categoriasDeuda: [...CATS_DEUDA_DEFAULT],
+    categoriasCargo: [...CATS_CARGO_DEFAULT],
+    meta: 0, adminEmail: 'maranto2912@gmail.com',
+    pedidos: [], clientes: [], proveedores: [], fiados: []
+  };
   const key = currentUserId || DEVICE_ID;
   if(currentUserId) {
     try {
@@ -3848,6 +3858,16 @@ async function cambiarContrasena() {
 async function cerrarSesion() {
   clearTimeout(inactivityTimer);
   currentUserId = null;
+  // Resetear state completamente para que el próximo usuario no vea datos del anterior
+  state = {
+    transacciones: [], deudas: [], empleados: [], inventario: [],
+    eventos: [], responsabilidades: [],
+    categorias: [...CATS_DEFAULT], categoriasInv: [...CATS_INV_DEFAULT],
+    categoriasResp: [...CATS_RESP_DEFAULT], categoriasDeuda: [...CATS_DEUDA_DEFAULT],
+    categoriasCargo: [...CATS_CARGO_DEFAULT],
+    meta: 0, adminEmail: 'maranto2912@gmail.com',
+    pedidos: [], clientes: [], proveedores: [], fiados: []
+  };
   await sb.auth.signOut();
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('main-app').style.display = 'none';
@@ -3917,9 +3937,22 @@ async function init() {
   try {
     const { data: { session } } = await sb.auth.getSession();
     if(session && session.user) {
+      // Mostrar pantalla de carga mientras llegan los datos
       document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('main-app').style.display = 'block';
-      document.getElementById('user-info').style.display = 'flex';
+      document.getElementById('main-app').style.display = 'none';
+      // Crear indicador de carga
+      const loadingApp = document.createElement('div');
+      loadingApp.id = 'loading-app';
+      loadingApp.style.cssText = 'position:fixed;inset:0;background:#F0EDFF;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100';
+      loadingApp.innerHTML = `<div style="font-size:32px;margin-bottom:12px">📈</div>
+        <div style="font-size:22px;font-weight:600;color:#1a1535;font-family:Cormorant Garamond,serif;letter-spacing:2px">Crece<span style="color:#7C3AED">App</span></div>
+        <div style="font-size:13px;color:#9B8EC4;margin-top:8px">Cargando tu negocio...</div>
+        <div style="width:40px;height:3px;background:#EDE9FF;border-radius:2px;margin-top:16px;overflow:hidden">
+          <div style="height:100%;background:#7C3AED;border-radius:2px;animation:loadBar 1.2s ease-in-out infinite" id="load-bar"></div>
+        </div>
+        <style>@keyframes loadBar{0%{width:0%;margin-left:0}50%{width:100%}100%{width:0%;margin-left:100%}}</style>`;
+      document.body.appendChild(loadingApp);
+
       const userEmail = session.user.email || '';
       const isAdmin = userEmail === 'maranto2912@gmail.com';
       const adminTab = document.getElementById('tab-admin');
@@ -3932,6 +3965,10 @@ async function init() {
       await cargarLS();
       renderAll();
       renderCalendario();
+      // Quitar loading y mostrar app con datos listos
+      loadingApp.remove();
+      document.getElementById('main-app').style.display = 'block';
+      document.getElementById('user-info').style.display = 'flex';
     }
   } catch(e) {
     console.log('Auth check failed:', e);
@@ -3946,8 +3983,18 @@ async function init() {
     } else if(event === 'SIGNED_IN' && session) {
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('reset-screen').style.display = 'none';
-      document.getElementById('main-app').style.display = 'block';
-      document.getElementById('user-info').style.display = 'flex';
+      document.getElementById('main-app').style.display = 'none';
+      // Loading mientras cargan datos
+      const loadingApp2 = document.createElement('div');
+      loadingApp2.id = 'loading-app2';
+      loadingApp2.style.cssText = 'position:fixed;inset:0;background:#F0EDFF;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100';
+      loadingApp2.innerHTML = `<div style="font-size:32px;margin-bottom:12px">📈</div>
+        <div style="font-size:22px;font-weight:600;color:#1a1535;font-family:Cormorant Garamond,serif;letter-spacing:2px">Crece<span style="color:#7C3AED">App</span></div>
+        <div style="font-size:13px;color:#9B8EC4;margin-top:8px">Cargando tu negocio...</div>
+        <div style="width:40px;height:3px;background:#EDE9FF;border-radius:2px;margin-top:16px;overflow:hidden">
+          <div style="height:100%;background:#7C3AED;border-radius:2px;animation:loadBar 1.2s ease-in-out infinite"></div>
+        </div>`;
+      document.body.appendChild(loadingApp2);
       const userEmail = session.user.email || '';
       const isAdmin = userEmail === 'maranto2912@gmail.com';
       const adminTab = document.getElementById('tab-admin');
@@ -3960,6 +4007,9 @@ async function init() {
       await cargarLS();
       renderAll();
       renderCalendario();
+      loadingApp2.remove();
+      document.getElementById('main-app').style.display = 'block';
+      document.getElementById('user-info').style.display = 'flex';
     } else if(event === 'SIGNED_OUT') {
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('main-app').style.display = 'none';
@@ -3971,12 +4021,17 @@ async function init() {
 init();
 </script>
 <script>
+// Desregistrar service workers viejos que cachean versiones antiguas
 if('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('SW registrado'))
-      .catch(err => console.log('SW error:', err));
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
   });
+  // Limpiar todos los cachés del navegador
+  if('caches' in window) {
+    caches.keys().then(names => {
+      names.forEach(name => caches.delete(name));
+    });
+  }
 }
 </script>
 </body>
