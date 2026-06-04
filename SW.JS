@@ -1,4 +1,3 @@
-// Service Worker que se autodestruye y limpia todo el caché
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', event => {
   event.waitUntil(
@@ -8,6 +7,5 @@ self.addEventListener('activate', event => {
   );
 });
 self.addEventListener('fetch', event => {
-  // No cachear nada — siempre ir a la red
   event.respondWith(fetch(event.request));
 });
