@@ -4016,6 +4016,22 @@ async function registerUser() {
         showAuthSuccess('¡Cuenta creada! Ya puedes iniciar sesión.');
       } else if(loginData?.session) {
         currentUserId = loginData.session.user.id;
+        resetTimer();
+        // Mostrar loading y cargar app
+        document.getElementById('auth-screen').style.display = 'none';
+        const loadingReg = document.createElement('div');
+        loadingReg.style.cssText = 'position:fixed;inset:0;background:#F0EDFF;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100';
+        loadingReg.innerHTML = `<div style="font-size:32px;margin-bottom:12px">📈</div>
+          <div style="font-size:22px;font-weight:600;color:#1a1535;font-family:Cormorant Garamond,serif;letter-spacing:2px">Crece<span style="color:#7C3AED">App</span></div>
+          <div style="font-size:13px;color:#9B8EC4;margin-top:8px">Preparando tu negocio...</div>`;
+        document.body.appendChild(loadingReg);
+        await cargarPerfil(loginData.session.user.id);
+        await cargarLS();
+        renderAll();
+        renderCalendario();
+        loadingReg.remove();
+        document.getElementById('main-app').style.display = 'block';
+        document.getElementById('user-info').style.display = 'flex';
       }
     }
   } catch(e) {
@@ -4308,6 +4324,11 @@ async function init() {
         </div>
         <style>@keyframes loadBar{0%{width:0%;margin-left:0}50%{width:100%}100%{width:0%;margin-left:100%}}</style>`;
       document.body.appendChild(loadingApp);
+      // Timeout de seguridad — si algo falla, quitar el loading después de 8 segundos
+      const loadingTimeout = setTimeout(() => {
+        const el = document.getElementById('loading-app');
+        if(el) el.remove();
+      }, 8000);
 
       const userEmail = session.user.email || '';
       const isAdmin = userEmail === 'maranto2912@gmail.com';
@@ -4322,6 +4343,7 @@ async function init() {
       renderAll();
       renderCalendario();
       // Quitar loading y mostrar app con datos listos
+      clearTimeout(loadingTimeout);
       loadingApp.remove();
       document.getElementById('main-app').style.display = 'block';
       document.getElementById('user-info').style.display = 'flex';
