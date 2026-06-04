@@ -1312,10 +1312,11 @@ function toggleVentaFields() {
 }
 
 function agregarItemTx() {
-  const tipo = document.getElementById('tx-tipo').value;
-  const esIngreso = tipo === 'ingreso';
-  const itemId = Date.now() + Math.random();
-  txItems.push({ id: itemId, tipo: 'servicio', productoId: '', nombre: '', precio: 0, cantidad: 1, comisionPct: 0 });
+  const empId = document.getElementById('tx-emp').value;
+  const emp = empId ? state.empleados.find(x => String(x.id) === String(empId)) : null;
+  // Por defecto es servicio: comisión solo si el empleado es comisionista
+  const comPctDefecto = (emp && emp.tipoPago === 'comision') ? (emp.comision || 0) : 0;
+  txItems.push({ id: Date.now() + Math.random(), tipo: 'servicio', productoId: '', nombre: '', precio: 0, cantidad: 1, comisionPct: comPctDefecto });
   renderItemsTx();
 }
 
@@ -1325,7 +1326,7 @@ function renderItemsTx() {
   const tipo = document.getElementById('tx-tipo').value;
   const empId = document.getElementById('tx-emp').value;
   const emp = empId ? state.empleados.find(x => String(x.id) === String(empId)) : null;
-  const empComision = emp ? (emp.comision || 0) : 0;
+  const empComision = (emp && emp.tipoPago === 'comision') ? (emp.comision || 0) : 0;
 
   el.innerHTML = txItems.map((item, idx) => {
     const opcionesProductos = state.inventario.map(p =>
@@ -1383,7 +1384,8 @@ function cambiarTipoItem(idx, valor) {
     txItems[idx].productoId = '';
     txItems[idx].nombre = '';
     txItems[idx].precio = 0;
-    txItems[idx].comisionPct = emp ? (emp.comision || 0) : 0;
+    // Servicios: solo aplica comisión si el empleado es tipo comisión
+    txItems[idx].comisionPct = (emp && emp.tipoPago === 'comision') ? (emp.comision || 0) : 0;
   } else {
     const prodId = parseInt(valor.replace('prod_', ''));
     const prod = state.inventario.find(p => p.id === prodId);
@@ -1392,6 +1394,7 @@ function cambiarTipoItem(idx, valor) {
       txItems[idx].productoId = valor;
       txItems[idx].nombre = prod.nombre;
       txItems[idx].precio = prod.precio;
+      // Productos: siempre usan el % del inventario, sin importar tipo de empleado
       txItems[idx].comisionPct = prod.comision || 0;
     }
   }
