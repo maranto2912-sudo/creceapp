@@ -1223,6 +1223,7 @@ function abrirModal(id) {
     const sel = document.getElementById('tx-emp');
     sel.innerHTML = '<option value="">— ninguno —</option>';
     state.empleados.forEach(e => sel.innerHTML += `<option value="${e.id}">${e.nombre}</option>`);
+    // Limpiar campos manuales
     const mv = document.getElementById('tx-monto-manual-val');
     if(mv) mv.value = '';
     const mp = document.getElementById('tx-monto-principal');
