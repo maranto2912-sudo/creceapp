@@ -1330,7 +1330,7 @@ function renderItemsTx() {
 
   el.innerHTML = txItems.map((item, idx) => {
     const opcionesProductos = state.inventario.map(p =>
-      `<option value="prod_${p.id}" ${item.productoId === 'prod_'+p.id ? 'selected' : ''}>📦 ${p.nombre} (${fmt(p.precio)})</option>`
+      `<option value="prod_${p.id}" ${item.productoId === 'prod_'+p.id ? 'selected' : ''}>📦 ${p.nombre} (${tipo==='egreso' ? fmt(p.costo||p.precio)+' costo' : fmt(p.precio)})</option>`
     ).join('');
     return `<div style="background:#fff;border:1px solid rgba(124,58,237,0.1);border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -1486,7 +1486,7 @@ function toggleDetalles() {
   const btn = document.getElementById('detalles-btn-text');
   const visible = fields.style.display === 'block';
   fields.style.display = visible ? 'none' : 'block';
-  btn.textContent = visible ? '+ Agregar costo, ganancia y forma de pago' : '− Ocultar detalles';
+  btn.textContent = visible ? '+ Agregar costo y forma de pago' : '− Ocultar detalles';
 }
 
 function actualizarCategorias() {
@@ -2151,7 +2151,8 @@ function calcHorasPeriodo(e) {
 
 function calcVentasPeriodo(e) {
   const inicio = getPeriodoInicio(e.frecuencia || 'semanal');
-  return (e.comisionLog||[]).filter(v=>v.fecha>=inicio).reduce((s,v)=>s+v.venta,0);
+  // Solo suma entradas de tipo servicio (o sin tipo) para no mezclar con productos
+  return (e.comisionLog||[]).filter(v => v.fecha >= inicio && (v.tipo === 'servicio' || !v.tipo)).reduce((s,v) => s+v.venta, 0);
 }
 
 function renderEmpleados() {
@@ -2607,12 +2608,25 @@ function renderHistorialEmpleados() {
       });
     }
 
-    // Comisiones
-    if(e.tipoPago === 'comision') {
+    // Comisiones — para todos los tipos de empleado
+    // Para comision: todas las entradas del log
+    // Para fijo/horas: solo las de tipo producto
+    const incluyeComision = e.tipoPago === 'comision';
+    const incluyeProductos = e.tipoPago === 'fijo' || e.tipoPago === 'horas';
+
+    if(incluyeComision) {
       (e.comisionLog||[]).forEach(v => {
         const key = getPeriodoKey(v.fecha, frec);
-        if(!semanas[key]) semanas[key] = { horas: 0, ventas: 0 };
+        if(!semanas[key]) semanas[key] = { horas: 0, ventas: 0, comProd: 0 };
         semanas[key].ventas += v.venta;
+      });
+    }
+
+    if(incluyeProductos) {
+      (e.comisionLog||[]).filter(v => v.tipo === 'producto').forEach(v => {
+        const key = getPeriodoKey(v.fecha, frec);
+        if(!semanas[key]) semanas[key] = { horas: 0, ventas: 0, comProd: 0 };
+        semanas[key].comProd = (semanas[key].comProd || 0) + (v.venta * (v.comisionPct||0) / 100);
       });
     }
 
@@ -2639,8 +2653,14 @@ function renderHistorialEmpleados() {
             let pago = 0;
             let detalle = '';
             if(e.tipoPago === 'horas') {
-              pago = s.horas * (e.valorHora||0);
-              detalle = `${s.horas}h`;
+              const pagoHoras = s.horas * (e.valorHora||0);
+              const comProd = s.comProd || 0;
+              pago = pagoHoras + comProd;
+              detalle = `${s.horas}h${comProd>0?' + Com prod':''}`; 
+            } else if(e.tipoPago === 'fijo') {
+              const comProd = s.comProd || 0;
+              pago = (e.salario||0) + comProd;
+              detalle = comProd > 0 ? `Sal + ${fmt(comProd)} prod` : 'Salario fijo';
             } else {
               pago = s.ventas * (e.comision/100);
               detalle = fmt(s.ventas);
@@ -2657,7 +2677,9 @@ function renderHistorialEmpleados() {
             <td style="padding:8px;text-align:right;font-weight:700;color:#7C3AED;font-size:14px">${fmt(
               semanasOrdenadas.reduce((s, lunes) => {
                 const sem = semanas[lunes];
-                return s + (e.tipoPago === 'horas' ? sem.horas*(e.valorHora||0) : sem.ventas*(e.comision/100));
+                if(e.tipoPago === 'horas') return s + sem.horas*(e.valorHora||0) + (sem.comProd||0);
+                if(e.tipoPago === 'fijo') return s + (e.salario||0) + (sem.comProd||0);
+                return s + sem.ventas*(e.comision/100);
               }, 0)
             )}</td>
           </tr>
@@ -2671,7 +2693,7 @@ function renderHistorialEmpleados() {
 
 function calcVentasHoy(e) {
   const hoy = new Date().toISOString().split('T')[0];
-  return (e.comisionLog||[]).filter(v=>v.fecha===hoy).reduce((s,v)=>s+v.venta,0);
+  return (e.comisionLog||[]).filter(v => v.fecha === hoy && (v.tipo === 'servicio' || !v.tipo)).reduce((s,v) => s+v.venta, 0);
 }
 
 function calcVentasSemana(e) {
@@ -3233,12 +3255,19 @@ function generarRecibo(tx) {
   reciboActual = tx;
   const emp = state.empleados.find(e => e.id == tx.empId);
   const fecha = new Date(tx.fecha + 'T12:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'});
+  let itemsLineas = '';
+  if(tx.items && tx.items.length > 0) {
+    itemsLineas = tx.items.map(item =>
+      `   ${item.nombre||'Item'} x${item.cantidad||1}  →  ${fmt((item.precio||0)*(item.cantidad||1))}`
+    ).join('\n');
+  }
   const lineas = [
     '🧾 RECIBO DE VENTA',
     '━━━━━━━━━━━━━━━━━━━━━',
     '📅 Fecha: ' + fecha,
     '📝 Concepto: ' + tx.desc,
-    '💰 Valor: ' + fmt(tx.monto),
+    itemsLineas ? '─────────────────────\n' + itemsLineas + '\n─────────────────────' : '',
+    '💰 Total: ' + fmt(tx.monto),
     tx.metodo ? '💳 Pago: ' + tx.metodo : '',
     emp ? '👤 Atendido por: ' + emp.nombre : '',
     tx.notas ? '📌 Notas: ' + tx.notas : '',
@@ -3246,7 +3275,6 @@ function generarRecibo(tx) {
     '¡Gracias por tu compra! 💜',
     'CreceApp — Tu negocio ordenado'
   ].filter(Boolean);
-  const recibo = lineas.join('\n');
   document.getElementById('recibo-contenido').innerHTML = lineas.join('<br>');
   document.getElementById('overlay-recibo').style.display = 'flex';
 }
