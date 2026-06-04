@@ -1306,14 +1306,54 @@ async function cargarLS() {
     try {
       const { data } = await sb.from('creceapp_data').select('data').eq('device_id', currentUserId).single();
       if(data && data.data) { 
-        state = { ...state, ...data.data };
+        // Reemplazo limpio — no merge para evitar datos del usuario anterior
+        const loaded = data.data;
+        state.transacciones = loaded.transacciones || [];
+        state.deudas = loaded.deudas || [];
+        state.empleados = loaded.empleados || [];
+        state.inventario = loaded.inventario || [];
+        state.eventos = loaded.eventos || [];
+        state.responsabilidades = loaded.responsabilidades || [];
+        state.meta = loaded.meta || 0;
+        state.pedidos = loaded.pedidos || [];
+        state.clientes = loaded.clientes || [];
+        state.proveedores = loaded.proveedores || [];
+        state.fiados = loaded.fiados || [];
+        state.activos = loaded.activos || [];
+        // Categorías — usar las guardadas si existen, si no las default
+        state.categorias = loaded.categorias || [...CATS_DEFAULT];
+        state.categoriasInv = loaded.categoriasInv || [...CATS_INV_DEFAULT];
+        state.categoriasResp = loaded.categoriasResp || [...CATS_RESP_DEFAULT];
+        state.categoriasDeuda = loaded.categoriasDeuda || [...CATS_DEUDA_DEFAULT];
+        state.categoriasCargo = loaded.categoriasCargo || [...CATS_CARGO_DEFAULT];
+        state.categoriasActivos = loaded.categoriasActivos || [...CATS_ACTIVOS_DEFAULT];
         return; 
       }
     } catch(e) {}
   }
   try { 
     const d = localStorage.getItem('creceapp_' + key) || localStorage.getItem('creceapp'); 
-    if(d) state = { ...state, ...JSON.parse(d) }; 
+    if(d) {
+      const loaded = JSON.parse(d);
+      state.transacciones = loaded.transacciones || [];
+      state.deudas = loaded.deudas || [];
+      state.empleados = loaded.empleados || [];
+      state.inventario = loaded.inventario || [];
+      state.eventos = loaded.eventos || [];
+      state.responsabilidades = loaded.responsabilidades || [];
+      state.meta = loaded.meta || 0;
+      state.pedidos = loaded.pedidos || [];
+      state.clientes = loaded.clientes || [];
+      state.proveedores = loaded.proveedores || [];
+      state.fiados = loaded.fiados || [];
+      state.activos = loaded.activos || [];
+      state.categorias = loaded.categorias || [...CATS_DEFAULT];
+      state.categoriasInv = loaded.categoriasInv || [...CATS_INV_DEFAULT];
+      state.categoriasResp = loaded.categoriasResp || [...CATS_RESP_DEFAULT];
+      state.categoriasDeuda = loaded.categoriasDeuda || [...CATS_DEUDA_DEFAULT];
+      state.categoriasCargo = loaded.categoriasCargo || [...CATS_CARGO_DEFAULT];
+      state.categoriasActivos = loaded.categoriasActivos || [...CATS_ACTIVOS_DEFAULT];
+    }
   } catch(e){}
 }
 
@@ -1338,6 +1378,8 @@ function intentarAdmin(btn) {
 }
 
 function showPage(id, btn) {
+  // Cerrar cualquier modal abierto al cambiar de página
+  document.querySelectorAll('.overlay').forEach(o => o.style.display = 'none');
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
