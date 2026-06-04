@@ -2222,7 +2222,7 @@ function renderEmpleados() {
       </div>
       <button class="btn-primary" style="margin-top:6px;font-size:11px;padding:5px 12px" onclick="registrarHoras(${e.id})">+ Horas hoy</button>`;
     } else if(tipoPago === 'comision') {
-      totalPagar = comisionPer;
+      totalPagar = comisionPer + totalComProd;
       detalleExtra = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
         <div style="background:#FEF3C7;border-radius:6px;padding:8px;text-align:center">
           <div style="font-size:10px;color:var(--text2)">Ventas hoy</div>
@@ -2232,7 +2232,7 @@ function renderEmpleados() {
         <div style="background:#FEF3C7;border-radius:6px;padding:8px;text-align:center">
           <div style="font-size:10px;color:var(--text2)">${labelPer}</div>
           <div style="font-size:14px;font-weight:700;color:#D97706">${fmt(ventasPer)}</div>
-          <div style="font-size:11px;color:#059669">Com: ${fmt(comisionPer)}</div>
+          <div style="font-size:11px;color:#059669">Com serv: ${fmt(comisionPer)}${totalComProd>0?' + prod: '+fmt(totalComProd):''}</div>
         </div>
       </div>
       <button class="btn-primary" style="margin-top:6px;font-size:11px;padding:5px 12px;background:#D97706" onclick="registrarVentaComision(${e.id})">+ Venta hoy</button>`;
@@ -2364,9 +2364,32 @@ function verDetallePago(id) {
   overlay.innerHTML = `
     <div style="background:#fff;border-radius:14px;padding:22px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto">
       ${html}
-      <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;margin-top:14px;padding:10px;border-radius:8px;background:#7C3AED;color:white;border:none;font-family:Outfit,sans-serif;font-size:13px;cursor:pointer;font-weight:500">Cerrar</button>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button onclick="limpiarHistorialEmpleado(${id})" style="flex:1;padding:9px;border-radius:8px;background:#FEE2E2;color:#DC2626;border:1px solid #FCA5A5;font-family:Outfit,sans-serif;font-size:12px;cursor:pointer">🗑️ Limpiar historial</button>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:2;padding:9px;border-radius:8px;background:#7C3AED;color:white;border:none;font-family:Outfit,sans-serif;font-size:13px;cursor:pointer;font-weight:500">Cerrar</button>
+      </div>
     </div>`;
   document.body.appendChild(overlay);
+}
+
+function limpiarHistorialEmpleado(id) {
+  if(!confirm('¿Seguro que quieres limpiar todo el historial de comisiones de este empleado? Esta acción no se puede deshacer.')) return;
+  const e = state.empleados.find(x => x.id === id);
+  if(e) {
+    e.comisionLog = [];
+    e.horasLog = [];
+    guardarLS();
+    renderAll();
+    // Cerrar el overlay
+    document.querySelectorAll('div[style*="position:fixed"]').forEach(el => {
+      if(el.querySelector('button') && el.textContent.includes('Limpiar historial')) el.remove();
+    });
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif';
+    msg.textContent = '✓ Historial limpiado correctamente';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
+  }
 }
 
 function eliminarEmpleado(id) {
