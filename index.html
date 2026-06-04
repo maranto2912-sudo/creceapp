@@ -556,7 +556,7 @@
 
 <!-- MODALES -->
 <div class="overlay" id="overlay-tx">
-<div class="modal">
+<div class="modal" style="max-width:460px">
   <div class="modal-title">Registrar transacción</div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Tipo</label>
@@ -567,42 +567,77 @@
     </div>
     <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="tx-fecha"></div>
   </div>
-  <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="tx-desc" placeholder="Ej: Corte, tinte, cuota banco, arriendo..."></div>
+  <div class="form-group"><label class="form-label">Descripción general</label><input type="text" id="tx-desc" placeholder="Ej: Venta productos, servicio corte..."></div>
   <div class="form-row">
     <div class="form-group">
-      <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat')">+ Agregar nueva</span></label>
-      <select id="tx-cat"></select>
+      <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat')">+ Nueva</span></label>
+      <select id="tx-cat" onchange="toggleVentaFields()"></select>
     </div>
     <div class="form-group"><label class="form-label">Empleado</label><select id="tx-emp" onchange="toggleVentaFields()"><option value="">— ninguno —</option></select></div>
   </div>
-  <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="tx-monto-principal" placeholder="0" min="0"></div>
 
-  <!-- COMISIÓN SOBRE ESTA VENTA -->
-  <div id="tx-comision-box" style="display:none;background:#FEF3C7;border-radius:8px;padding:10px;margin-bottom:10px;border:1px solid rgba(217,119,6,0.2)">
-    <div style="font-size:12px;font-weight:500;color:#D97706;margin-bottom:6px">💼 Comisión sobre esta venta</div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <input type="number" id="tx-comision-pct" placeholder="% comisión" min="0" max="100" oninput="calcComisionTx()" style="width:90px;padding:6px;border:1px solid rgba(217,119,6,0.3);border-radius:6px;font-size:12px;background:#fff">
-      <span style="font-size:12px;color:var(--text2)">% →</span>
-      <span id="tx-comision-valor" style="font-size:13px;font-weight:600;color:#D97706">$0</span>
+  <!-- SECCIÓN PRODUCTOS (ingreso de Productos o egreso de Insumos) -->
+  <div id="tx-productos-section" style="display:none">
+    <div style="background:#F8F7FF;border-radius:8px;padding:12px;margin-bottom:10px;border:1px solid rgba(124,58,237,0.15)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:500;color:#7C3AED" id="tx-productos-titulo">📦 Productos vendidos</span>
+        <button type="button" class="btn-sm" style="font-size:11px" onclick="agregarItemTx()">+ Agregar item</button>
+      </div>
+      <div id="tx-items-list"></div>
+      <div style="border-top:1px solid rgba(124,58,237,0.1);padding-top:8px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span style="color:var(--text2)">Subtotal productos:</span>
+          <span id="tx-subtotal-productos" style="font-weight:600;color:#7C3AED">$0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px" id="tx-fila-servicios" style="display:none">
+          <span style="color:var(--text2)">Subtotal servicios:</span>
+          <span id="tx-subtotal-servicios" style="font-weight:600;color:#7C3AED">$0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;border-top:1px solid rgba(124,58,237,0.1);padding-top:6px;margin-top:4px">
+          <span style="color:var(--text)">Total:</span>
+          <span id="tx-total-calc" style="color:#7C3AED">$0</span>
+        </div>
+        <div id="tx-comision-resumen" style="display:none;margin-top:6px;background:#FEF3C7;border-radius:6px;padding:8px;font-size:11px;line-height:1.8">
+          <div style="font-weight:500;color:#D97706;margin-bottom:3px">💼 Desglose comisiones</div>
+          <div id="tx-comision-detalle"></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label class="form-label">Monto total ($) <span style="font-size:10px;color:#7C3AED">(calculado automáticamente)</span></label>
+      <input type="number" id="tx-monto-principal" placeholder="0" min="0" style="background:#F0EDFF" readonly>
     </div>
   </div>
 
-  <div class="form-group"><label class="form-label">Notas <span style="font-size:10px;color:var(--text3)">(opcional)</span></label><input type="text" id="tx-notas" placeholder="Observaciones, detalles adicionales..."></div>
+  <!-- MONTO MANUAL (cuando no hay productos) -->
+  <div id="tx-monto-manual">
+    <div class="form-group"><label class="form-label">Monto ($)</label><input type="number" id="tx-monto-manual-val" placeholder="0" min="0" oninput="sincronizarMonto()"></div>
+    <!-- COMISIÓN SIMPLE -->
+    <div id="tx-comision-box" style="display:none;background:#FEF3C7;border-radius:8px;padding:10px;margin-bottom:10px;border:1px solid rgba(217,119,6,0.2)">
+      <div style="font-size:12px;font-weight:500;color:#D97706;margin-bottom:6px">💼 Comisión sobre este servicio</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="tx-comision-pct-label" style="font-size:12px;color:var(--text2)">%:</span>
+        <input type="number" id="tx-comision-pct" placeholder="0" min="0" max="100" oninput="calcComisionTx()" style="width:80px;padding:6px;border:1px solid rgba(217,119,6,0.3);border-radius:6px;font-size:12px;background:#fff">
+        <span style="font-size:12px;color:var(--text2)">→ Comisión:</span>
+        <span id="tx-comision-valor" style="font-size:13px;font-weight:600;color:#D97706">$0</span>
+      </div>
+    </div>
+  </div>
 
-  <!-- APLICAR A DEUDA (solo para egresos) -->
+  <div class="form-group"><label class="form-label">Notas <span style="font-size:10px;color:var(--text3)">(opcional)</span></label><input type="text" id="tx-notas" placeholder="Observaciones..."></div>
+
+  <!-- APLICAR A DEUDA -->
   <div id="deuda-selector" style="display:none">
     <div class="form-group">
       <label class="form-label">💳 ¿Aplicar a una deuda? <span style="font-size:10px;color:var(--text3)">(opcional)</span></label>
-      <select id="tx-deuda-id">
-        <option value="">— No aplicar a ninguna deuda —</option>
-      </select>
+      <select id="tx-deuda-id"><option value="">— No aplicar a ninguna deuda —</option></select>
     </div>
   </div>
 
   <!-- DETALLES OPCIONALES -->
   <div id="venta-fields" style="display:none">
     <div style="background:#F8F7FF;border-radius:8px;padding:12px;margin-bottom:10px;border:1px solid rgba(124,58,237,0.1)">
-      <div style="font-size:12px;font-weight:500;color:#7C3AED;margin-bottom:8px">💰 Costo y ganancia <span style="font-weight:400;color:var(--text3)">(opcional)</span></div>
+      <div style="font-size:12px;font-weight:500;color:#7C3AED;margin-bottom:8px">💰 Costo y forma de pago <span style="font-weight:400;color:var(--text3)">(opcional)</span></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Costo ($)</label><input type="number" id="tx-costo" placeholder="0" min="0" oninput="calcularGanancia()"></div>
         <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:10px">
@@ -640,7 +675,7 @@
     </div>
   </div>
   <button class="btn-sm" style="width:100%;justify-content:center;margin-bottom:12px;font-size:11px" onclick="toggleDetalles()">
-    <span id="detalles-btn-text">+ Agregar costo, ganancia y forma de pago</span>
+    <span id="detalles-btn-text">+ Agregar costo y forma de pago</span>
   </button>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('tx')">Cancelar</button><button class="btn-primary" onclick="guardarTx()">Guardar</button></div>
 </div></div>
@@ -957,6 +992,7 @@
     <div class="form-group"><label class="form-label">Precio venta ($)</label><input type="number" id="ei-precio"></div>
     <div class="form-group"><label class="form-label">Costo de compra ($)</label><input type="number" id="ei-costo" min="0"></div>
   </div>
+  <div class="form-group"><label class="form-label">% Comisión venta</label><input type="number" id="ei-comision" placeholder="0" min="0" max="100"></div>
   <input type="hidden" id="ei-id">
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('editar-inv')">Cancelar</button><button class="btn-primary" onclick="guardarEdicionInv()">Guardar</button></div>
 </div></div>
@@ -1006,14 +1042,19 @@
     <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat-inv')">+ Nueva</span></label>
     <select id="i-cat"></select>
     </div>
-    <div class="form-group"><label class="form-label">Precio ($)</label><input type="number" id="i-precio" placeholder="0"></div>
+    <div class="form-group"><label class="form-label">Precio ($)</label><input type="number" id="i-precio" placeholder="0" oninput="calcGananciaInv()"></div>
   </div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">Stock actual</label><input type="number" id="i-stock" placeholder="0" min="0"></div>
     <div class="form-group"><label class="form-label">Stock mínimo</label><input type="number" id="i-min" placeholder="5" min="0"></div>
   </div>
-  <div class="form-group"><label class="form-label">Costo de compra ($) <span style="font-size:10px;color:var(--text3)">(opcional)</span></label>
-    <input type="number" id="i-costo" placeholder="0" min="0" oninput="calcGananciaInv()">
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Costo de compra ($) <span style="font-size:10px;color:var(--text3)">(opcional)</span></label>
+      <input type="number" id="i-costo" placeholder="0" min="0" oninput="calcGananciaInv()">
+    </div>
+    <div class="form-group"><label class="form-label">% Comisión venta <span style="font-size:10px;color:var(--text3)">(opcional)</span></label>
+      <input type="number" id="i-comision" placeholder="0" min="0" max="100">
+    </div>
   </div>
   <div id="inv-ganancia-box" style="display:none;background:#F0EDFF;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px">
     <div style="display:flex;justify-content:space-between;margin-bottom:4px">
@@ -1177,10 +1218,22 @@ function abrirModal(id) {
     return;
   }
   if(id === 'tx') {
+    txItems = [];
     document.getElementById('tx-fecha').value = new Date().toISOString().split('T')[0];
     const sel = document.getElementById('tx-emp');
     sel.innerHTML = '<option value="">— ninguno —</option>';
     state.empleados.forEach(e => sel.innerHTML += `<option value="${e.id}">${e.nombre}</option>`);
+    // Limpiar campos manuales
+    const mv = document.getElementById('tx-monto-manual-val');
+    if(mv) mv.value = '';
+    const mp = document.getElementById('tx-monto-principal');
+    if(mp) mp.value = '';
+    const itemsList = document.getElementById('tx-items-list');
+    if(itemsList) itemsList.innerHTML = '';
+    const seccion = document.getElementById('tx-productos-section');
+    if(seccion) seccion.style.display = 'none';
+    const montoManual = document.getElementById('tx-monto-manual');
+    if(montoManual) montoManual.style.display = 'block';
     actualizarCategorias();
     toggleVentaFields();
   }
@@ -1210,26 +1263,209 @@ function cerrarModal(id) { document.getElementById('overlay-' + id).style.displa
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target === o) o.style.display = 'none'; }));
 
 // ─── GUARDAR DATOS ────────────────────────────────────────
+// Items de la transacción actual
+let txItems = [];
+
 function toggleVentaFields() {
   actualizarCategorias();
   const tipo = document.getElementById('tx-tipo').value;
+  const cat = document.getElementById('tx-cat').value;
+  const empId = document.getElementById('tx-emp').value;
+
+  // Mostrar/ocultar selector de deuda
   const deudaSelector = document.getElementById('deuda-selector');
   if(deudaSelector) {
     deudaSelector.style.display = tipo === 'egreso' ? 'block' : 'none';
     if(tipo === 'egreso') actualizarSelectorDeudas();
   }
-  // Mostrar box de comisión solo si hay empleado y es ingreso
+
+  // Categorías que activan el sistema de productos
+  const catsProductoIngreso = ['Productos', 'Ventas'];
+  const catsProductoEgreso = ['Insumos', 'Productos'];
+  const esSeccionProductos = (tipo === 'ingreso' && catsProductoIngreso.includes(cat)) ||
+                              (tipo === 'egreso' && catsProductoEgreso.includes(cat));
+
+  const seccion = document.getElementById('tx-productos-section');
+  const montoManual = document.getElementById('tx-monto-manual');
+  const titulo = document.getElementById('tx-productos-titulo');
+
+  if(esSeccionProductos) {
+    seccion.style.display = 'block';
+    montoManual.style.display = 'none';
+    if(titulo) titulo.textContent = tipo === 'egreso' ? '📦 Productos comprados (sube stock)' : '📦 Productos / Servicios vendidos';
+    if(txItems.length === 0) agregarItemTx();
+  } else {
+    seccion.style.display = 'none';
+    montoManual.style.display = 'block';
+    // Comisión simple para servicios
+    const comBox = document.getElementById('tx-comision-box');
+    if(comBox) {
+      const mostrar = tipo === 'ingreso' && empId;
+      comBox.style.display = mostrar ? 'block' : 'none';
+      if(mostrar) {
+        const emp = state.empleados.find(x => String(x.id) === String(empId));
+        const pct = emp ? (emp.comision || 0) : 0;
+        const pctEl = document.getElementById('tx-comision-pct');
+        if(pctEl && pct > 0) pctEl.value = pct;
+      }
+    }
+  }
+}
+
+function agregarItemTx() {
+  const tipo = document.getElementById('tx-tipo').value;
+  const esIngreso = tipo === 'ingreso';
+  const itemId = Date.now() + Math.random();
+  txItems.push({ id: itemId, tipo: 'servicio', productoId: '', nombre: '', precio: 0, cantidad: 1, comisionPct: 0 });
+  renderItemsTx();
+}
+
+function renderItemsTx() {
+  const el = document.getElementById('tx-items-list');
+  if(!el) return;
+  const tipo = document.getElementById('tx-tipo').value;
   const empId = document.getElementById('tx-emp').value;
-  const comBox = document.getElementById('tx-comision-box');
-  if(comBox) comBox.style.display = (tipo === 'ingreso' && empId) ? 'block' : 'none';
+  const emp = empId ? state.empleados.find(x => String(x.id) === String(empId)) : null;
+  const empComision = emp ? (emp.comision || 0) : 0;
+
+  el.innerHTML = txItems.map((item, idx) => {
+    const opcionesProductos = state.inventario.map(p =>
+      `<option value="prod_${p.id}" ${item.productoId === 'prod_'+p.id ? 'selected' : ''}>📦 ${p.nombre} (${fmt(p.precio)})</option>`
+    ).join('');
+    return `<div style="background:#fff;border:1px solid rgba(124,58,237,0.1);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:500;color:#7C3AED">Item ${idx+1}</span>
+        ${txItems.length > 1 ? `<button type="button" onclick="eliminarItemTx(${idx})" style="background:none;border:none;color:#DC2626;font-size:12px;cursor:pointer">✕</button>` : ''}
+      </div>
+      <div style="margin-bottom:6px">
+        <select onchange="cambiarTipoItem(${idx},this.value)" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:6px;font-size:12px;background:#F8F7FF;margin-bottom:6px">
+          <option value="servicio" ${item.tipo==='servicio'?'selected':''}>💇 Servicio (precio manual)</option>
+          ${opcionesProductos}
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px">
+        <div>
+          <label style="font-size:10px;color:var(--text2)">Nombre/descripción</label>
+          <input type="text" value="${item.nombre}" onchange="actualizarItem(${idx},'nombre',this.value)"
+            placeholder="${item.tipo==='servicio'?'Ej: Corte, tinte...':'Nombre del producto'}"
+            style="width:100%;padding:6px;border:1px solid rgba(124,58,237,0.2);border-radius:6px;font-size:12px;background:#F8F7FF"
+            ${item.tipo!=='servicio'?'readonly':''}>
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--text2)">Precio ($)</label>
+          <input type="number" value="${item.precio||''}" onchange="actualizarItem(${idx},'precio',this.value)"
+            placeholder="0" style="width:100%;padding:6px;border:1px solid rgba(124,58,237,0.2);border-radius:6px;font-size:12px;background:#F8F7FF"
+            ${item.tipo!=='servicio'?'readonly':''}>
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--text2)">Cant.</label>
+          <input type="number" value="${item.cantidad||1}" min="1" onchange="actualizarItem(${idx},'cantidad',this.value)"
+            style="width:100%;padding:6px;border:1px solid rgba(124,58,237,0.2);border-radius:6px;font-size:12px;background:#F8F7FF">
+        </div>
+      </div>
+      ${tipo === 'ingreso' ? `<div style="margin-top:6px;display:flex;align-items:center;gap:6px">
+        <span style="font-size:10px;color:var(--text2)">% Comisión:</span>
+        <input type="number" value="${item.comisionPct}" min="0" max="100" onchange="actualizarItem(${idx},'comisionPct',this.value)"
+          placeholder="${item.tipo==='servicio' ? empComision : ''}"
+          style="width:65px;padding:5px;border:1px solid rgba(217,119,6,0.3);border-radius:6px;font-size:11px;background:#FFF9E6">
+        <span style="font-size:11px;color:#D97706">→ Com: ${fmt((item.precio*item.cantidad)*(item.comisionPct/100))}</span>
+        <span style="font-size:11px;color:#7C3AED;margin-left:auto">= ${fmt(item.precio*item.cantidad)}</span>
+      </div>` : `<div style="margin-top:4px;font-size:11px;color:#059669;text-align:right">Stock subirá: +${item.cantidad} uds</div>`}
+    </div>`;
+  }).join('');
+  calcularTotalTx();
+}
+
+function cambiarTipoItem(idx, valor) {
+  const empId = document.getElementById('tx-emp').value;
+  const emp = empId ? state.empleados.find(x => String(x.id) === String(empId)) : null;
+  if(valor === 'servicio') {
+    txItems[idx].tipo = 'servicio';
+    txItems[idx].productoId = '';
+    txItems[idx].nombre = '';
+    txItems[idx].precio = 0;
+    txItems[idx].comisionPct = emp ? (emp.comision || 0) : 0;
+  } else {
+    const prodId = parseInt(valor.replace('prod_', ''));
+    const prod = state.inventario.find(p => p.id === prodId);
+    if(prod) {
+      txItems[idx].tipo = 'producto';
+      txItems[idx].productoId = valor;
+      txItems[idx].nombre = prod.nombre;
+      txItems[idx].precio = prod.precio;
+      txItems[idx].comisionPct = prod.comision || 0;
+    }
+  }
+  renderItemsTx();
+}
+
+function actualizarItem(idx, campo, valor) {
+  if(campo === 'precio' || campo === 'cantidad' || campo === 'comisionPct') {
+    txItems[idx][campo] = parseFloat(valor) || 0;
+  } else {
+    txItems[idx][campo] = valor;
+  }
+  calcularTotalTx();
+}
+
+function eliminarItemTx(idx) {
+  txItems.splice(idx, 1);
+  renderItemsTx();
+}
+
+function calcularTotalTx() {
+  const tipo = document.getElementById('tx-tipo').value;
+  let totalProd = 0, totalServ = 0, comisionTotal = 0;
+  const detallesCom = [];
+
+  txItems.forEach(item => {
+    const subtotal = (item.precio || 0) * (item.cantidad || 1);
+    const com = subtotal * ((item.comisionPct || 0) / 100);
+    if(item.tipo === 'servicio') totalServ += subtotal;
+    else totalProd += subtotal;
+    comisionTotal += com;
+    if(com > 0) detallesCom.push(`${item.nombre||'Item'}: ${fmt(com)} (${item.comisionPct}%)`);
+  });
+
+  const total = totalProd + totalServ;
+  const elTotal = document.getElementById('tx-total-calc');
+  const elProd = document.getElementById('tx-subtotal-productos');
+  const elServ = document.getElementById('tx-subtotal-servicios');
+  const elMonto = document.getElementById('tx-monto-principal');
+  const elComRes = document.getElementById('tx-comision-resumen');
+  const elComDet = document.getElementById('tx-comision-detalle');
+  const elFilaServ = document.getElementById('tx-fila-servicios');
+
+  if(elTotal) elTotal.textContent = fmt(total);
+  if(elProd) elProd.textContent = fmt(totalProd);
+  if(elServ) elServ.textContent = fmt(totalServ);
+  if(elFilaServ) elFilaServ.style.display = totalServ > 0 ? 'flex' : 'none';
+  if(elMonto) elMonto.value = total;
+
+  if(elComRes && tipo === 'ingreso') {
+    if(comisionTotal > 0) {
+      elComRes.style.display = 'block';
+      if(elComDet) elComDet.innerHTML = detallesCom.map(d => `<div>${d}</div>`).join('') +
+        `<div style="border-top:1px solid rgba(217,119,6,0.2);margin-top:4px;padding-top:4px;font-weight:600">Total comisión: ${fmt(comisionTotal)}</div>`;
+    } else {
+      elComRes.style.display = 'none';
+    }
+  }
+}
+
+function sincronizarMonto() {
+  const val = parseFloat(document.getElementById('tx-monto-manual-val').value) || 0;
+  const elMonto = document.getElementById('tx-monto-principal');
+  if(elMonto) elMonto.value = val;
+  calcComisionTx();
 }
 
 function calcComisionTx() {
-  const monto = parseFloat(document.getElementById('tx-monto-principal').value) || 0;
-  const pct = parseFloat(document.getElementById('tx-comision-pct').value) || 0;
+  const monto = parseFloat(document.getElementById('tx-monto-manual-val')?.value) || 0;
+  const pct = parseFloat(document.getElementById('tx-comision-pct')?.value) || 0;
   const valor = monto * (pct / 100);
   const el = document.getElementById('tx-comision-valor');
-  if(el) el.textContent = '$' + Math.round(valor).toLocaleString('es-CO');
+  if(el) el.textContent = fmt(valor);
 }
 
 function actualizarSelectorDeudas() {
@@ -1347,41 +1583,97 @@ function guardarTx() {
   const cat = document.getElementById('tx-cat').value;
   const empId = document.getElementById('tx-emp').value;
   const fecha = document.getElementById('tx-fecha').value;
-  const monto = parseFloat(document.getElementById('tx-monto-principal').value) || 0;
   const notas = document.getElementById('tx-notas').value.trim();
   const costoEl = document.getElementById('tx-costo');
   const costo = costoEl ? (parseFloat(costoEl.value) || 0) : 0;
-  const ganancia = monto - costo;
   const metodoEl = document.getElementById('tx-metodo');
-  const metodo = metodoEl ? metodoEl.value : '';
+  const metodo = metodoEl ? metodoEl.value : 'efectivo';
   const pagaConEl = document.getElementById('tx-paga-con');
   const pagaCon = pagaConEl ? (parseFloat(pagaConEl.value) || 0) : 0;
-  const cambio = metodo === 'efectivo' && pagaCon > 0 ? pagaCon - monto : 0;
-  if(!monto || !desc) {
-    alert('Por favor ingresa la descripción y el monto.');
-    return;
-  }
-  state.transacciones.unshift({ tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas, editado: false, id: Date.now() });
-  // Registrar comisión en el empleado si aplica
-  const comPctEl = document.getElementById('tx-comision-pct');
-  const comPct = comPctEl ? (parseFloat(comPctEl.value) || 0) : 0;
-  if(empId && tipo === 'ingreso' && comPct > 0) {
-    const emp = state.empleados.find(x => String(x.id) === String(empId));
-    if(emp) {
-      if(!emp.comisionLog) emp.comisionLog = [];
-      emp.comisionLog.push({ fecha, venta: monto, comisionPct: comPct, desc });
+  const cambio = metodo === 'efectivo' && pagaCon > 0 ? pagaCon - parseFloat(document.getElementById('tx-monto-principal')?.value||0) : 0;
+
+  // Obtener monto — de la sección de productos o del manual
+  const seccionProductos = document.getElementById('tx-productos-section');
+  const usaProductos = seccionProductos && seccionProductos.style.display !== 'none';
+  let monto = 0;
+
+  if(usaProductos) {
+    monto = txItems.reduce((s, item) => s + (item.precio * item.cantidad), 0);
+    if(!monto || txItems.length === 0) { alert('Agrega al menos un item con precio.'); return; }
+    if(!desc) { alert('Por favor ingresa una descripción.'); return; }
+
+    // Procesar cada item: stock y comisiones
+    txItems.forEach(item => {
+      // Actualizar stock
+      if(item.tipo === 'producto' && item.productoId) {
+        const prodId = parseInt(item.productoId.replace('prod_', ''));
+        const prod = state.inventario.find(p => p.id === prodId);
+        if(prod) {
+          if(tipo === 'ingreso') {
+            prod.stock = Math.max(0, prod.stock - (item.cantidad || 1));
+          } else {
+            prod.stock += (item.cantidad || 1);
+          }
+        }
+      }
+      // Registrar comisión por item
+      if(tipo === 'ingreso' && empId && item.comisionPct > 0) {
+        const emp = state.empleados.find(x => String(x.id) === String(empId));
+        if(emp) {
+          if(!emp.comisionLog) emp.comisionLog = [];
+          const comValor = (item.precio * item.cantidad) * (item.comisionPct / 100);
+          emp.comisionLog.push({
+            fecha,
+            venta: item.precio * item.cantidad,
+            comisionPct: item.comisionPct,
+            comisionValor: comValor,
+            desc: item.nombre || desc,
+            tipo: item.tipo
+          });
+        }
+      }
+    });
+
+    // Guardar items en la transacción para historial
+    const ganancia = monto - costo;
+    state.transacciones.unshift({
+      tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas,
+      items: txItems.map(i => ({...i})),
+      editado: false, id: Date.now()
+    });
+    // Limpiar items
+    txItems = [];
+
+  } else {
+    // Modo manual (servicios sin productos)
+    const montoManualEl = document.getElementById('tx-monto-manual-val');
+    monto = parseFloat(montoManualEl?.value) || 0;
+    if(!monto || !desc) { alert('Por favor ingresa la descripción y el monto.'); return; }
+    const ganancia = monto - costo;
+    state.transacciones.unshift({ tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas, editado: false, id: Date.now() });
+
+    // Comisión simple
+    const comPctEl = document.getElementById('tx-comision-pct');
+    const comPct = comPctEl ? (parseFloat(comPctEl.value) || 0) : 0;
+    if(empId && tipo === 'ingreso' && comPct > 0) {
+      const emp = state.empleados.find(x => String(x.id) === String(empId));
+      if(emp) {
+        if(!emp.comisionLog) emp.comisionLog = [];
+        emp.comisionLog.push({ fecha, venta: monto, comisionPct: comPct, desc, tipo: 'servicio' });
+      }
     }
-    if(comPctEl) comPctEl.value = '';
-    const comBox = document.getElementById('tx-comision-box');
-    if(comBox) comBox.style.display = 'none';
   }
+
+  // Limpiar formulario
   document.getElementById('tx-desc').value = '';
   document.getElementById('tx-notas').value = '';
-  document.getElementById('tx-monto-principal').value = '';
+  if(document.getElementById('tx-monto-manual-val')) document.getElementById('tx-monto-manual-val').value = '';
+  if(document.getElementById('tx-monto-principal')) document.getElementById('tx-monto-principal').value = '';
   document.getElementById('tx-costo') && (document.getElementById('tx-costo').value = '');
   document.getElementById('tx-paga-con') && (document.getElementById('tx-paga-con').value = '');
   document.getElementById('venta-fields').style.display = 'none';
-  document.getElementById('detalles-btn-text').textContent = '+ Agregar costo, ganancia y forma de pago';
+  document.getElementById('detalles-btn-text').textContent = '+ Agregar costo y forma de pago';
+
   // Aplicar a deuda si se seleccionó
   const deudaSelEl = document.getElementById('tx-deuda-id');
   const deudaId = deudaSelEl ? deudaSelEl.value : '';
@@ -1389,13 +1681,21 @@ function guardarTx() {
     const d = state.deudas.find(x => String(x.id) === String(deudaId));
     if(d) {
       d.pagado = Math.min(d.pagado + monto, d.total);
-      // Mostrar notificación
       const msg = document.createElement('div');
       msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#7C3AED;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:400;font-family:Outfit,sans-serif;white-space:nowrap';
       msg.textContent = '✓ Abono de ' + fmt(monto) + ' aplicado a ' + d.nombre;
       document.body.appendChild(msg);
       setTimeout(() => msg.remove(), 3000);
     }
+  }
+
+  // Notificación stock si hubo productos
+  if(usaProductos) {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:400;font-family:Outfit,sans-serif;white-space:nowrap';
+    msg.textContent = tipo === 'ingreso' ? '✓ Venta registrada — stock actualizado' : '✓ Compra registrada — stock actualizado';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 3000);
   }
 
   cerrarModal('tx');
@@ -1475,9 +1775,10 @@ function guardarInv() {
   const min = parseInt(document.getElementById('i-min').value) || 5;
   const precio = parseFloat(document.getElementById('i-precio').value) || 0;
   const costo = parseFloat(document.getElementById('i-costo').value) || 0;
+  const comision = parseFloat(document.getElementById('i-comision').value) || 0;
   if(!nombre) return;
-  state.inventario.push({ nombre, cat, stock, min, precio, costo, id: Date.now() });
-  ['i-nombre','i-stock','i-min','i-precio','i-costo'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  state.inventario.push({ nombre, cat, stock, min, precio, costo, comision, id: Date.now() });
+  ['i-nombre','i-stock','i-min','i-precio','i-costo','i-comision'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   const box = document.getElementById('inv-ganancia-box');
   if(box) box.style.display = 'none';
   cerrarModal('inv');
@@ -1613,6 +1914,7 @@ function editarProducto(id) {
   document.getElementById('ei-min').value = p.min;
   document.getElementById('ei-precio').value = p.precio;
   document.getElementById('ei-costo').value = p.costo || 0;
+  document.getElementById('ei-comision').value = p.comision || 0;
   document.getElementById('overlay-editar-inv').style.display = 'flex';
 }
 
@@ -1625,6 +1927,7 @@ function guardarEdicionInv() {
   p.min = parseInt(document.getElementById('ei-min').value) || 0;
   p.precio = parseFloat(document.getElementById('ei-precio').value) || 0;
   p.costo = parseFloat(document.getElementById('ei-costo').value) || 0;
+  p.comision = parseFloat(document.getElementById('ei-comision').value) || 0;
   cerrarModal('editar-inv');
   guardarLS();
   renderAll();
