@@ -241,6 +241,7 @@
     <button class="tab" onclick="showPage('calendario',this)">Calendario</button>
     <button class="tab" onclick="showPage('reportes',this)">Reportes</button>
     <button class="tab" onclick="showPage('fiado',this)">💰 Fiado</button>
+    <button class="tab" onclick="showPage('activos',this)">💼 Activos</button>
     <button class="tab" onclick="showPage('ventas-digitales',this)" style="color:#059669;font-weight:500">🟢 Ventas digitales</button>
     <button class="tab" id="tab-admin" onclick="intentarAdmin(this)">👑 Admin</button>
   </div>
@@ -517,7 +518,8 @@
     <span class="section-title">Reportes</span>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="reporte-periodo" onchange="renderReportes()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid rgba(124,58,237,0.2);background:#F8F7FF;color:#1a1535">
-        <option value="mes">Este mes</option>
+        <option value="hoy">Hoy</option>
+        <option value="mes" selected>Este mes</option>
         <option value="mes-1">Mes anterior</option>
         <option value="mes-2">Hace 2 meses</option>
         <option value="mes-3">Hace 3 meses</option>
@@ -527,13 +529,38 @@
       <button class="btn-primary" onclick="exportar()">⬇ Exportar</button>
     </div>
   </div>
-  <div class="grid3">
-    <div class="metric"><div class="metric-label">Ingresos del mes</div><div class="metric-value c-green" id="r-ing">$0</div></div>
-    <div class="metric"><div class="metric-label">Egresos del mes</div><div class="metric-value c-red" id="r-egr">$0</div></div>
-    <div class="metric"><div class="metric-label">Balance neto</div><div class="metric-value" id="r-bal">$0</div></div>
-    <div class="metric"><div class="metric-label">Ticket promedio</div><div class="metric-value c-blue" id="r-ticket">$0</div></div>
-    <div class="metric"><div class="metric-label">Ratio gasto/ingreso</div><div class="metric-value" id="r-ratio">0%</div></div>
-    <div class="metric"><div class="metric-label">Deuda total</div><div class="metric-value c-amber" id="r-deuda">$0</div></div>
+  <!-- Métricas principales -->
+  <div class="grid3" style="margin-bottom:12px">
+    <div class="metric"><div class="metric-label">📈 Ingresos brutos</div><div class="metric-value c-green" id="r-ing">$0</div><div class="metric-sub c-green" id="r-ing-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">📉 Egresos totales</div><div class="metric-value c-red" id="r-egr">$0</div><div class="metric-sub c-red" id="r-egr-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">💰 Ganancia bruta</div><div class="metric-value" id="r-bruta">$0</div><div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div></div>
+  </div>
+  <div class="grid3" style="margin-bottom:16px">
+    <div class="metric" style="border:1.5px solid rgba(124,58,237,0.25);background:#EDE9FF">
+      <div class="metric-label" style="color:#5B21B6">✨ Ganancia neta</div>
+      <div class="metric-value" id="r-neta" style="color:#5B21B6">$0</div>
+      <div class="metric-sub" style="color:#7C3AED" id="r-neta-det">Bruta - Comisiones</div>
+    </div>
+    <div class="metric"><div class="metric-label">🧾 Ticket promedio</div><div class="metric-value c-blue" id="r-ticket">$0</div></div>
+    <div class="metric"><div class="metric-label">💳 Deuda total</div><div class="metric-value c-amber" id="r-deuda">$0</div></div>
+  </div>
+  <!-- Balance mensual adicional (siempre visible) -->
+  <div id="r-balance-mensual" class="card" style="margin-bottom:16px;border:1.5px solid rgba(124,58,237,0.2)">
+    <div class="card-header"><span class="card-title">📊 Balance mensual</span><span id="r-mes-label" style="font-size:11px;color:var(--text2)"></span></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div style="text-align:center;padding:10px;background:#F0EDFF;border-radius:8px">
+        <div style="font-size:11px;color:var(--text2)">Ingresos</div>
+        <div style="font-size:16px;font-weight:700;color:#059669" id="rm-ing">$0</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:#FEE2E2;border-radius:8px">
+        <div style="font-size:11px;color:var(--text2)">Egresos</div>
+        <div style="font-size:16px;font-weight:700;color:#DC2626" id="rm-egr">$0</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:#EDE9FF;border-radius:8px">
+        <div style="font-size:11px;color:var(--text2)">Ganancia neta</div>
+        <div style="font-size:16px;font-weight:700;color:#7C3AED" id="rm-neta">$0</div>
+      </div>
+    </div>
   </div>
   <div class="grid2">
     <div class="card">
@@ -551,11 +578,109 @@
   </div>
 </div>
 
+<!-- ACTIVOS -->
+<div id="page-activos" class="page content">
+  <div style="background:linear-gradient(135deg,#1a1535,#2D1B69);border-radius:14px;padding:20px;margin-bottom:16px;color:white">
+    <div style="font-size:18px;font-weight:600;font-family:Cormorant Garamond,serif;letter-spacing:1px;margin-bottom:4px">💼 Activos del negocio</div>
+    <div style="font-size:13px;opacity:0.8">Registra tus equipos, muebles y herramientas para conocer el valor de tu negocio</div>
+  </div>
+  <div class="grid3" style="margin-bottom:16px">
+    <div class="metric">
+      <div class="metric-label">💼 Total activos</div>
+      <div class="metric-value" style="color:#7C3AED" id="act-total">$0</div>
+      <div class="metric-sub" style="color:var(--text2)" id="act-count">0 activos</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">💰 Saldo en caja (neto)</div>
+      <div class="metric-value c-green" id="act-caja">$0</div>
+      <div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div>
+    </div>
+    <div class="metric" style="border:2px solid rgba(124,58,237,0.3);background:#EDE9FF">
+      <div class="metric-label" style="color:#5B21B6">🏢 Valor estimado negocio</div>
+      <div class="metric-value" style="color:#5B21B6" id="act-valor-negocio">$0</div>
+      <div class="metric-sub" style="color:#7C3AED">Activos + Caja</div>
+    </div>
+  </div>
+  <div class="section-header">
+    <span class="section-title" style="font-size:14px">Mis activos</span>
+    <button class="btn-primary" onclick="abrirModal('activo')">+ Agregar activo</button>
+  </div>
+  <div id="activos-list"><div class="empty-state">Agrega tus equipos, muebles y herramientas.</div></div>
+</div>
+
 </div><!-- end app -->
 </div><!-- end main-app -->
 
-<!-- MODALES -->
-<div class="overlay" id="overlay-tx">
+<!-- MODAL NUEVO ACTIVO -->
+<div class="overlay" id="overlay-activo">
+<div class="modal">
+  <div class="modal-title">💼 Nuevo activo</div>
+  <div class="form-group"><label class="form-label">Nombre del activo</label><input type="text" id="act-nombre" placeholder="Ej: Silla hidráulica, Computador..."></div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat-activo')">+ Nueva</span></label>
+      <select id="act-cat"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Estado</label>
+      <select id="act-estado">
+        <option value="excelente">✅ Excelente</option>
+        <option value="bueno">👍 Bueno</option>
+        <option value="regular">⚠️ Regular</option>
+        <option value="dañado">❌ Dañado</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Valor de compra ($)</label><input type="number" id="act-valor-compra" placeholder="0" min="0"></div>
+    <div class="form-group"><label class="form-label">Valor actual ($)</label><input type="number" id="act-valor-actual" placeholder="0" min="0"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Fecha de compra</label><input type="date" id="act-fecha"></div>
+    <div class="form-group"><label class="form-label">Cantidad</label><input type="number" id="act-cantidad" placeholder="1" min="1" value="1"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Notas <span style="font-size:10px;color:var(--text3)">(opcional)</span></label><input type="text" id="act-notas" placeholder="Marca, modelo, número de serie..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('activo')">Cancelar</button><button class="btn-primary" onclick="guardarActivo()">Guardar</button></div>
+</div></div>
+
+<!-- MODAL EDITAR ACTIVO -->
+<div class="overlay" id="overlay-editar-activo">
+<div class="modal">
+  <div class="modal-title">✏️ Editar activo</div>
+  <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="ea-nombre"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Categoría</label><select id="ea-cat"></select></div>
+    <div class="form-group"><label class="form-label">Estado</label>
+      <select id="ea-estado">
+        <option value="excelente">✅ Excelente</option>
+        <option value="bueno">👍 Bueno</option>
+        <option value="regular">⚠️ Regular</option>
+        <option value="dañado">❌ Dañado</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Valor de compra ($)</label><input type="number" id="ea-valor-compra" min="0"></div>
+    <div class="form-group"><label class="form-label">Valor actual ($)</label><input type="number" id="ea-valor-actual" min="0"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Fecha de compra</label><input type="date" id="ea-fecha"></div>
+    <div class="form-group"><label class="form-label">Cantidad</label><input type="number" id="ea-cantidad" min="1"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Notas</label><input type="text" id="ea-notas"></div>
+  <input type="hidden" id="ea-id">
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('editar-activo')">Cancelar</button><button class="btn-primary" onclick="guardarEdicionActivo()">Guardar</button></div>
+</div></div>
+
+<!-- MODAL CATEGORÍA ACTIVOS -->
+<div class="overlay overlay-top" id="overlay-cat-activo">
+<div class="modal">
+  <div class="modal-title">Nueva categoría de activo</div>
+  <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="cat-activo-nombre" placeholder="Ej: Vehículo, Inmueble..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cat-activo')">Cancelar</button><button class="btn-primary" onclick="guardarCategoria('activo')">Guardar</button></div>
+</div></div>
+
+<!-- MODAL TX -->
 <div class="modal" style="max-width:460px">
   <div class="modal-title">Registrar transacción</div>
   <div class="form-row">
@@ -1121,6 +1246,7 @@ const CATS_INV_DEFAULT = ['Tintes','Shampoos','Tratamientos','Herramientas','Acc
 const CATS_RESP_DEFAULT = ['Arriendo','Servicios públicos','Nómina','Internet / Teléfono','Seguros','Impuestos','Publicidad','Otros'];
 const CATS_DEUDA_DEFAULT = ['Banco','Préstamo personal','Proveedor','Tarjeta crédito','Familiar','Otros'];
 const CATS_CARGO_DEFAULT = ['Estilista','Barbero','Colorista','Manicurista','Recepcionista','Administrador','Otros'];
+const CATS_ACTIVOS_DEFAULT = ['Equipo','Mueble','Herramienta','Vehículo','Tecnología','Inmueble','Otros'];
 
 let state = {
   transacciones: [],
@@ -1134,12 +1260,14 @@ let state = {
   categoriasResp: [...CATS_RESP_DEFAULT],
   categoriasDeuda: [...CATS_DEUDA_DEFAULT],
   categoriasCargo: [...CATS_CARGO_DEFAULT],
+  categoriasActivos: [...CATS_ACTIVOS_DEFAULT],
   meta: 0,
   adminEmail: 'maranto2912@gmail.com',
   pedidos: [],
   clientes: [],
   proveedores: [],
-  fiados: []
+  fiados: [],
+  activos: []
 };
 
 function getDeviceId() {
@@ -1171,7 +1299,7 @@ async function cargarLS() {
     categoriasResp: [...CATS_RESP_DEFAULT], categoriasDeuda: [...CATS_DEUDA_DEFAULT],
     categoriasCargo: [...CATS_CARGO_DEFAULT],
     meta: 0, adminEmail: 'maranto2912@gmail.com',
-    pedidos: [], clientes: [], proveedores: [], fiados: []
+    pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT]
   };
   const key = currentUserId || DEVICE_ID;
   if(currentUserId) {
@@ -1217,6 +1345,7 @@ function showPage(id, btn) {
   if(id === 'reportes') renderReportes();
   if(id === 'calendario') renderCalendario();
   if(id === 'admin') renderAdmin();
+  if(id === 'activos') renderActivos();
 }
 
 // ─── MODALES ──────────────────────────────────────────────
@@ -1251,7 +1380,10 @@ function abrirModal(id) {
   if(id === 'resp') { actualizarCategoriasResp(); }
   if(id === 'deuda') { actualizarCategoriasDeuda(); }
   if(id === 'empleado') { actualizarCategoriasCargo(); }
-  if(id === 'venta-digital') {
+  if(id === 'activo') {
+    document.getElementById('act-fecha').value = new Date().toISOString().split('T')[0];
+    actualizarCategoriasActivos();
+  }
     document.getElementById('vd-fecha').value = new Date().toISOString().split('T')[0];
     autoComision();
     calcVD();
@@ -1514,6 +1646,7 @@ function guardarCategoria(tipo) {
     resp: {input:'cat-resp-nombre', state:'categoriasResp', defaults:CATS_RESP_DEFAULT, modal:'cat-resp'},
     deuda: {input:'cat-deuda-nombre', state:'categoriasDeuda', defaults:CATS_DEUDA_DEFAULT, modal:'cat-deuda'},
     cargo: {input:'cat-cargo-nombre', state:'categoriasCargo', defaults:CATS_CARGO_DEFAULT, modal:'cat-cargo'},
+    activo: {input:'cat-activo-nombre', state:'categoriasActivos', defaults:CATS_ACTIVOS_DEFAULT, modal:'cat-activo'},
   };
   const cfg = ids[tipo] || ids.tx;
   const nombre = document.getElementById(cfg.input).value.trim();
@@ -1533,6 +1666,7 @@ function actualizarTodasCategorias() {
   actualizarCategoriasResp();
   actualizarCategoriasDeuda();
   actualizarCategoriasCargo();
+  actualizarCategoriasActivos();
 }
 
 function actualizarCategoriasInv() {
@@ -2813,7 +2947,10 @@ function getPeriodoTx() {
   const sel = document.getElementById('reporte-periodo');
   const periodo = sel ? sel.value : 'mes';
   const hoy = new Date();
-  if(periodo === 'semana') {
+  const hoyStr = hoy.toISOString().split('T')[0];
+  if(periodo === 'hoy') {
+    return state.transacciones.filter(t => t.fecha === hoyStr);
+  } else if(periodo === 'semana') {
     const lunes = new Date(hoy);
     lunes.setDate(hoy.getDate() - hoy.getDay() + 1);
     const lunesStr = lunes.toISOString().split('T')[0];
@@ -2829,24 +2966,72 @@ function getPeriodoTx() {
 }
 
 function renderReportes() {
-  const txMes = getPeriodoTx();
-  const ing = txMes.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-  const egr = txMes.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
-  const bal = ing - egr;
-  const ingresos = txMes.filter(t=>t.tipo==='ingreso');
-  const ticket = ingresos.length ? ing/ingresos.length : 0;
-  const ratio = ing > 0 ? Math.round(egr/ing*100) : 0;
+  const periodo = document.getElementById('reporte-periodo')?.value || 'mes';
+  const txPeriodo = getPeriodoTx();
+  const ing = txPeriodo.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const egr = txPeriodo.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
+  const bruta = ing - egr;
+  const ingresosTx = txPeriodo.filter(t=>t.tipo==='ingreso');
+  const ticket = ingresosTx.length ? ing/ingresosTx.length : 0;
   const totalDeuda = state.deudas.reduce((s,d)=>s+(d.total-d.pagado),0);
+
+  // Calcular comisiones del período para ganancia neta
+  const inicio = periodo === 'hoy' ? new Date().toISOString().split('T')[0] :
+    periodo === 'semana' ? (() => { const h=new Date(); const l=new Date(h); l.setDate(h.getDate()-h.getDay()+1); return l.toISOString().split('T')[0]; })() :
+    periodo === 'todo' ? '2000-01-01' : (() => {
+      const h=new Date(); const atras=parseInt(periodo.replace('mes-','')||'0');
+      const d=new Date(h.getFullYear(),h.getMonth()-atras,1);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;
+    })();
+  const fin = periodo === 'hoy' ? inicio : periodo === 'todo' ? '9999-12-31' : (() => {
+    const h=new Date(); const atras=parseInt(periodo.replace('mes-','')||'0');
+    const d=new Date(h.getFullYear(),h.getMonth()-atras+1,0);
+    return d.toISOString().split('T')[0];
+  })();
+  let totalComisiones = 0;
+  state.empleados.forEach(e => {
+    (e.comisionLog||[]).filter(v => v.fecha >= inicio && v.fecha <= fin).forEach(v => {
+      totalComisiones += (v.venta||0) * ((v.comisionPct||0)/100);
+    });
+  });
+  const neta = bruta - totalComisiones;
+
+  // Actualizar métricas período seleccionado
+  const periodoLabel = {hoy:'Hoy',mes:'Este mes','mes-1':'Mes anterior','mes-2':'Hace 2 meses','mes-3':'Hace 3 meses',semana:'Esta semana',todo:'Todo el historial'}[periodo]||'';
   document.getElementById('r-ing').textContent = fmt(ing);
+  const rIngN = document.getElementById('r-ing-n'); if(rIngN) rIngN.textContent = ingresosTx.length + ' transacciones';
   document.getElementById('r-egr').textContent = fmt(egr);
-  const rb = document.getElementById('r-bal'); rb.textContent = fmt(bal); rb.className = 'metric-value ' + (bal>=0?'c-green':'c-red');
+  const rEgrN = document.getElementById('r-egr-n'); if(rEgrN) rEgrN.textContent = txPeriodo.filter(t=>t.tipo==='egreso').length + ' transacciones';
+  const rBruta = document.getElementById('r-bruta'); if(rBruta) { rBruta.textContent = fmt(bruta); rBruta.className = 'metric-value ' + (bruta>=0?'c-green':'c-red'); }
+  const rNeta = document.getElementById('r-neta'); if(rNeta) { rNeta.textContent = fmt(neta); rNeta.style.color = neta>=0?'#5B21B6':'#DC2626'; }
+  const rNetaDet = document.getElementById('r-neta-det'); if(rNetaDet) rNetaDet.textContent = totalComisiones>0?`Bruta ${fmt(bruta)} - Com. ${fmt(totalComisiones)}`:'Sin comisiones en este período';
   document.getElementById('r-ticket').textContent = fmt(ticket);
-  const rr = document.getElementById('r-ratio'); rr.textContent = ratio+'%'; rr.className = 'metric-value ' + (ratio>80?'c-red':'c-amber');
   document.getElementById('r-deuda').textContent = fmt(totalDeuda);
+
+  // Balance mensual (siempre del mes actual)
+  const mesActual = getMes();
+  const txMes = state.transacciones.filter(t => t.fecha.startsWith(mesActual));
+  const ingMes = txMes.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const egrMes = txMes.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
+  let comMes = 0;
+  const inicioMes = mesActual + '-01';
+  state.empleados.forEach(e => {
+    (e.comisionLog||[]).filter(v => v.fecha >= inicioMes && v.fecha.startsWith(mesActual)).forEach(v => {
+      comMes += (v.venta||0) * ((v.comisionPct||0)/100);
+    });
+  });
+  const netaMes = ingMes - egrMes - comMes;
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesLabel = document.getElementById('r-mes-label'); if(mesLabel) mesLabel.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
+  const rmIng = document.getElementById('rm-ing'); if(rmIng) rmIng.textContent = fmt(ingMes);
+  const rmEgr = document.getElementById('rm-egr'); if(rmEgr) rmEgr.textContent = fmt(egrMes);
+  const rmNeta = document.getElementById('rm-neta'); if(rmNeta) { rmNeta.textContent = fmt(netaMes); rmNeta.style.color = netaMes>=0?'#7C3AED':'#DC2626'; }
+
+  // Gráficas
   const colors = ['#1D9E75','#3266ad','#BA7517','#534AB7','#D85A30','#993556','#5F5E5A'];
   const catI = {}, catE = {};
-  txMes.filter(t=>t.tipo==='ingreso').forEach(t => { catI[t.cat]=(catI[t.cat]||0)+t.monto; });
-  txMes.filter(t=>t.tipo==='egreso').forEach(t => { catE[t.cat]=(catE[t.cat]||0)+t.monto; });
+  txPeriodo.filter(t=>t.tipo==='ingreso').forEach(t => { catI[t.cat]=(catI[t.cat]||0)+t.monto; });
+  txPeriodo.filter(t=>t.tipo==='egreso').forEach(t => { catE[t.cat]=(catE[t.cat]||0)+t.monto; });
   if(charts.catI) charts.catI.destroy();
   charts.catI = new Chart(document.getElementById('chartCatI'), {type:'doughnut',data:{labels:Object.keys(catI).length?Object.keys(catI):['Sin datos'],datasets:[{data:Object.values(catI).length?Object.values(catI):[1],backgroundColor:Object.keys(catI).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
   if(charts.catE) charts.catE.destroy();
@@ -3716,6 +3901,8 @@ function renderAll() {
   renderProveedores();
   renderFiados();
   renderVentasDigitales();
+  // Activos solo si la página está activa para no gastar recursos
+  if(document.getElementById('page-activos')?.classList.contains('active')) renderActivos();
 }
 
 // Mostrar indicador de carga
@@ -3866,7 +4053,7 @@ async function cerrarSesion() {
     categoriasResp: [...CATS_RESP_DEFAULT], categoriasDeuda: [...CATS_DEUDA_DEFAULT],
     categoriasCargo: [...CATS_CARGO_DEFAULT],
     meta: 0, adminEmail: 'maranto2912@gmail.com',
-    pedidos: [], clientes: [], proveedores: [], fiados: []
+    pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT]
   };
   await sb.auth.signOut();
   document.getElementById('auth-screen').style.display = 'flex';
@@ -3908,7 +4095,149 @@ async function cargarPerfil(userId) {
   }
 }
 
-// ─── INIT ─────────────────────────────────────────────────
+// ─── ACTIVOS ──────────────────────────────────────────────
+function actualizarCategoriasActivos() {
+  ['act-cat','ea-cat'].forEach(id => {
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    const cats = state.categoriasActivos || CATS_ACTIVOS_DEFAULT;
+    sel.innerHTML = cats.map(c => `<option>${c}</option>`).join('');
+  });
+}
+
+function guardarActivo() {
+  const nombre = document.getElementById('act-nombre').value.trim();
+  const cat = document.getElementById('act-cat').value;
+  const estado = document.getElementById('act-estado').value;
+  const valorCompra = parseFloat(document.getElementById('act-valor-compra').value) || 0;
+  const valorActual = parseFloat(document.getElementById('act-valor-actual').value) || valorCompra;
+  const fecha = document.getElementById('act-fecha').value;
+  const cantidad = parseInt(document.getElementById('act-cantidad').value) || 1;
+  const notas = document.getElementById('act-notas').value.trim();
+  if(!nombre) { alert('Por favor ingresa el nombre del activo.'); return; }
+  if(!state.activos) state.activos = [];
+  state.activos.push({ nombre, cat, estado, valorCompra, valorActual, fecha, cantidad, notas, id: Date.now() });
+  ['act-nombre','act-valor-compra','act-valor-actual','act-notas'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('act-cantidad').value = '1';
+  cerrarModal('activo');
+  guardarLS();
+  renderActivos();
+}
+
+function editarActivo(id) {
+  const a = state.activos.find(x => x.id === id);
+  if(!a) return;
+  actualizarCategoriasActivos();
+  document.getElementById('ea-id').value = id;
+  document.getElementById('ea-nombre').value = a.nombre;
+  document.getElementById('ea-cat').value = a.cat;
+  document.getElementById('ea-estado').value = a.estado || 'bueno';
+  document.getElementById('ea-valor-compra').value = a.valorCompra;
+  document.getElementById('ea-valor-actual').value = a.valorActual;
+  document.getElementById('ea-fecha').value = a.fecha || '';
+  document.getElementById('ea-cantidad').value = a.cantidad || 1;
+  document.getElementById('ea-notas').value = a.notas || '';
+  document.getElementById('overlay-editar-activo').style.display = 'flex';
+}
+
+function guardarEdicionActivo() {
+  const id = parseInt(document.getElementById('ea-id').value);
+  const a = state.activos.find(x => x.id === id);
+  if(!a) return;
+  a.nombre = document.getElementById('ea-nombre').value.trim() || a.nombre;
+  a.cat = document.getElementById('ea-cat').value;
+  a.estado = document.getElementById('ea-estado').value;
+  a.valorCompra = parseFloat(document.getElementById('ea-valor-compra').value) || 0;
+  a.valorActual = parseFloat(document.getElementById('ea-valor-actual').value) || 0;
+  a.fecha = document.getElementById('ea-fecha').value;
+  a.cantidad = parseInt(document.getElementById('ea-cantidad').value) || 1;
+  a.notas = document.getElementById('ea-notas').value.trim();
+  cerrarModal('editar-activo');
+  guardarLS();
+  renderActivos();
+}
+
+function eliminarActivo(id) {
+  if(!confirm('¿Seguro que quieres eliminar este activo?')) return;
+  state.activos = state.activos.filter(x => x.id !== id);
+  guardarLS();
+  renderActivos();
+}
+
+function renderActivos() {
+  if(!state.activos) state.activos = [];
+  const activos = state.activos;
+
+  // Calcular saldo en caja (ingresos - egresos totales)
+  const ing = state.transacciones.filter(t => t.tipo === 'ingreso').reduce((s,t) => s+t.monto, 0);
+  const egr = state.transacciones.filter(t => t.tipo === 'egreso').reduce((s,t) => s+t.monto, 0);
+  const caja = ing - egr;
+
+  // Total activos (valor actual × cantidad)
+  const totalActivos = activos.reduce((s,a) => s + ((a.valorActual||a.valorCompra||0) * (a.cantidad||1)), 0);
+  const valorNegocio = totalActivos + Math.max(0, caja);
+
+  const elTotal = document.getElementById('act-total');
+  const elCaja = document.getElementById('act-caja');
+  const elValor = document.getElementById('act-valor-negocio');
+  const elCount = document.getElementById('act-count');
+  if(elTotal) elTotal.textContent = fmt(totalActivos);
+  if(elCaja) { elCaja.textContent = fmt(caja); elCaja.style.color = caja >= 0 ? '#059669' : '#DC2626'; }
+  if(elValor) elValor.textContent = fmt(valorNegocio);
+  if(elCount) elCount.textContent = activos.length + ' activo' + (activos.length !== 1 ? 's' : '');
+
+  const el = document.getElementById('activos-list');
+  if(!el) return;
+  if(!activos.length) { el.innerHTML = '<div class="empty-state">Agrega tus equipos, muebles y herramientas para conocer el valor de tu negocio.</div>'; return; }
+
+  const estadoColors = {
+    excelente: {bg:'#D1FAE5',color:'#065F46',label:'✅ Excelente'},
+    bueno: {bg:'#DBEAFE',color:'#1E40AF',label:'👍 Bueno'},
+    regular: {bg:'#FEF3C7',color:'#92400E',label:'⚠️ Regular'},
+    dañado: {bg:'#FEE2E2',color:'#991B1B',label:'❌ Dañado'}
+  };
+
+  // Agrupar por categoría
+  const porCat = {};
+  activos.forEach(a => {
+    if(!porCat[a.cat]) porCat[a.cat] = [];
+    porCat[a.cat].push(a);
+  });
+
+  el.innerHTML = Object.entries(porCat).map(([cat, items]) => {
+    const totalCat = items.reduce((s,a) => s + ((a.valorActual||a.valorCompra||0)*(a.cantidad||1)), 0);
+    return `<div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:6px 10px;background:#F0EDFF;border-radius:8px">
+        <span style="font-size:13px;font-weight:600;color:#5B21B6">${cat}</span>
+        <span style="font-size:12px;font-weight:600;color:#7C3AED">${fmt(totalCat)}</span>
+      </div>
+      ${items.map(a => {
+        const est = estadoColors[a.estado] || estadoColors.bueno;
+        const valorTotal = (a.valorActual||a.valorCompra||0) * (a.cantidad||1);
+        const diferencia = (a.valorActual||0) - (a.valorCompra||0);
+        return `<div class="tx-item" style="margin-bottom:6px">
+          <div style="width:36px;height:36px;border-radius:50%;background:#EDE9FF;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">💼</div>
+          <div class="tx-info">
+            <div class="tx-name">${a.nombre} ${a.cantidad>1?`<span style="font-size:10px;background:#EDE9FF;color:#7C3AED;padding:1px 6px;border-radius:10px">x${a.cantidad}</span>`:''}</div>
+            <div class="tx-cat">${a.cat}${a.fecha?' · '+a.fecha:''}</div>
+            ${a.notas?`<div style="font-size:11px;color:var(--text3)">📝 ${a.notas}</div>`:''}
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:14px;font-weight:600;color:#7C3AED">${fmt(valorTotal)}</div>
+            ${a.valorCompra>0&&a.valorActual>0&&a.valorActual!==a.valorCompra?`<div style="font-size:10px;color:${diferencia>=0?'#059669':'#DC2626'}">${diferencia>=0?'▲':'▼'} ${fmt(Math.abs(diferencia))}</div>`:''}
+            <span style="font-size:10px;padding:2px 6px;border-radius:8px;background:${est.bg};color:${est.color}">${est.label}</span>
+            <div style="display:flex;gap:4px;margin-top:4px;justify-content:flex-end">
+              <button class="btn-sm" style="font-size:10px;padding:2px 7px" onclick="editarActivo(${a.id})">✏️</button>
+              <button class="btn-danger" style="font-size:10px;padding:2px 7px" onclick="eliminarActivo(${a.id})">✕</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ─── FIN ACTIVOS ──────────────────────────────────────────
 async function init() {
   // Detectar si viene de link de recuperacion de contrasena
   const hash = window.location.hash;
