@@ -1349,13 +1349,12 @@ function renderItemsTx() {
           <input type="text" value="${item.nombre}" onchange="actualizarItem(${idx},'nombre',this.value)"
             placeholder="${item.tipo==='servicio'?'Ej: Corte, tinte...':'Nombre del producto'}"
             style="width:100%;padding:6px;border:1px solid rgba(124,58,237,0.2);border-radius:6px;font-size:12px;background:#F8F7FF"
-            ${item.tipo!=='servicio'?'readonly':''}>
+            ${item.tipo!=='servicio' && tipo==='ingreso' ?'readonly':''}>
         </div>
         <div>
-          <label style="font-size:10px;color:var(--text2)">Precio ($)</label>
+          <label style="font-size:10px;color:var(--text2)">${tipo==='egreso'?'Costo ($)':'Precio ($)'}</label>
           <input type="number" value="${item.precio||''}" onchange="actualizarItem(${idx},'precio',this.value)"
-            placeholder="0" style="width:100%;padding:6px;border:1px solid rgba(124,58,237,0.2);border-radius:6px;font-size:12px;background:#F8F7FF"
-            ${item.tipo!=='servicio'?'readonly':''}>
+            placeholder="0" style="width:100%;padding:6px;border:1px solid rgba(124,58,237,0.2);border-radius:6px;font-size:12px;background:#F8F7FF">
         </div>
         <div>
           <label style="font-size:10px;color:var(--text2)">Cant.</label>
@@ -1390,12 +1389,14 @@ function cambiarTipoItem(idx, valor) {
     const prodId = parseInt(valor.replace('prod_', ''));
     const prod = state.inventario.find(p => p.id === prodId);
     if(prod) {
+      const tipo = document.getElementById('tx-tipo').value;
       txItems[idx].tipo = 'producto';
       txItems[idx].productoId = valor;
       txItems[idx].nombre = prod.nombre;
-      txItems[idx].precio = prod.precio;
-      // Productos: siempre usan el % del inventario, sin importar tipo de empleado
-      txItems[idx].comisionPct = prod.comision || 0;
+      // Ingreso → precio de venta | Egreso → costo de compra
+      txItems[idx].precio = tipo === 'egreso' ? (prod.costo || prod.precio) : prod.precio;
+      // Comisión solo aplica en ingresos
+      txItems[idx].comisionPct = tipo === 'egreso' ? 0 : (prod.comision || 0);
     }
   }
   renderItemsTx();
@@ -2177,14 +2178,20 @@ function renderEmpleados() {
     const ventasHoy = calcVentasHoy(e);
     const ventasPer = calcVentasPeriodo(e);
     const comisionPer = ventasPer * ((e.comision||0) / 100);
+
+    // Comisiones de productos del período (aplica a todos los tipos)
+    const inicio = getPeriodoInicio(frecuencia);
+    const comProductosPer = (e.comisionLog||[]).filter(v => v.fecha >= inicio && v.tipo === 'producto');
+    const totalComProd = comProductosPer.reduce((s,v) => s + (v.venta*(v.comisionPct||0)/100), 0);
+
     let totalPagar = 0;
     let detalleExtra = '';
     if(tipoPago === 'fijo') {
-      totalPagar = e.salario || 0;
+      totalPagar = (e.salario || 0) + totalComProd;
       detalleExtra = `<div style="font-size:11px;color:var(--text2);margin-top:2px">${txEmp.length} servicios este mes</div>
-        <div style="font-size:11px;color:#7C3AED;margin-top:2px">Ventas: ${fmt(totalTx)} · Com: ${fmt(comTx)}</div>`;
+        <div style="font-size:11px;color:#7C3AED;margin-top:2px">Salario: ${fmt(e.salario||0)}${totalComProd>0?' · Com productos: '+fmt(totalComProd):''}</div>`;
     } else if(tipoPago === 'horas') {
-      totalPagar = horasPer * (e.valorHora || 0);
+      totalPagar = horasPer * (e.valorHora || 0) + totalComProd;
       detalleExtra = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
         <div style="background:#F0EDFF;border-radius:6px;padding:8px;text-align:center">
           <div style="font-size:10px;color:var(--text2)">Hoy</div>
