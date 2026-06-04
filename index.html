@@ -2224,12 +2224,128 @@ function renderEmpleados() {
       <div class="emp-stats">
         <div class="emp-total">${fmt(totalPagar)}</div>
         <div class="emp-detail" style="font-size:10px">A pagar ${labelPer.toLowerCase()}</div>
-        <button class="btn-sm" style="margin-top:6px;font-size:11px" onclick="editarEmpleado(${e.id})">✏️ Editar</button>
+        <button class="btn-sm" style="margin-top:6px;font-size:11px;width:100%;justify-content:center" onclick="verDetallePago(${e.id})">📋 Ver detalle</button>
+        <button class="btn-sm" style="margin-top:4px;font-size:11px" onclick="editarEmpleado(${e.id})">✏️ Editar</button>
         <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarEmpleado(${e.id})">✕ Eliminar</button>
       </div>
     </div>`;
   }).join('');
 }
+function verDetallePago(id) {
+  const e = state.empleados.find(x => x.id === id);
+  if(!e) return;
+  const tipoPago = e.tipoPago || 'fijo';
+  const frecuencia = e.frecuencia || 'semanal';
+  const labelPer = getLabelPeriodo(frecuencia);
+  const inicio = getPeriodoInicio(frecuencia);
+  const fmtL = n => '$' + Math.round(n).toLocaleString('es-CO');
+
+  // Comisiones del período desde comisionLog
+  const comisionesPer = (e.comisionLog||[]).filter(v => v.fecha >= inicio);
+
+  // Horas del período
+  const horasPer = calcHorasPeriodo(e);
+  const valorHoras = horasPer * (e.valorHora || 0);
+
+  // Agrupar comisiones por tipo
+  const comServicios = comisionesPer.filter(v => v.tipo === 'servicio' || !v.tipo);
+  const comProductos = comisionesPer.filter(v => v.tipo === 'producto');
+
+  const totalComServ = comServicios.reduce((s,v) => s + (v.venta * (v.comisionPct||0) / 100), 0);
+  const totalComProd = comProductos.reduce((s,v) => s + (v.venta * (v.comisionPct||0) / 100), 0);
+  const totalCom = totalComServ + totalComProd;
+
+  // Total a pagar
+  let totalPagar = 0;
+  if(tipoPago === 'fijo') totalPagar = (e.salario || 0) + totalComProd;
+  else if(tipoPago === 'horas') totalPagar = valorHoras + totalComProd;
+  else if(tipoPago === 'comision') totalPagar = totalCom;
+
+  // Construir HTML del desglose
+  let html = `<div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:4px">${e.nombre}</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px">${e.cargo||''} · Período: ${labelPer}</div>`;
+
+  // Sección salario/horas base
+  if(tipoPago === 'fijo') {
+    html += `<div style="background:#F0EDFF;border-radius:8px;padding:10px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:500;color:#7C3AED;margin-bottom:6px">💼 Salario base</div>
+      <div style="display:flex;justify-content:space-between;font-size:13px">
+        <span style="color:var(--text2)">Salario fijo</span>
+        <span style="font-weight:600;color:#7C3AED">${fmtL(e.salario||0)}</span>
+      </div>
+    </div>`;
+  } else if(tipoPago === 'horas') {
+    html += `<div style="background:#F0EDFF;border-radius:8px;padding:10px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:500;color:#7C3AED;margin-bottom:6px">⏰ Pago por horas</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+        <span style="color:var(--text2)">Horas trabajadas</span>
+        <span style="font-weight:500">${horasPer}h</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+        <span style="color:var(--text2)">Valor por hora</span>
+        <span style="font-weight:500">${fmtL(e.valorHora||0)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;border-top:1px solid rgba(124,58,237,0.1);padding-top:6px;margin-top:4px">
+        <span style="color:var(--text2)">Subtotal horas</span>
+        <span style="font-weight:600;color:#7C3AED">${fmtL(valorHoras)}</span>
+      </div>
+    </div>`;
+  }
+
+  // Sección comisiones por servicios
+  if(comServicios.length > 0 && (tipoPago === 'comision')) {
+    html += `<div style="background:#FEF3C7;border-radius:8px;padding:10px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:500;color:#D97706;margin-bottom:6px">💇 Comisiones por servicios</div>
+      ${comServicios.map(v => `
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span style="color:var(--text2)">${v.desc||'Servicio'} <span style="font-size:10px">(${v.comisionPct||0}%)</span></span>
+          <span style="font-weight:500;color:#D97706">${fmtL((v.venta||0)*(v.comisionPct||0)/100)}</span>
+        </div>`).join('')}
+      <div style="display:flex;justify-content:space-between;font-size:12px;border-top:1px solid rgba(217,119,6,0.15);padding-top:5px;margin-top:4px">
+        <span style="color:var(--text2)">Subtotal servicios</span>
+        <span style="font-weight:600;color:#D97706">${fmtL(totalComServ)}</span>
+      </div>
+    </div>`;
+  }
+
+  // Sección comisiones por productos (aplica a todos los tipos)
+  if(comProductos.length > 0) {
+    html += `<div style="background:#D1FAE5;border-radius:8px;padding:10px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:500;color:#059669;margin-bottom:6px">📦 Comisiones por productos</div>
+      ${comProductos.map(v => `
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span style="color:var(--text2)">${v.desc||'Producto'} <span style="font-size:10px">(${v.comisionPct||0}%)</span></span>
+          <span style="font-weight:500;color:#059669">${fmtL((v.venta||0)*(v.comisionPct||0)/100)}</span>
+        </div>`).join('')}
+      <div style="display:flex;justify-content:space-between;font-size:12px;border-top:1px solid rgba(5,150,105,0.15);padding-top:5px;margin-top:4px">
+        <span style="color:var(--text2)">Subtotal productos</span>
+        <span style="font-weight:600;color:#059669">${fmtL(totalComProd)}</span>
+      </div>
+    </div>`;
+  }
+
+  // Si no hay comisiones
+  if(comisionesPer.length === 0 && tipoPago !== 'fijo' && tipoPago !== 'horas') {
+    html += `<div style="text-align:center;padding:12px;color:var(--text3);font-size:12px">Sin comisiones registradas este período</div>`;
+  }
+
+  // Total final
+  html += `<div style="background:#1a1535;border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center">
+    <span style="color:white;font-weight:500;font-size:13px">TOTAL A PAGAR</span>
+    <span style="color:#A78BFA;font-weight:700;font-size:18px">${fmtL(totalPagar)}</span>
+  </div>`;
+
+  // Mostrar en overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:400;padding:20px';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:14px;padding:22px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto">
+      ${html}
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;margin-top:14px;padding:10px;border-radius:8px;background:#7C3AED;color:white;border:none;font-family:Outfit,sans-serif;font-size:13px;cursor:pointer;font-weight:500">Cerrar</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
 function eliminarEmpleado(id) {
   if(!confirm('¿Seguro que quieres eliminar este empleado?')) return;
   state.empleados = state.empleados.filter(x => x.id !== id);
