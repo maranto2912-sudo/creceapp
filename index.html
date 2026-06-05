@@ -1279,16 +1279,36 @@ function getDeviceId() {
 const DEVICE_ID = getDeviceId();
 let currentUserId = null;
 
+// Debounce para guardarLS — evita llamadas excesivas a Supabase
+let _guardarTimer = null;
 async function guardarLS() {
+  // localStorage: siempre inmediato como respaldo local
   try { localStorage.setItem('creceapp_' + (currentUserId||DEVICE_ID), JSON.stringify(state)); } catch(e){}
   if(!currentUserId) return;
-  try {
-    await sb.from('creceapp_data').upsert({
-      device_id: currentUserId,
-      data: state,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'device_id' });
-  } catch(e) { console.log('Supabase save:', e); }
+  // Supabase: con debounce de 800ms para no saturar con cada clic
+  clearTimeout(_guardarTimer);
+  _guardarTimer = setTimeout(async () => {
+    try {
+      const { error } = await sb.from('creceapp_data').upsert({
+        device_id: currentUserId,
+        data: state,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'device_id' });
+      if(error) throw error;
+    } catch(e) {
+      console.warn('Supabase save error:', e);
+      // Notificación visible si Supabase falla — el usuario sabe que solo está en localStorage
+      const ya = document.getElementById('_save-error-toast');
+      if(!ya) {
+        const toast = document.createElement('div');
+        toast.id = '_save-error-toast';
+        toast.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#D97706;color:white;padding:10px 18px;border-radius:10px;font-size:12px;z-index:600;font-family:Outfit,sans-serif;white-space:nowrap;box-shadow:0 2px 12px rgba(0,0,0,0.2)';
+        toast.textContent = '⚠️ Sin conexión — datos guardados localmente';
+        document.body.appendChild(toast);
+        setTimeout(() => { const el = document.getElementById('_save-error-toast'); if(el) el.remove(); }, 4000);
+      }
+    }
+  }, 800);
 }
 
 async function cargarLS() {
@@ -2143,13 +2163,14 @@ function guardarEdicionInv() {
 
 function ajustarStock(id, delta) {
   const p = state.inventario.find(x => x.id === id);
-  if(p) { p.stock = Math.max(0, p.stock + delta); guardarLS(); renderAll(); }
+  if(p) { p.stock = Math.max(0, p.stock + delta); guardarLS(); renderInventario(); }
 }
 
 // ─── FILTROS ──────────────────────────────────────────────
 function setFiltro(f, btn) {
   filtroTx = f;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  // Solo afecta los chips de la página de transacciones, no los de otras páginas
+  document.querySelectorAll('#page-transacciones .filter-chip').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
   renderTransacciones();
 }
@@ -3981,39 +4002,30 @@ async function registerUser() {
       } else {
         showAuthError('Error: ' + error.message);
       }
+      btn.textContent = 'Crear cuenta gratis';
+      btn.disabled = false;
     } else if(data.user) {
+      // Guardar perfil en Supabase
       try {
         await sb.from('perfiles').upsert({ id: data.user.id, nombre, negocio, plan: 'gratuito' });
       } catch(e) {}
       // Iniciar sesión automáticamente
-      const { data: loginData, error: loginError } = await sb.auth.signInWithPassword({ email, password: pass });
+      // onAuthStateChange (SIGNED_IN) se encarga del loading + cargar datos + render
+      // Evita el doble render que ocurría antes
+      const { error: loginError } = await sb.auth.signInWithPassword({ email, password: pass });
       if(loginError) {
+        // Si el auto-login falla, al menos la cuenta fue creada
         showAuthSuccess('¡Cuenta creada! Ya puedes iniciar sesión.');
-      } else if(loginData?.session) {
-        currentUserId = loginData.session.user.id;
-        resetTimer();
-        // Mostrar loading y cargar app
-        document.getElementById('auth-screen').style.display = 'none';
-        const loadingReg = document.createElement('div');
-        loadingReg.style.cssText = 'position:fixed;inset:0;background:#F0EDFF;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100';
-        loadingReg.innerHTML = `<div style="font-size:32px;margin-bottom:12px">📈</div>
-          <div style="font-size:22px;font-weight:600;color:#1a1535;font-family:Cormorant Garamond,serif;letter-spacing:2px">Crece<span style="color:#7C3AED">App</span></div>
-          <div style="font-size:13px;color:#9B8EC4;margin-top:8px">Preparando tu negocio...</div>`;
-        document.body.appendChild(loadingReg);
-        await cargarPerfil(loginData.session.user.id);
-        await cargarLS();
-        renderAll();
-        renderCalendario();
-        loadingReg.remove();
-        document.getElementById('main-app').style.display = 'block';
-        document.getElementById('user-info').style.display = 'flex';
+        btn.textContent = 'Crear cuenta gratis';
+        btn.disabled = false;
       }
+      // Si login exitoso: onAuthStateChange toma el control desde aquí
     }
   } catch(e) {
     showAuthError('Error de conexión. Intenta de nuevo.');
+    btn.textContent = 'Crear cuenta gratis';
+    btn.disabled = false;
   }
-  btn.textContent = 'Crear cuenta gratis';
-  btn.disabled = false;
 }
 
 async function resetPass() {
@@ -4063,6 +4075,8 @@ async function cambiarContrasena() {
 async function cerrarSesion() {
   clearTimeout(inactivityTimer);
   currentUserId = null;
+  // Limpiar mapa de transacciones para que el próximo usuario no acceda a datos ajenos
+  txMap.clear();
   // Resetear state completamente para que el próximo usuario no vea datos del anterior
   state = {
     transacciones: [], deudas: [], empleados: [], inventario: [],
