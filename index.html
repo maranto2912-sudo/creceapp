@@ -162,154 +162,11 @@
   .tag { font-size: 11px; padding: 2px 8px; border-radius: 6px; background: var(--bg3); color: var(--text2); }
 
   /* RESPONSIVE */
-  /* ── MENÚ HAMBURGUESA ── */
-  .hamburger {
-    display: none;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 6px;
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 22px;
-    line-height: 1;
-    transition: background 0.15s;
-  }
-  .hamburger:hover { background: var(--bg2); }
-
-  /* Overlay oscuro del menú */
-  .menu-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    z-index: 200;
-  }
-  .menu-overlay.open { display: block; }
-
-  /* Panel lateral */
-  .side-menu {
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
-    width: 260px;
-    background: #fff;
-    z-index: 201;
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.1);
-    overflow-y: auto;
-  }
-  .side-menu.open { transform: translateX(0); }
-
-  .side-menu-header {
-    padding: 20px 18px 14px;
-    border-bottom: 1px solid rgba(124,58,237,0.1);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .side-menu-logo {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1a1535;
-    font-family: 'Cormorant Garamond', serif;
-    letter-spacing: 1px;
-  }
-  .side-menu-logo span { color: #7C3AED; }
-  .side-menu-close {
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: var(--text2);
-    padding: 4px;
-    border-radius: 6px;
-  }
-  .side-menu-close:hover { background: var(--bg2); }
-
-  .side-menu-user {
-    padding: 12px 18px;
-    background: #F8F7FF;
-    border-bottom: 1px solid rgba(124,58,237,0.08);
-    font-size: 12px;
-  }
-  .side-menu-user .negocio {
-    font-weight: 600;
-    color: var(--text);
-    font-size: 13px;
-    margin-bottom: 2px;
-  }
-  .side-menu-user .plan {
-    display: inline-block;
-    background: #EDE9FF;
-    color: #7C3AED;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 500;
-  }
-
-  .side-menu-items {
-    flex: 1;
-    padding: 10px 0;
-  }
-  .side-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 18px;
-    font-size: 14px;
-    color: var(--text);
-    background: none;
-    border: none;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    border-radius: 0;
-    transition: background 0.12s;
-  }
-  .side-menu-item:hover { background: #F8F7FF; }
-  .side-menu-item.active {
-    background: #EDE9FF;
-    color: #7C3AED;
-    font-weight: 500;
-  }
-  .side-menu-item .item-icon { font-size: 16px; width: 22px; text-align: center; }
-
-  .side-menu-footer {
-    padding: 14px 18px;
-    border-top: 1px solid rgba(124,58,237,0.1);
-  }
-  .side-menu-footer .btn-salir {
-    width: 100%;
-    padding: 9px;
-    background: #FEE2E2;
-    color: #DC2626;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-  }
-  .side-menu-footer .btn-salir:hover { background: #FECACA; }
-
   @media (max-width: 700px) {
     .metrics { grid-template-columns: repeat(2, 1fr); }
     .grid2, .grid3 { grid-template-columns: 1fr; }
-    .content { padding: 14px; }
-
-    /* En móvil: ocultar tabs, mostrar hamburguesa */
     .nav { padding: 0 14px; }
-    .nav-tabs { display: none; }
-    .hamburger { display: flex; align-items: center; justify-content: center; }
-
-    /* Nav más compacto en móvil */
-    .nav { gap: 8px; }
-    .nav-logo { font-size: 16px; }
+    .content { padding: 14px; }
   }
 </style>
 </head>
@@ -387,7 +244,6 @@
     <button class="tab" onclick="showPage('activos',this)">💼 Activos</button>
     <button class="tab" onclick="showPage('ventas-digitales',this)" style="color:#059669;font-weight:500">🟢 Ventas digitales</button>
     <button class="tab" id="tab-admin" onclick="intentarAdmin(this)">👑 Admin</button>
-    <button class="tab" onclick="showPage('configuracion',this)">⚙️ Config</button>
   </div>
   <button class="btn-primary" onclick="abrirModal('tx')">+ Registrar</button>
 </nav>
@@ -728,80 +584,69 @@
     <div style="font-size:18px;font-weight:600;font-family:Cormorant Garamond,serif;letter-spacing:1px;margin-bottom:4px">💼 Activos del negocio</div>
     <div style="font-size:13px;opacity:0.8">Registra tus equipos, muebles y herramientas para conocer el valor de tu negocio</div>
   </div>
-  <div class="grid3" style="margin-bottom:16px">
-    <div class="metric">
-      <div class="metric-label">💼 Total activos</div>
-      <div class="metric-value" style="color:#7C3AED" id="act-total">$0</div>
-      <div class="metric-sub" style="color:var(--text2)" id="act-count">0 activos</div>
+  <!-- ECUACIÓN PATRIMONIAL -->
+  <div style="background:#F8F7FF;border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid rgba(124,58,237,0.1)">
+    <div style="font-size:11px;font-weight:600;color:#9B8EC4;letter-spacing:1px;margin-bottom:12px;text-transform:uppercase">Ecuación Patrimonial</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+      <!-- ACTIVOS -->
+      <div style="background:#fff;border-radius:10px;padding:12px;border:1px solid rgba(124,58,237,0.12)">
+        <div style="font-size:11px;color:#7C3AED;font-weight:600;margin-bottom:8px;text-transform:uppercase">ACTIVOS</div>
+        <div style="font-size:11px;color:var(--text2);display:flex;justify-content:space-between;margin-bottom:4px">
+          <span>💼 Bienes</span><span id="pat-bienes" style="font-weight:500;color:#1a1535">$0</span>
+        </div>
+        <div style="font-size:11px;color:var(--text2);display:flex;justify-content:space-between;margin-bottom:4px">
+          <span>💰 Caja</span><span id="pat-caja" style="font-weight:500;color:#1a1535">$0</span>
+        </div>
+        <div style="font-size:11px;color:var(--text2);display:flex;justify-content:space-between;margin-bottom:4px">
+          <span>🤝 Por cobrar</span><span id="pat-cobrar" style="font-weight:500;color:#1a1535">$0</span>
+        </div>
+        <div style="border-top:1px solid rgba(124,58,237,0.1);margin-top:6px;padding-top:6px;display:flex;justify-content:space-between">
+          <span style="font-size:12px;font-weight:600;color:#7C3AED">Total</span>
+          <span id="pat-total-activos" style="font-size:12px;font-weight:700;color:#7C3AED">$0</span>
+        </div>
+      </div>
+      <!-- PASIVOS -->
+      <div style="background:#fff;border-radius:10px;padding:12px;border:1px solid rgba(220,38,38,0.12)">
+        <div style="font-size:11px;color:#DC2626;font-weight:600;margin-bottom:8px;text-transform:uppercase">PASIVOS</div>
+        <div style="font-size:11px;color:var(--text2);display:flex;justify-content:space-between;margin-bottom:4px">
+          <span>💳 Deudas</span><span id="pat-deudas" style="font-weight:500;color:#1a1535">$0</span>
+        </div>
+        <div style="border-top:1px solid rgba(220,38,38,0.1);margin-top:6px;padding-top:6px;display:flex;justify-content:space-between">
+          <span style="font-size:12px;font-weight:600;color:#DC2626">Total</span>
+          <span id="pat-total-pasivos" style="font-size:12px;font-weight:700;color:#DC2626">$0</span>
+        </div>
+      </div>
+      <!-- PATRIMONIO NETO -->
+      <div style="background:linear-gradient(135deg,#1a1535,#2D1B69);border-radius:10px;padding:12px;color:white">
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;margin-bottom:8px;text-transform:uppercase">PATRIMONIO NETO</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:4px">Activos − Pasivos</div>
+        <div id="pat-neto" style="font-size:20px;font-weight:700;color:white;margin-top:8px">$0</div>
+        <div id="pat-neto-label" style="font-size:10px;margin-top:4px;opacity:0.8"></div>
+      </div>
     </div>
-    <div class="metric">
-      <div class="metric-label">💰 Saldo en caja (neto)</div>
-      <div class="metric-value c-green" id="act-caja">$0</div>
-      <div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div>
+    <!-- Barra visual de salud financiera -->
+    <div style="background:#E5E7EB;border-radius:8px;height:8px;overflow:hidden">
+      <div id="pat-barra" style="height:100%;border-radius:8px;background:linear-gradient(90deg,#7C3AED,#059669);transition:width 0.5s ease;width:0%"></div>
     </div>
-    <div class="metric" style="border:2px solid rgba(124,58,237,0.3);background:#EDE9FF">
-      <div class="metric-label" style="color:#5B21B6">🏢 Valor estimado negocio</div>
-      <div class="metric-value" style="color:#5B21B6" id="act-valor-negocio">$0</div>
-      <div class="metric-sub" style="color:#7C3AED">Activos + Caja</div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-top:4px">
+      <span>Pasivos</span>
+      <span id="pat-salud" style="font-weight:500"></span>
+      <span>Activos</span>
     </div>
+  </div>
+
+  <!-- Métricas rápidas (compatibilidad) -->
+  <div style="display:none">
+    <span id="act-total">$0</span>
+    <span id="act-caja">$0</span>
+    <span id="act-valor-negocio">$0</span>
+    <span id="act-count">0 activos</span>
   </div>
   <div class="section-header">
     <span class="section-title" style="font-size:14px">Mis activos</span>
     <button class="btn-primary" onclick="abrirModal('activo')">+ Agregar activo</button>
   </div>
   <div id="activos-list"><div class="empty-state">Agrega tus equipos, muebles y herramientas.</div></div>
-</div>
-
-<div id="page-configuracion" class="page content">
-
-  <!-- HEADER -->
-  <div style="background:linear-gradient(135deg,#1a1535,#2D1B69);border-radius:14px;padding:20px;margin-bottom:20px;color:white">
-    <div style="font-size:18px;font-weight:600;font-family:Cormorant Garamond,serif;letter-spacing:1px;margin-bottom:4px">⚙️ Configuración</div>
-    <div style="font-size:13px;opacity:0.8">Administra tu negocio, empleados, categorías y más</div>
-  </div>
-
-  <!-- ─── SECCIÓN: MI NEGOCIO ─────────────────── -->
-  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
-    <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px;display:flex;align-items:center;gap:8px">🏪 Mi negocio</div>
-    <div style="display:grid;gap:10px">
-      <div>
-        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Nombre del negocio</label>
-        <input type="text" id="cfg-negocio" placeholder="Ej: Salón Bella, Tienda XYZ..." style="width:100%;padding:9px 12px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;background:#F8F7FF">
-      </div>
-      <div>
-        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">🎯 Meta mensual de ingresos ($)</label>
-        <input type="number" id="cfg-meta" placeholder="0" style="width:100%;padding:9px 12px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;background:#F8F7FF">
-      </div>
-      <button onclick="guardarConfigNegocio()" class="btn-primary" style="width:100%;justify-content:center;padding:10px">Guardar cambios</button>
-    </div>
-  </div>
-
-  <!-- ─── SECCIÓN: EMPLEADOS ──────────────────── -->
-  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="font-size:14px;font-weight:600;color:#1a1535;display:flex;align-items:center;gap:8px">👥 Empleados</div>
-      <button onclick="abrirModal('empleado')" class="btn-primary" style="font-size:12px;padding:6px 14px">+ Nuevo</button>
-    </div>
-    <div id="cfg-empleados-list"></div>
-  </div>
-
-  <!-- ─── SECCIÓN: CATEGORÍAS ─────────────────── -->
-  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
-    <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px;display:flex;align-items:center;gap:8px">🏷️ Categorías</div>
-
-    <!-- Acordeones por módulo -->
-    <div id="cfg-cats-container"></div>
-    <div style="margin-top:12px;padding:10px 12px;background:#F8F7FF;border-radius:8px;font-size:11px;color:var(--text2)">
-      💡 Las categorías con transacciones registradas no se pueden eliminar para proteger tu historial.
-    </div>
-  </div>
-
-  <!-- ─── SECCIÓN: TRANSACCIONES EDITADAS ─────── -->
-  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
-    <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px;display:flex;align-items:center;gap:8px">✏️ Historial de ediciones</div>
-    <div id="cfg-ediciones-list"></div>
-  </div>
-
 </div>
 
 </div><!-- end app -->
@@ -1459,7 +1304,6 @@ let state = {
   categoriasCargo: [...CATS_CARGO_DEFAULT],
   categoriasActivos: [...CATS_ACTIVOS_DEFAULT],
   meta: 0,
-  nombreNegocio: '',
   adminEmail: 'maranto2912@gmail.com',
   pedidos: [],
   clientes: [],
@@ -1516,7 +1360,7 @@ async function cargarLS() {
     categorias: [...CATS_DEFAULT], categoriasInv: [...CATS_INV_DEFAULT],
     categoriasResp: [...CATS_RESP_DEFAULT], categoriasDeuda: [...CATS_DEUDA_DEFAULT],
     categoriasCargo: [...CATS_CARGO_DEFAULT],
-    meta: 0, nombreNegocio: '', adminEmail: 'maranto2912@gmail.com',
+    meta: 0, adminEmail: 'maranto2912@gmail.com',
     pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT]
   };
   const key = currentUserId || DEVICE_ID;
@@ -1542,7 +1386,6 @@ async function cargarLS() {
         state.eventos = loaded.eventos || [];
         state.responsabilidades = loaded.responsabilidades || [];
         state.meta = loaded.meta || 0;
-        state.nombreNegocio = loaded.nombreNegocio || '';
         state.pedidos = loaded.pedidos || [];
         state.clientes = loaded.clientes || [];
         state.proveedores = loaded.proveedores || [];
@@ -1570,7 +1413,6 @@ async function cargarLS() {
       state.eventos = loaded.eventos || [];
       state.responsabilidades = loaded.responsabilidades || [];
       state.meta = loaded.meta || 0;
-        state.nombreNegocio = loaded.nombreNegocio || '';
       state.pedidos = loaded.pedidos || [];
       state.clientes = loaded.clientes || [];
       state.proveedores = loaded.proveedores || [];
@@ -1596,62 +1438,8 @@ let charts = {};
 let filtroTx = 'todas';
 let calFecha = new Date();
 const txMap = new Map(); // mapa id→transacción para evitar JSON en onclick
-const fiadoMap = new Map(); // mapa id→fiado para cobrarWhatsApp seguro
 
 // ─── NAVEGACIÓN ───────────────────────────────────────────
-// ─── MENÚ HAMBURGUESA ─────────────────────────────────────
-function abrirMenu() {
-  document.getElementById('side-menu').classList.add('open');
-  document.getElementById('menu-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  // Sincronizar info de usuario
-  const negocio = document.getElementById('user-negocio').textContent;
-  const plan = document.getElementById('user-plan').textContent;
-  const sideUser = document.getElementById('side-menu-user');
-  if(negocio) {
-    document.getElementById('side-negocio').textContent = negocio;
-    document.getElementById('side-plan').textContent = plan;
-    sideUser.style.display = 'block';
-  }
-  // Sincronizar tab admin
-  const tabAdmin = document.getElementById('tab-admin');
-  const sideAdmin = document.getElementById('side-tab-admin');
-  if(tabAdmin && sideAdmin) {
-    sideAdmin.style.display = tabAdmin.style.display === 'none' ? 'none' : 'flex';
-  }
-}
-
-function cerrarMenu() {
-  document.getElementById('side-menu').classList.remove('open');
-  document.getElementById('menu-overlay').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-function menuNav(page, btn) {
-  // Actualizar activo en menú lateral
-  document.querySelectorAll('.side-menu-item').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  // Navegar
-  showPage(page, null);
-  // También actualizar tab del nav horizontal
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  cerrarMenu();
-}
-
-function menuAdmin(btn) {
-  document.querySelectorAll('.side-menu-item').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  cerrarMenu();
-  sb.auth.getSession().then(({data}) => {
-    const email = data?.session?.user?.email || '';
-    if(email === 'maranto2912@gmail.com') {
-      showPage('admin', null);
-    } else {
-      alert('Acceso solo para administradores.');
-    }
-  });
-}
-
 function intentarAdmin(btn) {
   sb.auth.getSession().then(({data}) => {
     const email = data?.session?.user?.email || '';
@@ -1674,7 +1462,6 @@ function showPage(id, btn) {
   if(id === 'calendario') renderCalendario();
   if(id === 'admin') renderAdmin();
   if(id === 'activos') renderActivos();
-  if(id === 'configuracion') renderConfiguracion();
 }
 
 // ─── MODALES ──────────────────────────────────────────────
@@ -1892,23 +1679,14 @@ function calcularTotalTx() {
   const tipo = document.getElementById('tx-tipo').value;
   let totalProd = 0, totalServ = 0, comisionTotal = 0;
   const detallesCom = [];
-  const itemEls = document.querySelectorAll('#tx-items-list > div');
 
-  txItems.forEach((item, idx) => {
+  txItems.forEach(item => {
     const subtotal = (item.precio || 0) * (item.cantidad || 1);
     const com = subtotal * ((item.comisionPct || 0) / 100);
     if(item.tipo === 'servicio') totalServ += subtotal;
     else totalProd += subtotal;
     comisionTotal += com;
     if(com > 0) detallesCom.push(`${item.nombre||'Item'}: ${fmt(com)} (${item.comisionPct}%)`);
-
-    // Actualizar display "→ Com: $X" y "= $Y" en tiempo real sin reconstruir el HTML
-    if(itemEls[idx]) {
-      itemEls[idx].querySelectorAll('span').forEach(s => {
-        if(s.textContent.startsWith('→ Com:')) s.textContent = `→ Com: ${fmt(com)}`;
-        if(s.textContent.startsWith('= ')) s.textContent = `= ${fmt(subtotal)}`;
-      });
-    }
   });
 
   const total = totalProd + totalServ;
@@ -2742,6 +2520,8 @@ function renderEmpleados() {
         <div class="emp-total">${fmt(totalPagar)}</div>
         <div class="emp-detail" style="font-size:10px">A pagar ${labelPer.toLowerCase()}</div>
         <button class="btn-sm" style="margin-top:6px;font-size:11px;width:100%;justify-content:center" onclick="verDetallePago(${e.id})">📋 Ver detalle</button>
+        <button class="btn-sm" style="margin-top:4px;font-size:11px" onclick="editarEmpleado(${e.id})">✏️ Editar</button>
+        <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarEmpleado(${e.id})">✕ Eliminar</button>
       </div>
     </div>`;
   }).join('');
@@ -3750,7 +3530,7 @@ function abonarFiado(id) {
       editado: false,
       id: Date.now()
     });
-    guardarLS(); renderFiados(); renderDashTx(); renderTransacciones();
+    guardarLS(); if(document.getElementById('page-activos')?.classList.contains('active')) renderActivos(); renderFiados(); renderDashTx(); renderTransacciones();
     const msg = document.createElement('div');
     msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:400;font-family:Outfit,sans-serif;white-space:nowrap';
     msg.textContent = `✓ Abono de ${fmt(monto)} de ${f.nombre} registrado en Transacciones`;
@@ -3779,8 +3559,6 @@ function renderFiados() {
   if(fc) fc.textContent = clientes;
   if(fcob) fcob.textContent = fmt(cobrado);
   if(!state.fiados.length) { el.innerHTML = '<div class="empty-state">No hay fiados. ¡Qué buena señal!</div>'; return; }
-  // Registrar fiados en mapa para acceso seguro desde onclick
-  state.fiados.forEach(f => fiadoMap.set(f.id, f));
   el.innerHTML = state.fiados.map(f => {
     const pendiente = f.monto - f.pagado;
     const pct = f.monto > 0 ? Math.round(f.pagado / f.monto * 100) : 0;
@@ -3796,39 +3574,19 @@ function renderFiados() {
         <div style="font-size:14px;font-weight:600;color:#DC2626">${fmt(pendiente)}</div>
         <div style="font-size:11px;color:var(--text3)">de ${fmt(f.monto)}</div>
         <button class="btn-sm" style="margin-top:4px;font-size:11px" onclick="abonarFiado(${f.id})">+ Abono</button>
-        ${f.tel ? `<button class="btn-sm" style="margin-top:4px;font-size:11px;color:#25D366" onclick="cobrarWhatsAppId(${f.id})">💬 Cobrar</button>` : ''}
+        ${f.tel ? `<button class="btn-sm" style="margin-top:4px;font-size:11px;color:#25D366" onclick="cobrarWhatsApp(${JSON.stringify(f.nombre)},${JSON.stringify(f.tel)},${pendiente})">💬 Cobrar</button>` : ''}
         <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarFiado(${f.id})">✕</button>
       </div>
     </div>`;
   }).join('');
 }
 
-function cobrarWhatsAppId(fiadoId) {
-  const f = fiadoMap.get(fiadoId);
-  if(!f) return;
-  const pendiente = f.monto - f.pagado;
-  const numLimpio = (f.tel || '').replace(/\D/g,'');
-  const numFinal = numLimpio.startsWith('57') && numLimpio.length >= 11 ? numLimpio : '57' + numLimpio;
-  if(numFinal.length < 12) {
-    const toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#DC2626;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:600;font-family:Outfit,sans-serif;white-space:nowrap';
-    toast.textContent = 'Numero de ' + f.nombre + ' no valido. Debe tener 10 digitos.';
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-    return;
-  }
-  const msg = encodeURIComponent('Hola ' + f.nombre + ', te recordamos que tienes un saldo pendiente de ' + fmt(pendiente) + '. Por favor ponernos al dia cuando puedas. Gracias.');
-  location.href = 'https://wa.me/' + numFinal + '?text=' + msg;
-}
-
-
 function cobrarWhatsApp(nombre, tel, monto) {
-  // Función legacy — redirige a la nueva implementación segura
-  const numLimpio = (tel||'').replace(/\D/g,'');
+  const msg = encodeURIComponent(`Hola ${nombre} 👋, te recordamos que tienes un saldo pendiente de ${fmt(monto)}. Por favor ponernos al día cuando puedas. ¡Gracias! 💜`);
+  const numLimpio = tel.replace(/\D/g,'');
+  // Si el número ya trae el código de país (57), no lo duplicamos
   const numFinal = numLimpio.startsWith('57') && numLimpio.length >= 11 ? numLimpio : '57' + numLimpio;
-  if(numFinal.length < 12) { alert('Número inválido: ' + tel); return; }
-  const msg = encodeURIComponent('Hola ' + nombre + ' 👋, tienes un saldo pendiente de ' + fmt(monto) + '. Por favor ponernos al día. ¡Gracias! 💜');
-  location.href = 'https://wa.me/' + numFinal + '?text=' + msg;
+  window.open(`https://wa.me/${numFinal}?text=${msg}`, '_blank');
 }
 
 // ─── RECIBO DE VENTA ──────────────────────────────────────
@@ -4430,15 +4188,14 @@ async function cargarPerfil(userId) {
       const { data, error } = await sb.from('perfiles').select('plan, negocio, nombre').eq('id', userId).single();
       if(data && !error) {
         plan = data.plan || 'gratuito';
-        // Prioridad: state.nombreNegocio (guardado en Config) > perfiles.negocio > fallback
-        negocio = state.nombreNegocio || data.negocio || data.nombre || '';
+        negocio = data.negocio || data.nombre || 'Mi negocio';
       }
     } catch(e) {}
     // Respaldo: verificar localStorage (usado cuando Supabase RPC no está configurado)
     const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
     if(freeUsers.includes(email) && plan === 'gratuito') plan = 'gratuito_total';
 
-    document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : (negocio || '');
+    document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : negocio;
     document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : 
       plan === 'premium' ? '⭐ Premium' : 
       plan === 'gratuito_total' ? '✓ Plan completo' : '✓ Gratuito';
@@ -4477,11 +4234,6 @@ function guardarActivo() {
   cerrarModal('activo');
   guardarLS();
   renderActivos();
-  // Actualizar config si está abierta
-  if(document.getElementById('page-configuracion')?.classList.contains('active')) {
-    renderCfgEmpleados();
-    renderCfgEdiciones();
-  }
 }
 
 function editarActivo(id) {
@@ -4528,23 +4280,58 @@ function renderActivos() {
   if(!state.activos) state.activos = [];
   const activos = state.activos;
 
-  // Calcular saldo en caja (ingresos - egresos totales)
-  const ing = state.transacciones.filter(t => t.tipo === 'ingreso').reduce((s,t) => s+t.monto, 0);
-  const egr = state.transacciones.filter(t => t.tipo === 'egreso').reduce((s,t) => s+t.monto, 0);
+  // ── ECUACIÓN PATRIMONIAL ────────────────────────────────
+  // ACTIVOS
+  const ing  = state.transacciones.filter(t => t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const egr  = state.transacciones.filter(t => t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
   const caja = ing - egr;
+  const bienes = activos.reduce((s,a) => s + ((a.valorActual||a.valorCompra||0)*(a.cantidad||1)), 0);
+  const porCobrar = state.fiados.reduce((s,f) => s + Math.max(0, f.monto - f.pagado), 0);
+  const totalActivosP = bienes + Math.max(0, caja) + porCobrar;
 
-  // Total activos (valor actual × cantidad)
-  const totalActivos = activos.reduce((s,a) => s + ((a.valorActual||a.valorCompra||0) * (a.cantidad||1)), 0);
-  const valorNegocio = totalActivos + Math.max(0, caja);
+  // PASIVOS
+  const deudas = state.deudas.reduce((s,d) => s + Math.max(0, d.total - d.pagado), 0);
+  const totalPasivos = deudas;
 
+  // PATRIMONIO NETO
+  const patrimonioNeto = totalActivosP - totalPasivos;
+
+  // Actualizar UI patrimonio
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  set('pat-bienes',  fmt(bienes));
+  set('pat-caja',    fmt(caja));
+  set('pat-cobrar',  fmt(porCobrar));
+  set('pat-total-activos', fmt(totalActivosP));
+  set('pat-deudas',  fmt(deudas));
+  set('pat-total-pasivos', fmt(totalPasivos));
+
+  const netoEl = document.getElementById('pat-neto');
+  if(netoEl) {
+    netoEl.textContent = fmt(Math.abs(patrimonioNeto));
+    netoEl.style.color = patrimonioNeto >= 0 ? '#A7F3D0' : '#FCA5A5';
+  }
+  const labelEl = document.getElementById('pat-neto-label');
+  if(labelEl) labelEl.textContent = patrimonioNeto >= 0 ? '✅ Patrimonio positivo' : '⚠️ Pasivos superan activos';
+
+  // Barra de salud financiera
+  const barra = document.getElementById('pat-barra');
+  const saludEl = document.getElementById('pat-salud');
+  if(barra && totalActivosP > 0) {
+    const pct = Math.min(100, Math.round((totalActivosP / (totalActivosP + totalPasivos)) * 100));
+    barra.style.width = pct + '%';
+    barra.style.background = pct >= 70 ? 'linear-gradient(90deg,#7C3AED,#059669)' : pct >= 40 ? 'linear-gradient(90deg,#D97706,#F59E0B)' : 'linear-gradient(90deg,#DC2626,#EF4444)';
+    if(saludEl) saludEl.textContent = pct >= 70 ? '💚 Salud financiera buena' : pct >= 40 ? '🟡 Salud financiera moderada' : '🔴 Atención: revisa deudas';
+  }
+
+  // Compatibilidad con IDs legacy
   const elTotal = document.getElementById('act-total');
-  const elCaja = document.getElementById('act-caja');
+  const elCaja  = document.getElementById('act-caja');
   const elValor = document.getElementById('act-valor-negocio');
   const elCount = document.getElementById('act-count');
-  if(elTotal) elTotal.textContent = fmt(totalActivos);
-  if(elCaja) { elCaja.textContent = fmt(caja); elCaja.style.color = caja >= 0 ? '#059669' : '#DC2626'; }
-  if(elValor) elValor.textContent = fmt(valorNegocio);
-  if(elCount) elCount.textContent = activos.length + ' activo' + (activos.length !== 1 ? 's' : '');
+  if(elTotal) elTotal.textContent = fmt(bienes);
+  if(elCaja)  { elCaja.textContent = fmt(caja); elCaja.style.color = caja>=0?'#059669':'#DC2626'; }
+  if(elValor) elValor.textContent = fmt(patrimonioNeto);
+  if(elCount) elCount.textContent = activos.length + ' activo' + (activos.length!==1?'s':'');
 
   const el = document.getElementById('activos-list');
   if(!el) return;
@@ -4598,220 +4385,6 @@ function renderActivos() {
 }
 
 // ─── FIN ACTIVOS ──────────────────────────────────────────
-// ─── CONFIGURACIÓN ────────────────────────────────────────
-
-function renderConfiguracion() {
-  const cfgNeg = document.getElementById('cfg-negocio');
-  const cfgMeta = document.getElementById('cfg-meta');
-  if(cfgNeg) cfgNeg.value = state.nombreNegocio || '';
-  if(cfgMeta) cfgMeta.value = state.meta || '';
-  renderCfgEmpleados();
-  renderCfgCategorias();
-  renderCfgEdiciones();
-}
-async function guardarConfigNegocio() {
-  const nombre = document.getElementById('cfg-negocio').value.trim();
-  const meta = parseFloat(document.getElementById('cfg-meta').value) || 0;
-  if(nombre) state.nombreNegocio = nombre;
-  state.meta = meta;
-  // Guardar en state (→ Supabase creceapp_data + localStorage)
-  guardarLS();
-  // También actualizar tabla perfiles para que el header siempre lo muestre
-  if(nombre && currentUserId) {
-    try {
-      await sb.from('perfiles').update({ negocio: nombre }).eq('id', currentUserId);
-    } catch(e) { console.warn('No se pudo actualizar perfiles:', e); }
-  }
-  // Actualizar header en tiempo real
-  const negEl = document.getElementById('user-negocio');
-  if(negEl && nombre) negEl.textContent = nombre;
-  // Toast de confirmación
-  const toast = document.createElement('div');
-  toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:600;font-family:Outfit,sans-serif;white-space:nowrap';
-  toast.textContent = '✅ Nombre guardado correctamente';
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
-}
-function renderCfgEmpleados() {
-  const el = document.getElementById('cfg-empleados-list');
-  if(!el) return;
-  if(!state.empleados.length) {
-    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text2);font-size:13px">No hay empleados registrados.</div>';
-    return;
-  }
-  el.innerHTML = state.empleados.map(e => {
-    const tipoBadge = {fijo:'💼 Fijo', horas:'⏰ Por horas', comision:'📊 Comisión'}[e.tipoPago||'fijo'] || 'Fijo';
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(124,58,237,0.07)">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:34px;height:34px;border-radius:50%;background:#EDE9FF;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#7C3AED;flex-shrink:0">${iniciales(e.nombre)}</div>
-        <div>
-          <div style="font-size:13px;font-weight:500;color:#1a1535">${e.nombre}</div>
-          <div style="font-size:11px;color:var(--text2)">${e.cargo||'Sin cargo'} · ${tipoBadge}</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:6px">
-        <button onclick="editarEmpleado(${e.id})" style="background:#EDE9FF;border:none;border-radius:7px;padding:5px 10px;font-size:11px;color:#7C3AED;cursor:pointer;font-family:DM Sans,sans-serif">✏️ Editar</button>
-        <button onclick="eliminarEmpleadoCfg(${e.id})" style="background:#FEE2E2;border:none;border-radius:7px;padding:5px 10px;font-size:11px;color:#DC2626;cursor:pointer;font-family:DM Sans,sans-serif">✕</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function eliminarEmpleadoCfg(id) {
-  const e = state.empleados.find(x => x.id === id);
-  if(!e) return;
-  if(!confirm('¿Eliminar a ' + e.nombre + '? Sus datos de comisiones e historial se perderán.')) return;
-  state.empleados = state.empleados.filter(x => x.id !== id);
-  guardarLS();
-  renderCfgEmpleados();
-  renderAll();
-}
-
-function abrirCatModal(id) { abrirModal(id); }
-
-function renderCfgCategorias() {
-  const el = document.getElementById('cfg-cats-container');
-  if(!el) return;
-
-  const modulos = [
-    { label: '💵 Transacciones',    key: 'categorias',        addType: 'cat',       defaults: CATS_DEFAULT },
-    { label: '📦 Inventario',       key: 'categoriasInv',     addType: 'cat-inv',   defaults: CATS_INV_DEFAULT },
-    { label: '📋 Responsabilidades',key: 'categoriasResp',    addType: 'cat-resp',  defaults: CATS_RESP_DEFAULT },
-    { label: '💳 Deudas',           key: 'categoriasDeuda',   addType: 'cat-deuda', defaults: CATS_DEUDA_DEFAULT },
-    { label: '👥 Cargos',           key: 'categoriasCargo',   addType: 'cat-cargo', defaults: CATS_CARGO_DEFAULT },
-    { label: '💼 Activos',          key: 'categoriasActivos', addType: 'cat-activo',defaults: CATS_ACTIVOS_DEFAULT },
-  ];
-
-  el.innerHTML = modulos.map((m, i) => {
-    const cats = state[m.key] || m.defaults;
-    const usadas = new Set();
-    if(m.key === 'categorias')        state.transacciones.forEach(t => usadas.add(t.cat));
-    if(m.key === 'categoriasInv')     state.inventario.forEach(p => usadas.add(p.cat));
-    if(m.key === 'categoriasResp')    state.responsabilidades.forEach(r => usadas.add(r.cat));
-    if(m.key === 'categoriasDeuda')   state.deudas.forEach(d => usadas.add(d.cat));
-    if(m.key === 'categoriasCargo')   state.empleados.forEach(e => usadas.add(e.cargo));
-    if(m.key === 'categoriasActivos') state.activos.forEach(a => usadas.add(a.cat));
-
-    const panelId = 'cp' + i;
-    const catBtns = cats.map(c => {
-      const safe = c.replace(/"/g, '&quot;');
-      const btn = usadas.has(c)
-        ? '<span style="color:#9CA3AF;font-size:10px">🔒</span>'
-        : '<button onclick="delCat(' + JSON.stringify(m.key) + ',' + JSON.stringify(c) + ',' + JSON.stringify(m.addType) + ')" style="background:none;border:none;color:#DC2626;cursor:pointer;font-size:13px;padding:0;line-height:1">✕</button>';
-      return '<div style="display:inline-flex;align-items:center;gap:5px;background:#F8F7FF;border:1px solid rgba(124,58,237,0.15);border-radius:20px;padding:4px 12px;font-size:12px">'
-           + '<span style="color:#1a1535">' + safe + '</span>' + btn + '</div>';
-    }).join('');
-
-    return '<div style="border:1px solid rgba(124,58,237,0.1);border-radius:10px;margin-bottom:8px;overflow:hidden">'
-      + '<button onclick="toggleCatPanel(\'' + panelId + '\')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#F8F7FF;border:none;cursor:pointer;font-family:DM Sans,sans-serif">'
-      + '<div style="display:flex;align-items:center;gap:10px">'
-      + '<span style="font-size:13px;font-weight:600;color:#1a1535">' + m.label + '</span>'
-      + '<span style="font-size:11px;background:#EDE9FF;color:#7C3AED;padding:2px 8px;border-radius:10px">' + cats.length + '</span>'
-      + '</div><span id="' + panelId + 'i" style="color:#7C3AED;font-size:13px">▼</span>'
-      + '</button>'
-      + '<div id="' + panelId + '" style="display:none;padding:14px;background:#fff">'
-      + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">' + catBtns + '</div>'
-      + '<button onclick="abrirModal(\'' + m.addType + '\')" style="font-size:12px;padding:5px 14px;background:none;border:1px dashed rgba(124,58,237,0.3);border-radius:20px;color:#7C3AED;cursor:pointer;font-family:DM Sans,sans-serif">+ Agregar</button>'
-      + '</div></div>';
-  }).join('');
-}
-
-function toggleCatPanel(id) {
-  const panel = document.getElementById(id);
-  const icon = document.getElementById(id + 'i');
-  if(!panel) return;
-  const open = panel.style.display === 'block';
-  panel.style.display = open ? 'none' : 'block';
-  if(icon) icon.style.transform = open ? '' : 'rotate(180deg)';
-}
-
-function delCat(stateKey, nombre, tipo) {
-  const usadas = new Set();
-  if(stateKey === 'categorias')        state.transacciones.forEach(t => usadas.add(t.cat));
-  if(stateKey === 'categoriasInv')     state.inventario.forEach(p => usadas.add(p.cat));
-  if(stateKey === 'categoriasResp')    state.responsabilidades.forEach(r => usadas.add(r.cat));
-  if(stateKey === 'categoriasDeuda')   state.deudas.forEach(d => usadas.add(d.cat));
-  if(stateKey === 'categoriasCargo')   state.empleados.forEach(e => usadas.add(e.cargo));
-  if(stateKey === 'categoriasActivos') state.activos.forEach(a => usadas.add(a.cat));
-  if(usadas.has(nombre)) { alert('No se puede eliminar "' + nombre + '" porque tiene registros asociados.'); return; }
-  if(!confirm('¿Eliminar la categoría "' + nombre + '"?')) return;
-  state[stateKey] = (state[stateKey] || []).filter(c => c !== nombre);
-  guardarLS();
-  renderCfgCategorias();
-}
-
-function toggleCatPanel(id) {
-  const panel = document.getElementById(id);
-  const icon = document.getElementById(id + '-icon');
-  if(!panel) return;
-  const open = panel.style.display === 'block';
-  panel.style.display = open ? 'none' : 'block';
-  if(icon) icon.style.transform = open ? '' : 'rotate(180deg)';
-}
-
-
-function eliminarCategoria(stateKey, nombre, tipo) {
-  // Verificar si tiene registros asociados
-  const usadas = new Set();
-  if(stateKey === 'categorias') state.transacciones.forEach(t => usadas.add(t.cat));
-  if(stateKey === 'categoriasInv') state.inventario.forEach(p => usadas.add(p.cat));
-  if(stateKey === 'categoriasResp') state.responsabilidades.forEach(r => usadas.add(r.cat));
-  if(stateKey === 'categoriasDeuda') state.deudas.forEach(d => usadas.add(d.cat));
-  if(stateKey === 'categoriasCargo') state.empleados.forEach(e => usadas.add(e.cargo));
-  if(stateKey === 'categoriasActivos') state.activos.forEach(a => usadas.add(a.cat));
-
-  if(usadas.has(nombre)) {
-    alert('No se puede eliminar "' + nombre + '" porque tiene registros asociados.');
-    return;
-  }
-  if(!confirm('¿Eliminar la categoría "' + nombre + '"?')) return;
-  state[stateKey] = (state[stateKey] || []).filter(c => c !== nombre);
-  guardarLS();
-  renderCfgCategorias();
-}
-
-function renderCfgEdiciones() {
-  const el = document.getElementById('cfg-ediciones-list');
-  if(!el) return;
-
-  const editadas = state.transacciones.filter(t => t.editado && t.historialEdicion && t.historialEdicion.length > 0);
-
-  if(!editadas.length) {
-    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">✅ Sin transacciones editadas</div>';
-    return;
-  }
-
-  const fmt2 = n => '$' + Math.round(n).toLocaleString('es-CO');
-  const fmtFecha = iso => {
-    const d = new Date(iso);
-    return d.toLocaleDateString('es-CO', {day:'2-digit',month:'short',year:'numeric'}) + ' ' +
-           d.toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'});
-  };
-
-  el.innerHTML = editadas.map(t => {
-    const historial = t.historialEdicion || [];
-    return `<div style="border:1px solid rgba(217,119,6,0.2);border-radius:10px;padding:12px;margin-bottom:10px;background:#FFFBEB">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div>
-          <div style="font-size:13px;font-weight:600;color:#1a1535">${t.desc}</div>
-          <div style="font-size:11px;color:var(--text2)">${t.cat} · ${t.fecha}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:14px;font-weight:600;color:${t.tipo==='ingreso'?'#059669':'#DC2626'}">${t.tipo==='ingreso'?'+':'-'}${fmt2(t.monto)}</div>
-          <span style="font-size:10px;background:#FEF3C7;color:#D97706;padding:2px 7px;border-radius:10px">✏️ Editada ${historial.length}x</span>
-        </div>
-      </div>
-      <div style="border-top:1px solid rgba(217,119,6,0.15);padding-top:8px">
-        ${historial.map((h, i) => `
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px">
-            <span>Edición ${i+1}: "${h.descAnterior}" · ${fmt2(h.montoAnterior)}</span>
-            <span style="color:#D97706;white-space:nowrap;margin-left:8px">${fmtFecha(h.fecha)}</span>
-          </div>`).join('')}
-      </div>
-    </div>`;
-  }).join('');
-}
-
 async function init() {
   // Detectar si viene de link de recuperacion de contrasena
   const hash = window.location.hash;
@@ -4865,12 +4438,12 @@ async function init() {
       const isAdmin = userEmail === 'maranto2912@gmail.com';
       const adminTab = document.getElementById('tab-admin');
       if(adminTab) adminTab.style.display = isAdmin ? 'block' : 'none';
-      document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : '';
+      document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : userEmail.split('@')[0];
       document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : '✓ Gratuito';
       currentUserId = session.user.id;
       resetTimer();
-      await cargarLS(); // cargar state primero para tener nombreNegocio
-      await cargarPerfil(session.user.id); // luego cargar perfil (usará state.nombreNegocio)
+      await cargarPerfil(session.user.id);
+      await cargarLS();
       renderAll();
       renderCalendario();
       // Quitar loading y mostrar app con datos listos
