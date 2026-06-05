@@ -244,6 +244,7 @@
     <button class="tab" onclick="showPage('activos',this)">💼 Activos</button>
     <button class="tab" onclick="showPage('ventas-digitales',this)" style="color:#059669;font-weight:500">🟢 Ventas digitales</button>
     <button class="tab" id="tab-admin" onclick="intentarAdmin(this)">👑 Admin</button>
+    <button class="tab" onclick="showPage('configuracion',this)">⚙️ Config</button>
   </div>
   <button class="btn-primary" onclick="abrirModal('tx')">+ Registrar</button>
 </nav>
@@ -647,6 +648,55 @@
     <button class="btn-primary" onclick="abrirModal('activo')">+ Agregar activo</button>
   </div>
   <div id="activos-list"><div class="empty-state">Agrega tus equipos, muebles y herramientas.</div></div>
+</div>
+
+<div id="page-configuracion" class="page content">
+
+  <div style="background:linear-gradient(135deg,#1a1535,#2D1B69);border-radius:14px;padding:20px;margin-bottom:20px;color:white">
+    <div style="font-size:18px;font-weight:600;font-family:Cormorant Garamond,serif;letter-spacing:1px;margin-bottom:4px">⚙️ Configuración</div>
+    <div style="font-size:13px;opacity:0.8">Administra tu negocio, empleados, categorías y más</div>
+  </div>
+
+  <!-- MI NEGOCIO -->
+  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
+    <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px">🏪 Mi negocio</div>
+    <div style="display:grid;gap:10px">
+      <div>
+        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Nombre del negocio</label>
+        <input type="text" id="cfg-negocio" placeholder="Ej: Salón Bella, Tienda XYZ..." style="width:100%;padding:9px 12px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;background:#F8F7FF">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">🎯 Meta mensual de ingresos ($)</label>
+        <input type="number" id="cfg-meta" placeholder="0" style="width:100%;padding:9px 12px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;background:#F8F7FF">
+      </div>
+      <button onclick="guardarConfigNegocio()" class="btn-primary" style="width:100%;justify-content:center;padding:10px">Guardar cambios</button>
+    </div>
+  </div>
+
+  <!-- EMPLEADOS -->
+  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:14px;font-weight:600;color:#1a1535">👥 Empleados</div>
+      <button onclick="abrirModal('empleado')" class="btn-primary" style="font-size:12px;padding:6px 14px">+ Nuevo</button>
+    </div>
+    <div id="cfg-empleados-list"></div>
+  </div>
+
+  <!-- CATEGORÍAS -->
+  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
+    <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px">🏷️ Categorías</div>
+    <div id="cfg-cats-container"></div>
+    <div style="margin-top:12px;padding:10px 12px;background:#F8F7FF;border-radius:8px;font-size:11px;color:var(--text2)">
+      💡 Las categorías con registros no se pueden eliminar para proteger tu historial.
+    </div>
+  </div>
+
+  <!-- HISTORIAL EDICIONES -->
+  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
+    <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px">✏️ Historial de ediciones</div>
+    <div id="cfg-ediciones-list"></div>
+  </div>
+
 </div>
 
 </div><!-- end app -->
@@ -1304,6 +1354,7 @@ let state = {
   categoriasCargo: [...CATS_CARGO_DEFAULT],
   categoriasActivos: [...CATS_ACTIVOS_DEFAULT],
   meta: 0,
+  nombreNegocio: '',
   adminEmail: 'maranto2912@gmail.com',
   pedidos: [],
   clientes: [],
@@ -1462,6 +1513,7 @@ function showPage(id, btn) {
   if(id === 'calendario') renderCalendario();
   if(id === 'admin') renderAdmin();
   if(id === 'activos') renderActivos();
+  if(id === 'configuracion') renderConfiguracion();
 }
 
 // ─── MODALES ──────────────────────────────────────────────
@@ -4385,6 +4437,164 @@ function renderActivos() {
 }
 
 // ─── FIN ACTIVOS ──────────────────────────────────────────
+// ─── CONFIGURACIÓN ──────────────────────────────────────
+
+function renderConfiguracion() {
+  const cfgNeg = document.getElementById('cfg-negocio');
+  const cfgMeta = document.getElementById('cfg-meta');
+  if(cfgNeg) cfgNeg.value = state.nombreNegocio || '';
+  if(cfgMeta) cfgMeta.value = state.meta || '';
+  renderCfgEmpleados();
+  renderCfgCategorias();
+  renderCfgEdiciones();
+}
+
+async function guardarConfigNegocio() {
+  const nombre = document.getElementById('cfg-negocio').value.trim();
+  const meta = parseFloat(document.getElementById('cfg-meta').value) || 0;
+  if(nombre) state.nombreNegocio = nombre;
+  state.meta = meta;
+  guardarLS();
+  if(nombre && currentUserId) {
+    try { await sb.from('perfiles').update({ negocio: nombre }).eq('id', currentUserId); } catch(e) {}
+  }
+  const negEl = document.getElementById('user-negocio');
+  if(negEl && nombre) negEl.textContent = nombre;
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:600;font-family:Outfit,sans-serif;white-space:nowrap';
+  toast.textContent = '✅ Cambios guardados';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function renderCfgEmpleados() {
+  const el = document.getElementById('cfg-empleados-list');
+  if(!el) return;
+  if(!state.empleados.length) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text2);font-size:13px">No hay empleados registrados.</div>';
+    return;
+  }
+  el.innerHTML = state.empleados.map(e => {
+    const tipos = {fijo:'💼 Fijo', horas:'⏰ Horas', comision:'📊 Comisión'};
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(124,58,237,0.07)">'
+      + '<div style="display:flex;align-items:center;gap:10px">'
+      + '<div style="width:34px;height:34px;border-radius:50%;background:#EDE9FF;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#7C3AED">' + iniciales(e.nombre) + '</div>'
+      + '<div><div style="font-size:13px;font-weight:500;color:#1a1535">' + e.nombre + '</div>'
+      + '<div style="font-size:11px;color:var(--text2)">' + (e.cargo||'Sin cargo') + ' · ' + (tipos[e.tipoPago||'fijo']||'Fijo') + '</div></div></div>'
+      + '<div style="display:flex;gap:6px">'
+      + '<button onclick="editarEmpleado(' + e.id + ')" style="background:#EDE9FF;border:none;border-radius:7px;padding:5px 10px;font-size:11px;color:#7C3AED;cursor:pointer">✏️ Editar</button>'
+      + '<button onclick="eliminarEmpleadoCfg(' + e.id + ')" style="background:#FEE2E2;border:none;border-radius:7px;padding:5px 10px;font-size:11px;color:#DC2626;cursor:pointer">✕</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+function eliminarEmpleadoCfg(id) {
+  const e = state.empleados.find(x => x.id === id);
+  if(!e) return;
+  if(!confirm('¿Eliminar a ' + e.nombre + '?')) return;
+  state.empleados = state.empleados.filter(x => x.id !== id);
+  guardarLS(); renderCfgEmpleados(); renderAll();
+}
+
+function abrirCatModal(id) { abrirModal(id); }
+
+function renderCfgCategorias() {
+  const el = document.getElementById('cfg-cats-container');
+  if(!el) return;
+  const modulos = [
+    { label: '💵 Transacciones',    key: 'categorias',        addType: 'cat',       defaults: CATS_DEFAULT },
+    { label: '📦 Inventario',       key: 'categoriasInv',     addType: 'cat-inv',   defaults: CATS_INV_DEFAULT },
+    { label: '📋 Responsabilidades',key: 'categoriasResp',    addType: 'cat-resp',  defaults: CATS_RESP_DEFAULT },
+    { label: '💳 Deudas',           key: 'categoriasDeuda',   addType: 'cat-deuda', defaults: CATS_DEUDA_DEFAULT },
+    { label: '👥 Cargos',           key: 'categoriasCargo',   addType: 'cat-cargo', defaults: CATS_CARGO_DEFAULT },
+    { label: '💼 Activos',          key: 'categoriasActivos', addType: 'cat-activo',defaults: CATS_ACTIVOS_DEFAULT },
+  ];
+  el.innerHTML = modulos.map(function(m, i) {
+    var cats = state[m.key] || m.defaults;
+    var usadas = new Set();
+    if(m.key === 'categorias')        state.transacciones.forEach(function(t){ usadas.add(t.cat); });
+    if(m.key === 'categoriasInv')     state.inventario.forEach(function(p){ usadas.add(p.cat); });
+    if(m.key === 'categoriasResp')    state.responsabilidades.forEach(function(r){ usadas.add(r.cat); });
+    if(m.key === 'categoriasDeuda')   state.deudas.forEach(function(d){ usadas.add(d.cat); });
+    if(m.key === 'categoriasCargo')   state.empleados.forEach(function(e){ usadas.add(e.cargo); });
+    if(m.key === 'categoriasActivos') state.activos.forEach(function(a){ usadas.add(a.cat); });
+    var pid = 'cp' + i;
+    var addType = m.addType;
+    var catBtns = cats.map(function(c) {
+      var safe = c.replace(/"/g,'&quot;');
+      var delBtn = usadas.has(c)
+        ? '<span style="color:#9CA3AF;font-size:10px">🔒</span>'
+        : '<button onclick="delCat(' + JSON.stringify(m.key) + ',' + JSON.stringify(c) + ',' + JSON.stringify(addType) + ')" style="background:none;border:none;color:#DC2626;cursor:pointer;font-size:13px;padding:0;line-height:1">✕</button>';
+      return '<div style="display:inline-flex;align-items:center;gap:5px;background:#F8F7FF;border:1px solid rgba(124,58,237,0.15);border-radius:20px;padding:4px 12px;font-size:12px"><span>' + safe + '</span>' + delBtn + '</div>';
+    }).join('');
+    var toggleFn = 'toggleCatPanel(' + JSON.stringify(pid) + ')';
+    var addFn = 'abrirModal(' + JSON.stringify(addType) + ')';
+    return '<div style="border:1px solid rgba(124,58,237,0.1);border-radius:10px;margin-bottom:8px;overflow:hidden">'
+      + '<button onclick="' + toggleFn + '" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#F8F7FF;border:none;cursor:pointer;font-family:DM Sans,sans-serif">'
+      + '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:13px;font-weight:600;color:#1a1535">' + m.label + '</span>'
+      + '<span style="font-size:11px;background:#EDE9FF;color:#7C3AED;padding:2px 8px;border-radius:10px">' + cats.length + '</span></div>'
+      + '<span id="' + pid + 'i" style="color:#7C3AED;font-size:13px">▼</span></button>'
+      + '<div id="' + pid + '" style="display:none;padding:14px;background:#fff">'
+      + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">' + catBtns + '</div>'
+      + '<button onclick="' + addFn + '" style="font-size:12px;padding:5px 14px;background:none;border:1px dashed rgba(124,58,237,0.3);border-radius:20px;color:#7C3AED;cursor:pointer;font-family:DM Sans,sans-serif">+ Agregar</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+function toggleCatPanel(id) {
+  var panel = document.getElementById(id);
+  var icon = document.getElementById(id + 'i');
+  if(!panel) return;
+  var open = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  if(icon) icon.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function delCat(stateKey, nombre, tipo) {
+  var usadas = new Set();
+  if(stateKey === 'categorias')        state.transacciones.forEach(function(t){ usadas.add(t.cat); });
+  if(stateKey === 'categoriasInv')     state.inventario.forEach(function(p){ usadas.add(p.cat); });
+  if(stateKey === 'categoriasResp')    state.responsabilidades.forEach(function(r){ usadas.add(r.cat); });
+  if(stateKey === 'categoriasDeuda')   state.deudas.forEach(function(d){ usadas.add(d.cat); });
+  if(stateKey === 'categoriasCargo')   state.empleados.forEach(function(e){ usadas.add(e.cargo); });
+  if(stateKey === 'categoriasActivos') state.activos.forEach(function(a){ usadas.add(a.cat); });
+  if(usadas.has(nombre)) { alert('No se puede eliminar "' + nombre + '" porque tiene registros asociados.'); return; }
+  if(!confirm('¿Eliminar la categoría "' + nombre + '"?')) return;
+  state[stateKey] = (state[stateKey] || []).filter(function(c){ return c !== nombre; });
+  guardarLS();
+  renderCfgCategorias();
+}
+
+
+function renderCfgEdiciones() {
+  var el = document.getElementById('cfg-ediciones-list');
+  if(!el) return;
+  var editadas = state.transacciones.filter(function(t){ return t.editado && t.historialEdicion && t.historialEdicion.length > 0; });
+  if(!editadas.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">✅ Sin transacciones editadas</div>';
+    return;
+  }
+  var fmtFecha = function(iso) {
+    var d = new Date(iso);
+    return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}) + ' ' + d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  };
+  el.innerHTML = editadas.map(function(t) {
+    var h = t.historialEdicion || [];
+    var histRows = h.map(function(ed, i) {
+      return '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px">'
+        + '<span>Edición ' + (i+1) + ': "' + (ed.descAnterior||'') + '" · ' + fmt(ed.montoAnterior||0) + '</span>'
+        + '<span style="color:#D97706;white-space:nowrap;margin-left:8px">' + fmtFecha(ed.fecha) + '</span></div>';
+    }).join('');
+    return '<div style="border:1px solid rgba(217,119,6,0.2);border-radius:10px;padding:12px;margin-bottom:10px;background:#FFFBEB">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
+      + '<div><div style="font-size:13px;font-weight:600;color:#1a1535">' + t.desc + '</div>'
+      + '<div style="font-size:11px;color:var(--text2)">' + t.cat + ' · ' + t.fecha + '</div></div>'
+      + '<div style="text-align:right"><div style="font-size:14px;font-weight:600;color:' + (t.tipo==='ingreso'?'#059669':'#DC2626') + '">' + (t.tipo==='ingreso'?'+':'-') + fmt(t.monto) + '</div>'
+      + '<span style="font-size:10px;background:#FEF3C7;color:#D97706;padding:2px 7px;border-radius:10px">✏️ Editada ' + h.length + 'x</span></div></div>'
+      + '<div style="border-top:1px solid rgba(217,119,6,0.15);padding-top:8px">' + histRows + '</div></div>';
+  }).join('');
+}
+
 async function init() {
   // Detectar si viene de link de recuperacion de contrasena
   const hash = window.location.hash;
