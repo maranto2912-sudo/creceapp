@@ -1283,7 +1283,7 @@ let currentUserId = null;
 let _guardarTimer = null;
 async function guardarLS() {
   // localStorage: siempre inmediato como respaldo local
-  try { localStorage.setItem('creceapp_' + (currentUserId||DEVICE_ID), JSON.stringify(state)); } catch(e){}
+  try { localStorage.setItem('creceapp_' + (currentUserId||DEVICE_ID), JSON.stringify({...state, _savedAt: Date.now()})); } catch(e){}
   if(!currentUserId) return;
   // Supabase: con debounce de 800ms para no saturar con cada clic
   clearTimeout(_guardarTimer);
@@ -1308,7 +1308,7 @@ async function guardarLS() {
         setTimeout(() => { const el = document.getElementById('_save-error-toast'); if(el) el.remove(); }, 4000);
       }
     }
-  }, 800);
+  }, 300);
 }
 
 async function cargarLS() {
@@ -1325,9 +1325,18 @@ async function cargarLS() {
   const key = currentUserId || DEVICE_ID;
   if(currentUserId) {
     try {
-      const { data } = await sb.from('creceapp_data').select('data').eq('device_id', currentUserId).single();
+      const { data } = await sb.from('creceapp_data').select('data, updated_at').eq('device_id', currentUserId).single();
       if(data && data.data) { 
-        // Reemplazo limpio — no merge para evitar datos del usuario anterior
+        // Verificar si localStorage tiene datos más recientes (trabajo offline)
+        const lsRaw = localStorage.getItem('creceapp_' + currentUserId);
+        const lsData = lsRaw ? (() => { try { return JSON.parse(lsRaw); } catch(e) { return null; } })() : null;
+        const sbTime = data.updated_at ? new Date(data.updated_at).getTime() : 0;
+        const lsTime = lsData?._savedAt || 0;
+        // Si localStorage es más reciente que Supabase por más de 5 segundos, avisar
+        if(lsData && lsTime > sbTime + 5000) {
+          console.warn('localStorage más reciente que Supabase — posible trabajo offline reciente');
+        }
+        // Supabase es siempre la fuente de verdad al cargar
         const loaded = data.data;
         state.transacciones = loaded.transacciones || [];
         state.deudas = loaded.deudas || [];
@@ -1381,6 +1390,8 @@ async function cargarLS() {
 // ─── UTILS ────────────────────────────────────────────────
 const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
 const getMes = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; };
+// ID único garantizado: usa crypto.randomUUID si está disponible, fallback a Date.now+random
+const genId = () => { try { return parseInt(crypto.randomUUID().replace(/-/g,'').slice(0,13), 16); } catch(e) { return Date.now() + Math.floor(Math.random()*10000); } };
 const iniciales = n => n.trim().split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
 let charts = {};
 let filtroTx = 'todas';
@@ -1809,6 +1820,9 @@ function guardarTx() {
   const seccionProductos = document.getElementById('tx-productos-section');
   const usaProductos = seccionProductos && seccionProductos.style.display !== 'none';
   let monto = 0;
+
+  // Validar fecha obligatoria
+  if(!fecha) { alert('Por favor selecciona una fecha para la transacción.'); return; }
 
   if(usaProductos) {
     // Forzar lectura de valores actuales del DOM antes de procesar
