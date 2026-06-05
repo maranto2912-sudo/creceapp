@@ -177,7 +177,7 @@
   <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
     <div style="text-align:center;margin-bottom:28px">
       <div style="font-size:32px;margin-bottom:8px">📈</div>
-      <div style="font-size:26px;font-weight:600;color:#1a1535;font-family:Cormorant Garamond,serif;letter-spacing:2px">Crece<span style="color:#1D9E75">App</span></div>
+      <div style="font-size:26px;font-weight:600;color:#1a1535;font-family:Cormorant Garamond,serif;letter-spacing:2px">Crece<span style="color:#7C3AED">App</span></div>
       <div style="font-size:13px;color:#9B8EC4;margin-top:4px">Control financiero para tu negocio</div>
     </div>
     <div id="loading-supabase" style="text-align:center;padding:8px;font-size:12px;color:var(--text3)">Conectando...</div>
@@ -192,7 +192,7 @@
       <div class="form-group"><label class="form-label">Correo electrónico</label><input type="email" id="login-email" placeholder="tucorreo@gmail.com"></div>
       <div class="form-group"><label class="form-label">Contraseña</label><input type="password" id="login-pass" placeholder="••••••••"></div>
       <button class="btn-primary" style="width:100%;justify-content:center;padding:10px;font-size:14px;margin-top:4px" onclick="loginUser()">Entrar a CreceApp</button>
-      <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text2)">¿Olvidaste tu contraseña? <a href="#" onclick="resetPass()" style="color:#1D9E75">Recuperar</a></div>
+      <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--text2)">¿Olvidaste tu contraseña? <a href="#" onclick="resetPass()" style="color:#7C3AED">Recuperar</a></div>
     </div>
     <!-- REGISTER -->
     <div id="form-register" style="display:none">
@@ -2090,7 +2090,8 @@ function guardarEdicionDeuda() {
   if(!d) return;
   d.nombre = document.getElementById('ed-nombre').value.trim() || d.nombre;
   d.total = parseFloat(document.getElementById('ed-total').value) || d.total;
-  d.pagado = parseFloat(document.getElementById('ed-pagado').value) || 0;
+  const nuevoPagado = parseFloat(document.getElementById('ed-pagado').value) || 0;
+  d.pagado = Math.min(nuevoPagado, d.total); // no puede superar el total
   cerrarModal('editar-deuda');
   guardarLS();
   renderAll();
@@ -2303,6 +2304,7 @@ function renderTransacciones() {
 // ─── RENDER DEUDAS ────────────────────────────────────────
 function renderDeudas() {
   const el = document.getElementById('deudas-list');
+  if(!el) return;
   if(!state.deudas.length) { el.innerHTML = '<div class="empty-state">No hay deudas registradas. ¡Buena señal!</div>'; return; }
   const hoyD = new Date();
   el.innerHTML = state.deudas.map(d => {
@@ -2360,7 +2362,10 @@ function getPeriodoInicio(frecuencia) {
     return new Date(hoy.getFullYear(), hoy.getMonth(), inicio).toISOString().split('T')[0];
   } else {
     const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() - hoy.getDay() + 1);
+    // getDay(): 0=Dom, 1=Lun...6=Sáb
+    // Si es domingo (0), retroceder 6 días para ir al lunes anterior
+    const diasDesde = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1;
+    lunes.setDate(hoy.getDate() - diasDesde);
     return lunes.toISOString().split('T')[0];
   }
 }
@@ -2527,8 +2532,8 @@ function verDetallePago(id) {
     </div>`;
   }
 
-  // Sección comisiones por servicios
-  if(comServicios.length > 0 && (tipoPago === 'comision')) {
+  // Sección comisiones por servicios — aplica a todos los tipos de empleado
+  if(comServicios.length > 0) {
     html += `<div style="background:#FEF3C7;border-radius:8px;padding:10px;margin-bottom:10px">
       <div style="font-size:12px;font-weight:500;color:#D97706;margin-bottom:6px">💇 Comisiones por servicios</div>
       ${comServicios.map(v => `
@@ -2619,7 +2624,7 @@ function toggleTipoPago() {
 
 function registrarHoras(empId) {
   const horas = parseFloat(prompt('¿Cuántas horas trabajó hoy?'));
-  if(!horas || isNaN(horas)) return;
+  if(!horas || isNaN(horas) || horas <= 0) return;
   const e = state.empleados.find(x => x.id === empId);
   if(!e) return;
   if(!e.horasLog) e.horasLog = [];
@@ -2638,6 +2643,7 @@ function registrarHoras(empId) {
 // ─── RENDER INVENTARIO ────────────────────────────────────
 function renderInventario() {
   const el = document.getElementById('inv-list');
+  if(!el) return;
   if(!state.inventario.length) { el.innerHTML = '<div class="empty-state">Agrega productos a tu inventario.</div>'; return; }
   el.innerHTML = state.inventario.map(p => {
     const s = p.stock === 0 ? 'out' : p.stock <= p.min ? 'low' : 'ok';
@@ -3111,8 +3117,28 @@ function renderReportes() {
 
 // ─── EXPORTAR ─────────────────────────────────────────────
 function exportar() {
+  // Respetar el período seleccionado en el selector de reportes
+  const periodo = document.getElementById('reporte-periodo') ? document.getElementById('reporte-periodo').value : 'mes';
+  const hoy = new Date();
   const mes = getMes();
-  const txMes = state.transacciones.filter(t => t.fecha.startsWith(mes));
+  let txMes;
+  if(periodo === 'hoy') {
+    const hoyStr = hoy.toISOString().split('T')[0];
+    txMes = state.transacciones.filter(t => t.fecha === hoyStr);
+  } else if(periodo === 'semana') {
+    const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - (hoy.getDay()||7) + 1);
+    const lunesStr = lunes.toISOString().split('T')[0];
+    txMes = state.transacciones.filter(t => t.fecha >= lunesStr);
+  } else if(periodo === 'todo') {
+    txMes = state.transacciones;
+  } else if(periodo.startsWith('mes-')) {
+    const mesesAtras = parseInt(periodo.replace('mes-',''));
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - mesesAtras, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    txMes = state.transacciones.filter(t => t.fecha.startsWith(key));
+  } else {
+    txMes = state.transacciones.filter(t => t.fecha.startsWith(mes));
+  }
   const ing = txMes.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
   const egr = txMes.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
   const totalDeuda = state.deudas.reduce((s,d)=>s+(d.total-d.pagado),0);
@@ -3150,13 +3176,10 @@ function copiarLink() {
 
 async function renderAdmin() {
   try {
-    // Contar usuarios desde auth.users via SQL
-    const { data: countData } = await sb.rpc('count_users').catch ? await sb.rpc('count_users').catch(() => ({data: null})) : {data: null};
-    
-    // Fallback: contar desde perfiles
+    // Contar usuarios desde perfiles (evita doble llamada RPC)
     const { data, error } = await sb.from('perfiles').select('id, nombre, negocio, plan, created_at');
     
-    const total = data ? data.length : (countData || 0);
+    const total = data ? data.length : 0;
     const premium = data ? data.filter(u=>u.plan==='premium').length : 0;
     const gratuito_total = data ? data.filter(u=>u.plan==='gratuito_total').length : 0;
     
@@ -3277,10 +3300,11 @@ function guardarResp() {
   const cat = document.getElementById('r-cat') ? document.getElementById('r-cat').value : 'Otros';
   if(!nombre || !monto) { alert('Por favor completa el nombre y monto.'); return; }
   const newId = Date.now();
+  const eventoId = newId + 1 + Math.floor(Math.random() * 1000); // ID único garantizado
   state.responsabilidades.push({ nombre, desc: nombre, monto, dia, cat, pagado: false, id: newId });
   // Agregar al calendario solo si no existe ya por respId
   if(!state.eventos.some(e => e.respId === newId)) {
-    state.eventos.push({ desc: nombre, monto, dia, tipo: 'pago', respId: newId, id: Date.now()+1 });
+    state.eventos.push({ desc: nombre, monto, dia, tipo: 'pago', respId: newId, id: eventoId });
   }
   if(nombreEl) nombreEl.value = '';
   document.getElementById('r-monto').value = '';
@@ -3482,7 +3506,7 @@ function renderFiados() {
   if(!state.fiados.length) { el.innerHTML = '<div class="empty-state">No hay fiados. ¡Qué buena señal!</div>'; return; }
   el.innerHTML = state.fiados.map(f => {
     const pendiente = f.monto - f.pagado;
-    const pct = Math.round(f.pagado / f.monto * 100);
+    const pct = f.monto > 0 ? Math.round(f.pagado / f.monto * 100) : 0;
     return `<div class="tx-item">
       <div class="tx-icon egreso" style="font-size:16px">💰</div>
       <div class="tx-info">
@@ -3495,7 +3519,7 @@ function renderFiados() {
         <div style="font-size:14px;font-weight:600;color:#DC2626">${fmt(pendiente)}</div>
         <div style="font-size:11px;color:var(--text3)">de ${fmt(f.monto)}</div>
         <button class="btn-sm" style="margin-top:4px;font-size:11px" onclick="abonarFiado(${f.id})">+ Abono</button>
-        ${f.tel ? `<button class="btn-sm" style="margin-top:4px;font-size:11px;color:#25D366" onclick="cobrarWhatsApp('${f.nombre}','${f.tel}',${pendiente})">💬 Cobrar</button>` : ''}
+        ${f.tel ? `<button class="btn-sm" style="margin-top:4px;font-size:11px;color:#25D366" onclick="cobrarWhatsApp(${JSON.stringify(f.nombre)},${JSON.stringify(f.tel)},${pendiente})">💬 Cobrar</button>` : ''}
         <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarFiado(${f.id})">✕</button>
       </div>
     </div>`;
@@ -4074,6 +4098,7 @@ async function cambiarContrasena() {
 
 async function cerrarSesion() {
   clearTimeout(inactivityTimer);
+  clearTimeout(_guardarTimer); // cancelar save pendiente antes de limpiar currentUserId
   currentUserId = null;
   // Limpiar mapa de transacciones para que el próximo usuario no acceda a datos ajenos
   txMap.clear();
