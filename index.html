@@ -4430,14 +4430,15 @@ async function cargarPerfil(userId) {
       const { data, error } = await sb.from('perfiles').select('plan, negocio, nombre').eq('id', userId).single();
       if(data && !error) {
         plan = data.plan || 'gratuito';
-        negocio = data.negocio || data.nombre || 'Mi negocio';
+        // Prioridad: state.nombreNegocio (guardado en Config) > perfiles.negocio > fallback
+        negocio = state.nombreNegocio || data.negocio || data.nombre || '';
       }
     } catch(e) {}
     // Respaldo: verificar localStorage (usado cuando Supabase RPC no está configurado)
     const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
     if(freeUsers.includes(email) && plan === 'gratuito') plan = 'gratuito_total';
 
-    document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : negocio;
+    document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : (negocio || '');
     document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : 
       plan === 'premium' ? '⭐ Premium' : 
       plan === 'gratuito_total' ? '✓ Plan completo' : '✓ Gratuito';
@@ -4608,17 +4609,26 @@ function renderConfiguracion() {
   renderCfgCategorias();
   renderCfgEdiciones();
 }
-function guardarConfigNegocio() {
+async function guardarConfigNegocio() {
   const nombre = document.getElementById('cfg-negocio').value.trim();
   const meta = parseFloat(document.getElementById('cfg-meta').value) || 0;
   if(nombre) state.nombreNegocio = nombre;
   state.meta = meta;
+  // Guardar en state (→ Supabase creceapp_data + localStorage)
   guardarLS();
+  // También actualizar tabla perfiles para que el header siempre lo muestre
+  if(nombre && currentUserId) {
+    try {
+      await sb.from('perfiles').update({ negocio: nombre }).eq('id', currentUserId);
+    } catch(e) { console.warn('No se pudo actualizar perfiles:', e); }
+  }
+  // Actualizar header en tiempo real
   const negEl = document.getElementById('user-negocio');
   if(negEl && nombre) negEl.textContent = nombre;
+  // Toast de confirmación
   const toast = document.createElement('div');
   toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:600;font-family:Outfit,sans-serif;white-space:nowrap';
-  toast.textContent = '✅ Cambios guardados';
+  toast.textContent = '✅ Nombre guardado correctamente';
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
@@ -4855,12 +4865,12 @@ async function init() {
       const isAdmin = userEmail === 'maranto2912@gmail.com';
       const adminTab = document.getElementById('tab-admin');
       if(adminTab) adminTab.style.display = isAdmin ? 'block' : 'none';
-      document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : userEmail.split('@')[0];
+      document.getElementById('user-negocio').textContent = isAdmin ? '👑 Admin' : '';
       document.getElementById('user-plan').textContent = isAdmin ? 'Administradora' : '✓ Gratuito';
       currentUserId = session.user.id;
       resetTimer();
-      await cargarPerfil(session.user.id);
-      await cargarLS();
+      await cargarLS(); // cargar state primero para tener nombreNegocio
+      await cargarPerfil(session.user.id); // luego cargar perfil (usará state.nombreNegocio)
       renderAll();
       renderCalendario();
       // Quitar loading y mostrar app con datos listos
