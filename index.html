@@ -2739,8 +2739,6 @@ function renderEmpleados() {
         <div class="emp-total">${fmt(totalPagar)}</div>
         <div class="emp-detail" style="font-size:10px">A pagar ${labelPer.toLowerCase()}</div>
         <button class="btn-sm" style="margin-top:6px;font-size:11px;width:100%;justify-content:center" onclick="verDetallePago(${e.id})">📋 Ver detalle</button>
-        <button class="btn-sm" style="margin-top:4px;font-size:11px" onclick="editarEmpleado(${e.id})">✏️ Editar</button>
-        <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarEmpleado(${e.id})">✕ Eliminar</button>
       </div>
     </div>`;
   }).join('');
