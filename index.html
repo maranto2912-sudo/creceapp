@@ -1638,14 +1638,23 @@ function calcularTotalTx() {
   const tipo = document.getElementById('tx-tipo').value;
   let totalProd = 0, totalServ = 0, comisionTotal = 0;
   const detallesCom = [];
+  const itemEls = document.querySelectorAll('#tx-items-list > div');
 
-  txItems.forEach(item => {
+  txItems.forEach((item, idx) => {
     const subtotal = (item.precio || 0) * (item.cantidad || 1);
     const com = subtotal * ((item.comisionPct || 0) / 100);
     if(item.tipo === 'servicio') totalServ += subtotal;
     else totalProd += subtotal;
     comisionTotal += com;
     if(com > 0) detallesCom.push(`${item.nombre||'Item'}: ${fmt(com)} (${item.comisionPct}%)`);
+
+    // Actualizar display "→ Com: $X" y "= $Y" en tiempo real sin reconstruir el HTML
+    if(itemEls[idx]) {
+      itemEls[idx].querySelectorAll('span').forEach(s => {
+        if(s.textContent.startsWith('→ Com:')) s.textContent = `→ Com: ${fmt(com)}`;
+        if(s.textContent.startsWith('= ')) s.textContent = `= ${fmt(subtotal)}`;
+      });
+    }
   });
 
   const total = totalProd + totalServ;
