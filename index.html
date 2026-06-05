@@ -4666,44 +4666,81 @@ function renderCfgCategorias() {
   if(!el) return;
 
   const modulos = [
-    { label: '💵 Transacciones', key: 'categorias',       addType: 'tx',    defaults: CATS_DEFAULT },
-    { label: '📦 Inventario',    key: 'categoriasInv',    addType: 'inv',   defaults: CATS_INV_DEFAULT },
-    { label: '📋 Responsabilidades', key: 'categoriasResp', addType: 'resp', defaults: CATS_RESP_DEFAULT },
-    { label: '💳 Deudas',        key: 'categoriasDeuda',  addType: 'deuda', defaults: CATS_DEUDA_DEFAULT },
-    { label: '👥 Cargos',        key: 'categoriasCargo',  addType: 'cargo', defaults: CATS_CARGO_DEFAULT },
-    { label: '💼 Activos',       key: 'categoriasActivos',addType: 'activo',defaults: CATS_ACTIVOS_DEFAULT },
+    { label: '💵 Transacciones',    key: 'categorias',        addType: 'cat',       defaults: CATS_DEFAULT },
+    { label: '📦 Inventario',       key: 'categoriasInv',     addType: 'cat-inv',   defaults: CATS_INV_DEFAULT },
+    { label: '📋 Responsabilidades',key: 'categoriasResp',    addType: 'cat-resp',  defaults: CATS_RESP_DEFAULT },
+    { label: '💳 Deudas',           key: 'categoriasDeuda',   addType: 'cat-deuda', defaults: CATS_DEUDA_DEFAULT },
+    { label: '👥 Cargos',           key: 'categoriasCargo',   addType: 'cat-cargo', defaults: CATS_CARGO_DEFAULT },
+    { label: '💼 Activos',          key: 'categoriasActivos', addType: 'cat-activo',defaults: CATS_ACTIVOS_DEFAULT },
   ];
 
-  el.innerHTML = modulos.map(m => {
+  el.innerHTML = modulos.map((m, i) => {
     const cats = state[m.key] || m.defaults;
-    // Saber qué categorías tienen transacciones (no eliminables)
     const usadas = new Set();
-    if(m.key === 'categorias') state.transacciones.forEach(t => usadas.add(t.cat));
-    if(m.key === 'categoriasInv') state.inventario.forEach(p => usadas.add(p.cat));
-    if(m.key === 'categoriasResp') state.responsabilidades.forEach(r => usadas.add(r.cat));
-    if(m.key === 'categoriasDeuda') state.deudas.forEach(d => usadas.add(d.cat));
-    if(m.key === 'categoriasCargo') state.empleados.forEach(e => usadas.add(e.cargo));
+    if(m.key === 'categorias')        state.transacciones.forEach(t => usadas.add(t.cat));
+    if(m.key === 'categoriasInv')     state.inventario.forEach(p => usadas.add(p.cat));
+    if(m.key === 'categoriasResp')    state.responsabilidades.forEach(r => usadas.add(r.cat));
+    if(m.key === 'categoriasDeuda')   state.deudas.forEach(d => usadas.add(d.cat));
+    if(m.key === 'categoriasCargo')   state.empleados.forEach(e => usadas.add(e.cargo));
     if(m.key === 'categoriasActivos') state.activos.forEach(a => usadas.add(a.cat));
 
-    return `<div style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:600;color:#7C3AED;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid rgba(124,58,237,0.1)">${m.label}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
-        ${cats.map(c => `
-          <div style="display:inline-flex;align-items:center;gap:4px;background:#F8F7FF;border:1px solid rgba(124,58,237,0.15);border-radius:20px;padding:3px 10px;font-size:12px">
-            <span style="color:#1a1535">${c}</span>
-            ${usadas.has(c)
-              ? '<span style="color:#9CA3AF;font-size:10px" title="Tiene registros">🔒</span>'
-              : `<button onclick="eliminarCategoria('${m.key}','${c.replace(/'/g,"&#39;")}','${m.addType}')" style="background:none;border:none;color:#DC2626;cursor:pointer;font-size:12px;padding:0;line-height:1;margin-left:2px">✕</button>`
-            }
-          </div>`).join('')}
-      </div>
-      <button onclick="abrirModal('cat-${m.addType === 'tx' ? '' : m.addType}${m.addType === 'tx' ? 'cat' : ''}')" 
-        style="font-size:11px;padding:4px 12px;background:none;border:1px dashed rgba(124,58,237,0.3);border-radius:20px;color:#7C3AED;cursor:pointer;font-family:DM Sans,sans-serif">
-        + Agregar categoría
-      </button>
-    </div>`;
+    const panelId = 'cp' + i;
+    const catBtns = cats.map(c => {
+      const safe = c.replace(/"/g, '&quot;');
+      const btn = usadas.has(c)
+        ? '<span style="color:#9CA3AF;font-size:10px">🔒</span>'
+        : '<button onclick="delCat(' + JSON.stringify(m.key) + ',' + JSON.stringify(c) + ',' + JSON.stringify(m.addType) + ')" style="background:none;border:none;color:#DC2626;cursor:pointer;font-size:13px;padding:0;line-height:1">✕</button>';
+      return '<div style="display:inline-flex;align-items:center;gap:5px;background:#F8F7FF;border:1px solid rgba(124,58,237,0.15);border-radius:20px;padding:4px 12px;font-size:12px">'
+           + '<span style="color:#1a1535">' + safe + '</span>' + btn + '</div>';
+    }).join('');
+
+    return '<div style="border:1px solid rgba(124,58,237,0.1);border-radius:10px;margin-bottom:8px;overflow:hidden">'
+      + '<button onclick="toggleCatPanel(\'' + panelId + '\')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#F8F7FF;border:none;cursor:pointer;font-family:DM Sans,sans-serif">'
+      + '<div style="display:flex;align-items:center;gap:10px">'
+      + '<span style="font-size:13px;font-weight:600;color:#1a1535">' + m.label + '</span>'
+      + '<span style="font-size:11px;background:#EDE9FF;color:#7C3AED;padding:2px 8px;border-radius:10px">' + cats.length + '</span>'
+      + '</div><span id="' + panelId + 'i" style="color:#7C3AED;font-size:13px">▼</span>'
+      + '</button>'
+      + '<div id="' + panelId + '" style="display:none;padding:14px;background:#fff">'
+      + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">' + catBtns + '</div>'
+      + '<button onclick="abrirModal(\'' + m.addType + '\')" style="font-size:12px;padding:5px 14px;background:none;border:1px dashed rgba(124,58,237,0.3);border-radius:20px;color:#7C3AED;cursor:pointer;font-family:DM Sans,sans-serif">+ Agregar</button>'
+      + '</div></div>';
   }).join('');
 }
+
+function toggleCatPanel(id) {
+  const panel = document.getElementById(id);
+  const icon = document.getElementById(id + 'i');
+  if(!panel) return;
+  const open = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  if(icon) icon.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function delCat(stateKey, nombre, tipo) {
+  const usadas = new Set();
+  if(stateKey === 'categorias')        state.transacciones.forEach(t => usadas.add(t.cat));
+  if(stateKey === 'categoriasInv')     state.inventario.forEach(p => usadas.add(p.cat));
+  if(stateKey === 'categoriasResp')    state.responsabilidades.forEach(r => usadas.add(r.cat));
+  if(stateKey === 'categoriasDeuda')   state.deudas.forEach(d => usadas.add(d.cat));
+  if(stateKey === 'categoriasCargo')   state.empleados.forEach(e => usadas.add(e.cargo));
+  if(stateKey === 'categoriasActivos') state.activos.forEach(a => usadas.add(a.cat));
+  if(usadas.has(nombre)) { alert('No se puede eliminar "' + nombre + '" porque tiene registros asociados.'); return; }
+  if(!confirm('¿Eliminar la categoría "' + nombre + '"?')) return;
+  state[stateKey] = (state[stateKey] || []).filter(c => c !== nombre);
+  guardarLS();
+  renderCfgCategorias();
+}
+
+function toggleCatPanel(id) {
+  const panel = document.getElementById(id);
+  const icon = document.getElementById(id + '-icon');
+  if(!panel) return;
+  const open = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  if(icon) icon.style.transform = open ? '' : 'rotate(180deg)';
+}
+
 
 function eliminarCategoria(stateKey, nombre, tipo) {
   // Verificar si tiene registros asociados
