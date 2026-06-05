@@ -3558,70 +3558,18 @@ function cobrarWhatsAppId(fiadoId) {
   const pendiente = f.monto - f.pagado;
   const numLimpio = (f.tel || '').replace(/\D/g,'');
   const numFinal = numLimpio.startsWith('57') && numLimpio.length >= 11 ? numLimpio : '57' + numLimpio;
-
   if(numFinal.length < 12) {
     const toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#DC2626;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:600;font-family:Outfit,sans-serif;white-space:nowrap;box-shadow:0 2px 12px rgba(0,0,0,0.2)';
-    toast.textContent = '⚠️ El número de ' + f.nombre + ' no es válido. Debe tener 10 dígitos.';
+    toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#DC2626;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:600;font-family:Outfit,sans-serif;white-space:nowrap';
+    toast.textContent = 'Numero de ' + f.nombre + ' no valido. Debe tener 10 digitos.';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 4000);
     return;
   }
-
-  // Mensajes disponibles
-  const mensajes = [
-    {
-      label: '😊 Amigable',
-      color: '#25D366',
-      texto: `Hola ${f.nombre} 👋, te recordamos que tienes un saldo pendiente de ${fmt(pendiente)}. ¡Cuando puedas nos avisas! Gracias 💜`
-    },
-    {
-      label: '🤝 Formal',
-      color: '#7C3AED',
-      texto: `Estimado/a ${f.nombre}, le informamos que registramos un saldo pendiente de ${fmt(pendiente)} a su nombre. Le agradecemos ponerse al día a la mayor brevedad posible. Quedamos atentos. 🙏`
-    },
-    {
-      label: '⚡ Urgente',
-      color: '#DC2626',
-      texto: `${f.nombre}, te recordamos que tienes una deuda pendiente de ${fmt(pendiente)}. Es importante que nos contactes hoy para ponerte al día. Gracias.`
-    }
-  ];
-
-  // Crear overlay de selección de mensaje
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:700;display:flex;align-items:center;justify-content:center;padding:16px';
-  const btns = mensajes.map((m, i) =>
-    '<button onclick="enviarMsgCobro(' + fiadoId + ',' + i + ')" style="width:100%;text-align:left;padding:12px 14px;border:1px solid rgba(124,58,237,0.15);border-radius:10px;background:#F8F7FF;margin-bottom:8px;cursor:pointer;font-family:Outfit,sans-serif">' +
-    '<div style="font-size:12px;font-weight:600;color:' + m.color + ';margin-bottom:4px">' + m.label + '</div>' +
-    '<div style="font-size:11px;color:#6B7280;line-height:1.4">' + m.texto + '</div>' +
-    '</button>'
-  ).join('');
-  overlay.innerHTML =
-    '<div style="background:white;border-radius:16px;padding:20px;width:100%;max-width:400px;font-family:Outfit,sans-serif">' +
-    '<div style="font-size:15px;font-weight:600;color:#1a1535;margin-bottom:4px">&#128172; Cobrar a ' + f.nombre + '</div>' +
-    '<div style="font-size:12px;color:#9B8EC4;margin-bottom:16px">Elige el tono del mensaje</div>' +
-    btns +
-    '<button onclick="this.closest('[data-cobrar]').remove()" style="width:100%;padding:10px;border:none;background:none;color:#9B8EC4;font-size:13px;cursor:pointer;font-family:Outfit,sans-serif;margin-top:4px">Cancelar</button>' +
-    '</div>';
-  overlay.setAttribute('data-cobrar', '1');
-  document.body.appendChild(overlay);
-
-  // Función para enviar el mensaje seleccionado
-  window._cobrarMensajes = window._cobrarMensajes || {};
-  window._cobrarMensajes[fiadoId] = { numFinal, mensajes };
+  const msg = encodeURIComponent('Hola ' + f.nombre + ', te recordamos que tienes un saldo pendiente de ' + fmt(pendiente) + '. Por favor ponernos al dia cuando puedas. Gracias.');
+  location.href = 'https://wa.me/' + numFinal + '?text=' + msg;
 }
 
-function enviarMsgCobro(fiadoId, idx) {
-  const data = window._cobrarMensajes && window._cobrarMensajes[fiadoId];
-  if(!data) return;
-  const { numFinal, mensajes } = data;
-  const msg = encodeURIComponent(mensajes[idx].texto);
-  // Cerrar overlay
-  document.querySelectorAll('div[style*="inset:0"]').forEach(el => {
-    if(el.style.zIndex === '700') el.remove();
-  });
-  location.href = "https://wa.me/" + numFinal + "?text=" + msg;
-}
 
 function cobrarWhatsApp(nombre, tel, monto) {
   // Función legacy — redirige a la nueva implementación segura
