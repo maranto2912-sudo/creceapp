@@ -715,7 +715,7 @@
           <span style="color:var(--text2)">Subtotal productos:</span>
           <span id="tx-subtotal-productos" style="font-weight:600;color:#7C3AED">$0</span>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px" id="tx-fila-servicios" style="display:none">
+        <div id="tx-fila-servicios" style="display:none;justify-content:space-between;font-size:12px;margin-bottom:3px">
           <span style="color:var(--text2)">Subtotal servicios:</span>
           <span id="tx-subtotal-servicios" style="font-weight:600;color:#7C3AED">$0</span>
         </div>
@@ -1365,6 +1365,7 @@ const iniciales = n => n.trim().split(' ').map(x=>x[0]).join('').toUpperCase().s
 let charts = {};
 let filtroTx = 'todas';
 let calFecha = new Date();
+const txMap = new Map(); // mapa id→transacción para evitar JSON en onclick
 
 // ─── NAVEGACIÓN ───────────────────────────────────────────
 function intentarAdmin(btn) {
@@ -2254,6 +2255,8 @@ function txHTML(t) {
   const metodoLabel = t.metodo ? `<span style="font-size:10px;background:#F3F4F6;color:#6B7280;padding:1px 6px;border-radius:10px;margin-left:4px">${t.metodo}</span>` : '';
   const editadoLabel = t.editado ? `<span style="font-size:10px;background:#FEF3C7;color:#D97706;padding:1px 6px;border-radius:10px;margin-left:4px">✏️ Editado</span>` : '';
   const notasLabel = t.notas ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;font-style:italic">📝 ${t.notas}</div>` : '';
+  // Registrar en mapa para evitar JSON inline en onclick (previene XSS)
+  txMap.set(t.id, t);
   return `<div class="tx-item">
     <div class="tx-icon ${t.tipo}">${t.tipo==='ingreso'?'↑':'↓'}</div>
     <div class="tx-info"><div class="tx-name">${t.desc}${extras}${metodoLabel}${editadoLabel}</div><div class="tx-cat">${t.cat}${emp?' · '+emp.nombre:''}</div>${notasLabel}</div>
@@ -2261,7 +2264,7 @@ function txHTML(t) {
       <div class="tx-amount ${t.tipo==='ingreso'?'c-green':'c-red'}">${t.tipo==='ingreso'?'+':'-'}${fmt(t.monto)}</div>
       <div class="tx-date">${t.fecha}</div>
       <button class="btn-sm" style="font-size:10px;padding:2px 7px" onclick="editarTx(${t.id})">✏️</button>
-      ${t.tipo==='ingreso'?`<button class="btn-sm" style="font-size:10px;padding:2px 7px;color:#7C3AED" onclick='generarRecibo(${JSON.stringify(t).replace(/'/g,"&#39;")})'>🧾</button>`:''}
+      ${t.tipo==='ingreso'?`<button class="btn-sm" style="font-size:10px;padding:2px 7px;color:#7C3AED" onclick="generarRecibo(txMap.get(${t.id}))">🧾</button>`:''}
     </div>
   </div>`;
 }
@@ -2682,21 +2685,21 @@ function calcGananciaProducto(id) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div>
             <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Costo ($)</label>
-            <input type="number" id="calc-costo" placeholder="0" value="${costoGuardado||''}" oninput="recalcProd()" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
+            <input type="number" id="calc-costo" placeholder="0" value="${costoGuardado||''}" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
           </div>
           <div>
             <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Unidades</label>
-            <input type="number" id="calc-cant" placeholder="1" value="1" oninput="recalcProd()" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
+            <input type="number" id="calc-cant" placeholder="1" value="1" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
           <div>
             <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">% Comisión empleado</label>
-            <input type="number" id="calc-comision" placeholder="0" value="0" min="0" max="100" oninput="recalcProd()" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
+            <input type="number" id="calc-comision" placeholder="0" value="0" min="0" max="100" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
           </div>
           <div>
             <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:3px">Precio venta ($)</label>
-            <input type="number" id="calc-precio" value="${p.precio}" oninput="recalcProd()" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
+            <input type="number" id="calc-precio" value="${p.precio}" style="width:100%;padding:7px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF">
           </div>
         </div>
         <div id="calc-resultado" style="background:#F0EDFF;border-radius:8px;padding:10px;font-size:12px;line-height:1.9">
@@ -2709,25 +2712,28 @@ function calcGananciaProducto(id) {
       <button onclick="this.closest('div[style*=fixed]').remove()" style="width:100%;padding:10px;border-radius:8px;background:#7C3AED;color:white;border:none;font-family:Outfit,sans-serif;font-size:13px;cursor:pointer">Cerrar</button>
     </div>`;
   document.body.appendChild(overlay);
-  // Función para recalcular en tiempo real
-  window.recalcProd = function() {
-    const precio = parseFloat(document.getElementById('calc-precio').value) || 0;
-    const costo = parseFloat(document.getElementById('calc-costo').value) || 0;
-    const cant = parseFloat(document.getElementById('calc-cant').value) || 1;
-    const comPct = parseFloat(document.getElementById('calc-comision').value) || 0;
+  // Función local para recalcular — usa event listeners en vez de window
+  function recalcProdLocal() {
+    const precio = parseFloat(overlay.querySelector('#calc-precio').value) || 0;
+    const costo = parseFloat(overlay.querySelector('#calc-costo').value) || 0;
+    const cant = parseFloat(overlay.querySelector('#calc-cant').value) || 1;
+    const comPct = parseFloat(overlay.querySelector('#calc-comision').value) || 0;
     const ganUnit = precio - costo;
     const comVal = precio * cant * (comPct / 100);
     const ganTotal = ganUnit * cant - comVal;
     const margen = precio > 0 ? Math.round((ganTotal / (precio * cant)) * 100) : 0;
     const fmtL = n => '$' + Math.round(n).toLocaleString('es-CO');
-    document.getElementById('calc-gan-unit').textContent = fmtL(ganUnit);
-    document.getElementById('calc-gan-unit').style.color = ganUnit >= 0 ? '#7C3AED' : '#DC2626';
-    document.getElementById('calc-com-val').textContent = fmtL(comVal);
-    document.getElementById('calc-gan-total').textContent = fmtL(ganTotal);
-    document.getElementById('calc-gan-total').style.color = ganTotal >= 0 ? '#7C3AED' : '#DC2626';
-    document.getElementById('calc-margen').textContent = margen + '%';
-  };
-  window.recalcProd();
+    overlay.querySelector('#calc-gan-unit').textContent = fmtL(ganUnit);
+    overlay.querySelector('#calc-gan-unit').style.color = ganUnit >= 0 ? '#7C3AED' : '#DC2626';
+    overlay.querySelector('#calc-com-val').textContent = fmtL(comVal);
+    overlay.querySelector('#calc-gan-total').textContent = fmtL(ganTotal);
+    overlay.querySelector('#calc-gan-total').style.color = ganTotal >= 0 ? '#7C3AED' : '#DC2626';
+    overlay.querySelector('#calc-margen').textContent = margen + '%';
+  }
+  ['#calc-precio','#calc-costo','#calc-cant','#calc-comision'].forEach(sel => {
+    overlay.querySelector(sel).addEventListener('input', recalcProdLocal);
+  });
+  recalcProdLocal();
 }
 
 // ─── RENDER CALENDARIO ────────────────────────────────────
@@ -3117,35 +3123,6 @@ const ADMIN_EMAIL = 'maranto2912@gmail.com';
 // PLAN_LINK: actualizar con link real de Wompi cuando esté aprobado
 // const PLAN_LINK = 'https://checkout.wompi.co/l/XXXX';
 
-async function darAccesoGratuito() {
-  const email = document.getElementById('adm-email-free').value.trim();
-  if(!email) return;
-  try {
-    // Usar función SQL que tiene permisos de service role
-    const { data, error } = await sb.rpc('activar_plan_gratuito', { email_input: email });
-    if(error) throw error;
-    if(!data) {
-      alert('No se encontró ningún usuario con ese correo. Verifica que esté registrado en CreceApp.');
-      return;
-    }
-    // Guardar también en localStorage del admin como respaldo
-    const freeUsers = JSON.parse(localStorage.getItem('creceapp_free') || '[]');
-    if(!freeUsers.includes(email)) freeUsers.push(email);
-    localStorage.setItem('creceapp_free', JSON.stringify(freeUsers));
-    
-    document.getElementById('adm-email-free').value = '';
-    const msg = document.createElement('div');
-    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#059669;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap';
-    msg.textContent = '✓ Acceso completo activado para ' + email;
-    document.body.appendChild(msg);
-    setTimeout(() => msg.remove(), 3000);
-    renderAdmin();
-  } catch(e) {
-    console.log('Error:', e);
-    alert('Error: ' + (e.message || 'No se pudo activar el acceso'));
-  }
-}
-
 function copiarLink() {
   navigator.clipboard.writeText('https://creceapp-nine.vercel.app').then(() => alert('¡Link copiado!'));
 }
@@ -3506,7 +3483,10 @@ function renderFiados() {
 
 function cobrarWhatsApp(nombre, tel, monto) {
   const msg = encodeURIComponent(`Hola ${nombre} 👋, te recordamos que tienes un saldo pendiente de ${fmt(monto)}. Por favor ponernos al día cuando puedas. ¡Gracias! 💜`);
-  window.open(`https://wa.me/57${tel.replace(/\D/g,'')}?text=${msg}`, '_blank');
+  const numLimpio = tel.replace(/\D/g,'');
+  // Si el número ya trae el código de país (57), no lo duplicamos
+  const numFinal = numLimpio.startsWith('57') && numLimpio.length >= 11 ? numLimpio : '57' + numLimpio;
+  window.open(`https://wa.me/${numFinal}?text=${msg}`, '_blank');
 }
 
 // ─── RECIBO DE VENTA ──────────────────────────────────────
@@ -3777,7 +3757,7 @@ function guardarProveedor() {
 
 function filtrarPedidos(f, btn) {
   filtroPedido = f;
-  document.querySelectorAll('#page-pedidos .filter-chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('#page-ventas-digitales .filter-chip').forEach(c => c.classList.remove('active'));
   if(btn) btn.classList.add('active');
   renderPedidos();
 }
@@ -3968,25 +3948,19 @@ async function loginUser() {
   btn.textContent = 'Entrando...';
   btn.disabled = true;
   try {
-    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
     if(error) {
       showAuthError('Correo o contraseña incorrectos. Verifica tus datos.');
-    } else if(data.session) {
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('main-app').style.display = 'block';
-      document.getElementById('user-info').style.display = 'flex';
-      currentUserId = data.session.user.id;
-      resetTimer();
-      await cargarPerfil(data.session.user.id);
-      await cargarLS();
-      renderAll();
-      renderCalendario();
+      btn.textContent = originalText;
+      btn.disabled = false;
     }
+    // Si el login es exitoso, onAuthStateChange (SIGNED_IN) se encarga de
+    // mostrar el loading, cargar datos y renderizar — evitando el doble render.
   } catch(e) {
     showAuthError('Error de conexión. Verifica tu internet e intenta de nuevo.');
+    btn.textContent = originalText;
+    btn.disabled = false;
   }
-  btn.textContent = originalText;
-  btn.disabled = false;
 }
 
 async function registerUser() {
