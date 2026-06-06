@@ -3241,33 +3241,52 @@ function aplicarRestricciones(plan) {
 }
 
 async function darAccesoGratuito() {
-  const email = document.getElementById('adm-email-free').value.trim();
+  const email = document.getElementById('adm-email-free').value.trim().toLowerCase();
   if(!email) { alert('Por favor ingresa un correo.'); return; }
   const btn = document.querySelector('#page-admin .btn-primary');
   if(btn) { btn.textContent = 'Activando...'; btn.disabled = true; }
-  try {
-    const { data: rpcData, error: rpcError } = await sb.rpc('activar_plan_gratuito', { email_input: email });
-    document.getElementById('adm-email-free').value = '';
-    const exito = !rpcError && rpcData;
+
+  function toastMsg(texto, color) {
     const msg = document.createElement('div');
-    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap;max-width:90%;text-align:center';
-    if(exito) {
-      msg.style.background = '#059669';
-      msg.textContent = '✓ Acceso completo activado para ' + email;
-    } else {
-      msg.style.background = '#DC2626';
-      msg.textContent = '❌ Error: Verifica que la función SQL esté configurada en Supabase. Error: ' + (rpcError?.message || 'desconocido');
-    }
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:999;font-family:Outfit,sans-serif;max-width:90%;text-align:center;background:' + color;
+    msg.textContent = texto;
     document.body.appendChild(msg);
     setTimeout(() => msg.remove(), 5000);
-    if(exito) renderAdmin();
+  }
+
+  try {
+    // NIVEL 1 — Buscar perfil por campo email (usuarios nuevos lo tienen)
+    let perfilId = null;
+    const { data: perfilEmail } = await sb.from('perfiles').select('id').eq('email', email).single();
+    if(perfilEmail?.id) perfilId = perfilEmail.id;
+
+    // NIVEL 2 — Si no tiene campo email, intentar via RPC
+    if(!perfilId) {
+      const { data: rpcData, error: rpcError } = await sb.rpc('activar_plan_gratuito', { email_input: email });
+      if(!rpcError && rpcData) {
+        document.getElementById('adm-email-free').value = '';
+        toastMsg('✓ Acceso completo activado para ' + email, '#059669');
+        renderAdmin();
+        return;
+      }
+    }
+
+    // NIVEL 3 — Update directo por id encontrado
+    if(perfilId) {
+      const { error: updateError } = await sb.from('perfiles').update({ plan: 'gratuito_total' }).eq('id', perfilId);
+      if(updateError) throw updateError;
+      document.getElementById('adm-email-free').value = '';
+      toastMsg('✓ Acceso completo activado para ' + email, '#059669');
+      renderAdmin();
+      return;
+    }
+
+    // Si no encontró el perfil por ningún medio
+    toastMsg('❌ Usuario no encontrado. Verifica que ' + email + ' esté registrado en CreceApp.', '#DC2626');
+
   } catch(e) {
     console.log('Error darAccesoGratuito:', e);
-    const msg = document.createElement('div');
-    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#DC2626;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:500;font-family:Outfit,sans-serif;white-space:nowrap';
-    msg.textContent = '❌ Error: ' + (e.message || 'revisa la consola');
-    document.body.appendChild(msg);
-    setTimeout(() => msg.remove(), 5000);
+    toastMsg('❌ Error: ' + (e.message || 'revisa la consola'), '#DC2626');
   } finally {
     if(btn) { btn.textContent = '✓ Dar acceso gratuito'; btn.disabled = false; }
   }
@@ -4038,7 +4057,7 @@ async function registerUser() {
       }
     } else if(data.user) {
       try {
-        await sb.from('perfiles').upsert({ id: data.user.id, nombre, negocio, plan: 'gratuito' });
+        await sb.from('perfiles').upsert({ id: data.user.id, nombre, negocio, plan: 'gratuito', email: email });
       } catch(e) {}
       // Iniciar sesión automáticamente
       const { data: loginData, error: loginError } = await sb.auth.signInWithPassword({ email, password: pass });
@@ -4146,10 +4165,14 @@ async function cargarPerfil(userId) {
     let negocio = 'Mi negocio';
     
     try {
-      const { data, error } = await sb.from('perfiles').select('plan, negocio, nombre').eq('id', userId).single();
+      const { data, error } = await sb.from('perfiles').select('plan, negocio, nombre, email').eq('id', userId).single();
       if(data && !error) {
         plan = data.plan || 'gratuito';
         negocio = data.negocio || data.nombre || 'Mi negocio';
+        // Backfill: si el perfil no tiene email guardado, guardarlo ahora
+        if(!data.email && email) {
+          try { await sb.from('perfiles').update({ email: email }).eq('id', userId); } catch(e) {}
+        }
       }
     } catch(e) {}
     // Respaldo: verificar localStorage (usado cuando Supabase RPC no está configurado)
