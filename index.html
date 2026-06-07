@@ -3246,47 +3246,56 @@ async function darAccesoGratuito() {
   const btn = document.querySelector('#page-admin .btn-primary');
   if(btn) { btn.textContent = 'Activando...'; btn.disabled = true; }
 
-  function toastMsg(texto, color) {
-    const msg = document.createElement('div');
-    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:999;font-family:Outfit,sans-serif;max-width:90%;text-align:center;background:' + color;
-    msg.textContent = texto;
-    document.body.appendChild(msg);
-    setTimeout(() => msg.remove(), 5000);
+  // Panel de diagnóstico visible en pantalla
+  let diagEl = document.getElementById('adm-diag');
+  if(!diagEl) {
+    diagEl = document.createElement('div');
+    diagEl.id = 'adm-diag';
+    diagEl.style.cssText = 'margin-top:12px;background:#1a1535;color:#A78BFA;border-radius:8px;padding:12px;font-size:11px;font-family:DM Mono,monospace;white-space:pre-wrap;max-height:200px;overflow-y:auto;border:1px solid rgba(124,58,237,0.3)';
+    btn.parentNode.insertBefore(diagEl, btn.nextSibling);
   }
+  const log = (msg) => { diagEl.textContent += '\n' + msg; diagEl.scrollTop = diagEl.scrollHeight; console.log(msg); };
+  diagEl.textContent = '🔍 Diagnóstico ' + new Date().toLocaleTimeString();
 
   try {
-    // NIVEL 1 — Buscar perfil por campo email (usuarios nuevos lo tienen)
-    let perfilId = null;
-    const { data: perfilEmail } = await sb.from('perfiles').select('id').eq('email', email).single();
-    if(perfilEmail?.id) perfilId = perfilEmail.id;
+    // PASO 1 — Leer todos los perfiles (sin filtrar por email, ya que la columna puede no existir)
+    log('1. Leyendo tabla perfiles...');
+    const { data: todosPerfiles, error: errLeer } = await sb.from('perfiles').select('id, nombre, negocio, plan');
+    if(errLeer) { log('❌ Error leyendo perfiles: ' + errLeer.message); throw errLeer; }
+    log('✓ Perfiles encontrados: ' + (todosPerfiles?.length || 0));
+    if(todosPerfiles?.length) log('   Columnas: ' + Object.keys(todosPerfiles[0]).join(', '));
 
-    // NIVEL 2 — Si no tiene campo email, intentar via RPC
-    if(!perfilId) {
-      const { data: rpcData, error: rpcError } = await sb.rpc('activar_plan_gratuito', { email_input: email });
-      if(!rpcError && rpcData) {
-        document.getElementById('adm-email-free').value = '';
-        toastMsg('✓ Acceso completo activado para ' + email, '#059669');
-        renderAdmin();
-        return;
-      }
-    }
-
-    // NIVEL 3 — Update directo por id encontrado
-    if(perfilId) {
-      const { error: updateError } = await sb.from('perfiles').update({ plan: 'gratuito_total' }).eq('id', perfilId);
-      if(updateError) throw updateError;
+    // PASO 2 — Buscar el usuario en auth via RPC (puede no existir la función)
+    log('2. Intentando RPC activar_plan_gratuito...');
+    const { data: rpcData, error: rpcError } = await sb.rpc('activar_plan_gratuito', { email_input: email });
+    log('   rpcData: ' + JSON.stringify(rpcData) + ' | rpcError: ' + (rpcError?.message || 'ninguno'));
+    if(!rpcError && rpcData) {
       document.getElementById('adm-email-free').value = '';
-      toastMsg('✓ Acceso completo activado para ' + email, '#059669');
+      log('✅ RPC exitoso!');
       renderAdmin();
       return;
     }
 
-    // Si no encontró el perfil por ningún medio
-    toastMsg('❌ Usuario no encontrado. Verifica que ' + email + ' esté registrado en CreceApp.', '#DC2626');
+    // PASO 3 — Buscar por email en perfiles (si tiene la columna)
+    log('3. Buscando por email en perfiles...');
+    const { data: porEmail, error: errEmail } = await sb.from('perfiles').select('id, plan').eq('email', email);
+    log('   porEmail: ' + JSON.stringify(porEmail) + ' | error: ' + (errEmail?.message || 'ninguno'));
+    if(porEmail?.length) {
+      const { error: updErr } = await sb.from('perfiles').update({ plan: 'gratuito_total' }).eq('id', porEmail[0].id);
+      if(updErr) { log('❌ Error update: ' + updErr.message); throw updErr; }
+      document.getElementById('adm-email-free').value = '';
+      log('✅ Plan actualizado por email!');
+      renderAdmin();
+      return;
+    }
+
+    // PASO 4 — Mostrar todos los perfiles para elegir manualmente
+    log('4. No se encontró por email. Perfiles disponibles:');
+    (todosPerfiles || []).forEach(p => log('   ID:' + p.id + ' | ' + p.nombre + ' | ' + p.negocio + ' | plan:' + p.plan));
+    log('⚠️ Ingresa el ID exacto del usuario en el campo y vuelve a intentar, o verifica el correo.');
 
   } catch(e) {
-    console.log('Error darAccesoGratuito:', e);
-    toastMsg('❌ Error: ' + (e.message || 'revisa la consola'), '#DC2626');
+    log('❌ Excepción: ' + (e.message || JSON.stringify(e)));
   } finally {
     if(btn) { btn.textContent = '✓ Dar acceso gratuito'; btn.disabled = false; }
   }
@@ -4165,14 +4174,10 @@ async function cargarPerfil(userId) {
     let negocio = 'Mi negocio';
     
     try {
-      const { data, error } = await sb.from('perfiles').select('plan, negocio, nombre, email').eq('id', userId).single();
+      const { data, error } = await sb.from('perfiles').select('plan, negocio, nombre').eq('id', userId).single();
       if(data && !error) {
         plan = data.plan || 'gratuito';
         negocio = data.negocio || data.nombre || 'Mi negocio';
-        // Backfill: si el perfil no tiene email guardado, guardarlo ahora
-        if(!data.email && email) {
-          try { await sb.from('perfiles').update({ email: email }).eq('id', userId); } catch(e) {}
-        }
       }
     } catch(e) {}
     // Respaldo: verificar localStorage (usado cuando Supabase RPC no está configurado)
