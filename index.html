@@ -936,7 +936,8 @@
   <div class="modal-actions">
     <button class="btn-sm" onclick="cerrarModal('recibo')">Cerrar</button>
     <button class="btn-sm" onclick="copiarRecibo()">📋 Copiar</button>
-    <button class="btn-primary" onclick="enviarWhatsApp()">💬 Enviar por WhatsApp</button>
+    <button class="btn-sm" onclick="imprimirRecibo()">🖨️ Imprimir</button>
+    <button class="btn-primary" onclick="enviarWhatsApp()">💬 WhatsApp</button>
   </div>
 </div></div>
 
@@ -3245,57 +3246,17 @@ async function darAccesoGratuito() {
   if(!email) { alert('Por favor ingresa un correo.'); return; }
   const btn = document.querySelector('#page-admin .btn-primary');
   if(btn) { btn.textContent = 'Activando...'; btn.disabled = true; }
-
-  // Panel de diagnóstico visible en pantalla
-  let diagEl = document.getElementById('adm-diag');
-  if(!diagEl) {
-    diagEl = document.createElement('div');
-    diagEl.id = 'adm-diag';
-    diagEl.style.cssText = 'margin-top:12px;background:#1a1535;color:#A78BFA;border-radius:8px;padding:12px;font-size:11px;font-family:DM Mono,monospace;white-space:pre-wrap;max-height:200px;overflow-y:auto;border:1px solid rgba(124,58,237,0.3)';
-    btn.parentNode.insertBefore(diagEl, btn.nextSibling);
-  }
-  const log = (msg) => { diagEl.textContent += '\n' + msg; diagEl.scrollTop = diagEl.scrollHeight; console.log(msg); };
-  diagEl.textContent = '🔍 Diagnóstico ' + new Date().toLocaleTimeString();
-
   try {
-    // PASO 1 — Leer todos los perfiles (sin filtrar por email, ya que la columna puede no existir)
-    log('1. Leyendo tabla perfiles...');
-    const { data: todosPerfiles, error: errLeer } = await sb.from('perfiles').select('id, nombre, negocio, plan');
-    if(errLeer) { log('❌ Error leyendo perfiles: ' + errLeer.message); throw errLeer; }
-    log('✓ Perfiles encontrados: ' + (todosPerfiles?.length || 0));
-    if(todosPerfiles?.length) log('   Columnas: ' + Object.keys(todosPerfiles[0]).join(', '));
-
-    // PASO 2 — Buscar el usuario en auth via RPC (puede no existir la función)
-    log('2. Intentando RPC activar_plan_gratuito...');
     const { data: rpcData, error: rpcError } = await sb.rpc('activar_plan_gratuito', { email_input: email });
-    log('   rpcData: ' + JSON.stringify(rpcData) + ' | rpcError: ' + (rpcError?.message || 'ninguno'));
-    if(!rpcError && rpcData) {
-      document.getElementById('adm-email-free').value = '';
-      log('✅ RPC exitoso!');
-      renderAdmin();
-      return;
-    }
-
-    // PASO 3 — Buscar por email en perfiles (si tiene la columna)
-    log('3. Buscando por email en perfiles...');
-    const { data: porEmail, error: errEmail } = await sb.from('perfiles').select('id, plan').eq('email', email);
-    log('   porEmail: ' + JSON.stringify(porEmail) + ' | error: ' + (errEmail?.message || 'ninguno'));
-    if(porEmail?.length) {
-      const { error: updErr } = await sb.from('perfiles').update({ plan: 'gratuito_total' }).eq('id', porEmail[0].id);
-      if(updErr) { log('❌ Error update: ' + updErr.message); throw updErr; }
-      document.getElementById('adm-email-free').value = '';
-      log('✅ Plan actualizado por email!');
-      renderAdmin();
-      return;
-    }
-
-    // PASO 4 — Mostrar todos los perfiles para elegir manualmente
-    log('4. No se encontró por email. Perfiles disponibles:');
-    (todosPerfiles || []).forEach(p => log('   ID:' + p.id + ' | ' + p.nombre + ' | ' + p.negocio + ' | plan:' + p.plan));
-    log('⚠️ Ingresa el ID exacto del usuario en el campo y vuelve a intentar, o verifica el correo.');
-
+    const exito = !rpcError && rpcData;
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:999;font-family:Outfit,sans-serif;max-width:90%;text-align:center;background:' + (exito ? '#059669' : '#DC2626');
+    msg.textContent = exito ? '✓ Acceso completo activado para ' + email + '. El usuario debe cerrar sesión y volver a entrar.' : '❌ Usuario no encontrado: ' + (rpcError?.message || 'verifica que el correo esté registrado');
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 6000);
+    if(exito) { document.getElementById('adm-email-free').value = ''; renderAdmin(); }
   } catch(e) {
-    log('❌ Excepción: ' + (e.message || JSON.stringify(e)));
+    alert('Error: ' + (e.message || 'revisa la consola'));
   } finally {
     if(btn) { btn.textContent = '✓ Dar acceso gratuito'; btn.disabled = false; }
   }
@@ -3612,6 +3573,45 @@ function copiarRecibo() {
 function enviarWhatsApp() {
   const texto = document.getElementById('recibo-contenido').innerText;
   window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+}
+
+function imprimirRecibo() {
+  if(!reciboActual) return;
+  const tx = reciboActual;
+  const emp = state.empleados.find(e => e.id == tx.empId);
+  const fecha = new Date(tx.fecha + 'T12:00:00').toLocaleDateString('es-CO', {day:'numeric',month:'long',year:'numeric'});
+  let itemsHTML = '';
+  if(tx.items && tx.items.length > 0) {
+    itemsHTML = tx.items.map(item =>
+      `<tr><td>${item.nombre||'Item'}</td><td>x${item.cantidad||1}</td><td style="text-align:right">${fmt((item.precio||0)*(item.cantidad||1))}</td></tr>`
+    ).join('');
+  }
+  const negocio = state.nombreNegocio || 'Mi negocio';
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:32px;max-width:400px;margin:0 auto;color:#1a1535}
+h1{font-size:20px;font-weight:700;margin-bottom:4px}h2{font-size:13px;color:#6B7280;margin-bottom:20px;font-weight:400}
+.divider{border:none;border-top:1px dashed #ccc;margin:14px 0}.label{font-size:11px;color:#6B7280;margin-bottom:2px}
+.value{font-size:14px;font-weight:500;margin-bottom:12px}table{width:100%;border-collapse:collapse;margin:10px 0}
+th{font-size:11px;color:#6B7280;text-align:left;padding:4px 0;border-bottom:1px solid #eee}
+td{font-size:13px;padding:6px 0;border-bottom:1px solid #f3f4f6}.total{font-size:17px;font-weight:700;color:#7C3AED}
+.footer{margin-top:24px;text-align:center;font-size:12px;color:#9B8EC4}@media print{body{padding:16px}}
+</style></head><body>
+<h1>🧾 Recibo de Venta</h1><h2>${negocio}</h2>
+<hr class="divider">
+<div class="label">Fecha</div><div class="value">${fecha}</div>
+<div class="label">Concepto</div><div class="value">${tx.desc}</div>
+${itemsHTML ? `<table><thead><tr><th>Producto</th><th>Cant.</th><th style="text-align:right">Subtotal</th></tr></thead><tbody>${itemsHTML}</tbody></table>` : ''}
+<hr class="divider">
+${tx.metodo ? `<div class="label">Método de pago</div><div class="value">${tx.metodo}</div>` : ''}
+${emp ? `<div class="label">Atendido por</div><div class="value">${emp.nombre}</div>` : ''}
+${tx.notas ? `<div class="label">Notas</div><div class="value">${tx.notas}</div>` : ''}
+<hr class="divider">
+<div class="label">Total</div><div class="total">${fmt(tx.monto)}</div>
+<div class="footer"><br>¡Gracias por tu compra! 💜<br>CreceApp — Tu negocio ordenado</div>
+</body></html>`);
+  win.document.close();
+  win.onload = () => win.print();
 }
 
 // ─── PAGOS MIXTOS ─────────────────────────────────────────
