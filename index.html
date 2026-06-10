@@ -753,7 +753,7 @@
       <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat')">+ Nueva</span></label>
       <select id="tx-cat" onchange="toggleVentaFields()"></select>
     </div>
-    <div class="form-group"><label class="form-label">Empleado</label><select id="tx-emp" onchange="toggleVentaFields()"><option value="">— ninguno —</option></select></div>
+    <div class="form-group"><label class="form-label">Empleado</label><select id="tx-emp" onchange="toggleVentaFields();actualizarComisionItems()"><option value="">— ninguno —</option></select></div>
   </div>
 
   <!-- SECCIÓN PRODUCTOS (ingreso de Productos o egreso de Insumos) -->
@@ -1547,7 +1547,7 @@ function toggleVentaFields() {
         const emp = state.empleados.find(x => String(x.id) === String(empId));
         const pct = emp ? (emp.comision || 0) : 0;
         const pctEl = document.getElementById('tx-comision-pct');
-        if(pctEl && pct > 0) pctEl.value = pct;
+        if(pctEl) pctEl.value = pct; // Siempre actualizar, incluso si es 0
       }
     }
   }
@@ -1560,6 +1560,17 @@ function agregarItemTx() {
   const comPctDefecto = (emp && emp.tipoPago === 'comision') ? (emp.comision || 0) : 0;
   txItems.push({ id: Date.now() + Math.random(), tipo: 'servicio', productoId: '', nombre: '', precio: 0, cantidad: 1, comisionPct: comPctDefecto });
   renderItemsTx();
+}
+
+function actualizarComisionItems() {
+  // Cuando cambia el empleado, actualizar el % de comisión en todos los ítems de servicio
+  const empId = document.getElementById('tx-emp').value;
+  const emp = empId ? state.empleados.find(x => String(x.id) === String(empId)) : null;
+  const pct = (emp && emp.tipoPago === 'comision') ? (emp.comision || 0) : 0;
+  txItems.forEach(item => {
+    if(item.tipo === 'servicio') item.comisionPct = pct;
+  });
+  if(txItems.length > 0) renderItemsTx();
 }
 
 function renderItemsTx() {
@@ -1880,19 +1891,25 @@ function guardarTx() {
         }
       }
       // Registrar comisión por item
-      if(tipo === 'ingreso' && empId && item.comisionPct > 0) {
+      if(tipo === 'ingreso' && empId) {
         const emp = state.empleados.find(x => String(x.id) === String(empId));
         if(emp) {
-          if(!emp.comisionLog) emp.comisionLog = [];
-          const comValor = (item.precio * item.cantidad) * (item.comisionPct / 100);
-          emp.comisionLog.push({
-            fecha,
-            venta: item.precio * item.cantidad,
-            comisionPct: item.comisionPct,
-            comisionValor: comValor,
-            desc: item.nombre || desc,
-            tipo: item.tipo
-          });
+          // Si el item no tiene % de comisión pero el empleado es comisionista, usar su % automáticamente
+          let pctItem = item.comisionPct || 0;
+          if(pctItem === 0 && emp.tipoPago === 'comision' && emp.comision > 0) pctItem = emp.comision;
+          if(pctItem > 0) {
+            if(!emp.comisionLog) emp.comisionLog = [];
+            const ventaItem = item.precio * item.cantidad;
+            const comValor = ventaItem * (pctItem / 100);
+            emp.comisionLog.push({
+              fecha,
+              venta: ventaItem,
+              comisionPct: pctItem,
+              comisionValor: comValor,
+              desc: item.nombre || desc,
+              tipo: item.tipo
+            });
+          }
         }
       }
     });
@@ -1917,12 +1934,17 @@ function guardarTx() {
 
     // Comisión simple
     const comPctEl = document.getElementById('tx-comision-pct');
-    const comPct = comPctEl ? (parseFloat(comPctEl.value) || 0) : 0;
-    if(empId && tipo === 'ingreso' && comPct > 0) {
+    let comPct = comPctEl ? (parseFloat(comPctEl.value) || 0) : 0;
+    if(empId && tipo === 'ingreso') {
       const emp = state.empleados.find(x => String(x.id) === String(empId));
       if(emp) {
-        if(!emp.comisionLog) emp.comisionLog = [];
-        emp.comisionLog.push({ fecha, venta: monto, comisionPct: comPct, desc, tipo: 'servicio' });
+        // Si el campo está en 0 pero el empleado es comisionista, usar su % automáticamente
+        if(comPct === 0 && emp.tipoPago === 'comision' && emp.comision > 0) comPct = emp.comision;
+        if(comPct > 0) {
+          if(!emp.comisionLog) emp.comisionLog = [];
+          const comValor = monto * comPct / 100;
+          emp.comisionLog.push({ fecha, venta: monto, comisionPct: comPct, comisionValor: comValor, desc, tipo: 'servicio' });
+        }
       }
     }
   }
