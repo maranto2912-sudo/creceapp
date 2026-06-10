@@ -2466,17 +2466,19 @@ function renderEmpleados() {
       </div>
       <button class="btn-primary" style="margin-top:6px;font-size:11px;padding:5px 12px" onclick="registrarHoras(${e.id})">+ Horas hoy</button>`;
     } else if(tipoPago === 'comision') {
-      totalPagar = comisionPer + totalComProd;
+      const comHoy = calcComisionHoy(e);
+      const comPer = calcComisionPeriodo(e);
+      totalPagar = comPer;
       detalleExtra = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
         <div style="background:#FEF3C7;border-radius:6px;padding:8px;text-align:center">
           <div style="font-size:10px;color:var(--text2)">Ventas hoy</div>
           <div style="font-size:14px;font-weight:700;color:#D97706">${fmt(ventasHoy)}</div>
-          <div style="font-size:11px;color:#059669">Com: ${fmt(ventasHoy*(e.comision||0)/100)}</div>
+          <div style="font-size:11px;color:#059669">Com: ${fmt(comHoy)}</div>
         </div>
         <div style="background:#FEF3C7;border-radius:6px;padding:8px;text-align:center">
           <div style="font-size:10px;color:var(--text2)">${labelPer}</div>
           <div style="font-size:14px;font-weight:700;color:#D97706">${fmt(ventasPer)}</div>
-          <div style="font-size:11px;color:#059669">Com serv: ${fmt(comisionPer)}${totalComProd>0?' + prod: '+fmt(totalComProd):''}</div>
+          <div style="font-size:11px;color:#059669">Com: ${fmt(comPer)}</div>
         </div>
       </div>
       <button class="btn-primary" style="margin-top:6px;font-size:11px;padding:5px 12px;background:#D97706" onclick="registrarVentaComision(${e.id})">+ Venta hoy</button>`;
@@ -2975,7 +2977,23 @@ function renderHistorialEmpleados() {
 
 function calcVentasHoy(e) {
   const hoy = new Date().toISOString().split('T')[0];
-  return (e.comisionLog||[]).filter(v => v.fecha === hoy && (v.tipo === 'servicio' || !v.tipo)).reduce((s,v) => s+v.venta, 0);
+  return (e.comisionLog||[]).filter(v => v.fecha === hoy).reduce((s,v) => s+v.venta, 0);
+}
+
+function calcComisionHoy(e) {
+  const hoy = new Date().toISOString().split('T')[0];
+  return (e.comisionLog||[]).filter(v => v.fecha === hoy).reduce((s,v) => {
+    const pct = (v.comisionPct != null) ? v.comisionPct : (e.comision || 0);
+    return s + (v.comisionValor != null ? v.comisionValor : v.venta * pct / 100);
+  }, 0);
+}
+
+function calcComisionPeriodo(e) {
+  const inicio = getPeriodoInicio(e.frecuencia || 'semanal');
+  return (e.comisionLog||[]).filter(v => v.fecha >= inicio).reduce((s,v) => {
+    const pct = (v.comisionPct != null) ? v.comisionPct : (e.comision || 0);
+    return s + (v.comisionValor != null ? v.comisionValor : v.venta * pct / 100);
+  }, 0);
 }
 
 function calcVentasSemana(e) {
