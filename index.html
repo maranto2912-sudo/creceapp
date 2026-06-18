@@ -242,7 +242,6 @@
     <button class="tab" onclick="showPage('reportes',this)">Reportes</button>
     <button class="tab" onclick="showPage('fiado',this)">💰 Fiado</button>
     <button class="tab" onclick="showPage('activos',this)">💼 Activos</button>
-    <button class="tab" onclick="showPage('ventas-digitales',this)" style="color:#059669;font-weight:500">🟢 Ventas digitales</button>
     <button class="tab" id="tab-admin" onclick="intentarAdmin(this)">👑 Admin</button>
     <button class="tab" onclick="showPage('configuracion',this)">⚙️ Config</button>
   </div>
@@ -409,68 +408,6 @@
 </div>
 
 <!-- VENTAS DIGITALES -->
-<div id="page-ventas-digitales" class="page content">
-  <div style="background:linear-gradient(135deg,#064E3B,#065F46);border-radius:14px;padding:20px;margin-bottom:16px;color:white">
-    <div style="font-size:18px;font-weight:600;font-family:Cormorant Garamond,serif;letter-spacing:1px;margin-bottom:4px">🟢 Ventas Digitales</div>
-    <div style="font-size:13px;opacity:0.8">Control financiero para dropshippers y vendedores online</div>
-  </div>
-  <div class="grid3" style="margin-bottom:16px">
-    <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">💰 Ventas totales</div><div class="metric-value" style="color:#059669" id="vd-ventas">$0</div></div>
-    <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">📈 Ganancia neta</div><div class="metric-value" style="color:#059669" id="vd-ganancia">$0</div></div>
-    <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">💸 Comisiones pagadas</div><div class="metric-value c-red" id="vd-comisiones">$0</div></div>
-    <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">🏆 Mejor plataforma</div><div class="metric-value" style="font-size:14px;color:#059669" id="vd-mejor">—</div></div>
-    <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">📦 Total ventas</div><div class="metric-value" style="color:#059669" id="vd-cantidad">0</div></div>
-    <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">💡 Margen promedio</div><div class="metric-value" style="color:#059669" id="vd-margen">0%</div></div>
-  </div>
-  <!-- IDs legacy para compatibilidad -->
-  <div style="display:none">
-    <span id="ped-total">0</span>
-    <span id="ped-ingresos">$0</span>
-    <span id="ped-ganancia">$0</span>
-    <div id="pedidos-list"></div>
-  </div>
-  <div class="grid2" style="margin-bottom:16px">
-    <div class="card" style="border-color:rgba(5,150,105,0.15)">
-      <div class="card-header">
-        <span class="card-title">Ventas por plataforma</span>
-      </div>
-      <div style="position:relative;height:180px"><canvas id="chartPlataformas"></canvas></div>
-    </div>
-    <div class="card" style="border-color:rgba(5,150,105,0.15)">
-      <div class="card-header"><span class="card-title">Ganancia vs Comisiones</span></div>
-      <div style="position:relative;height:180px"><canvas id="chartGananciasVD"></canvas></div>
-    </div>
-  </div>
-  <div class="section-header">
-    <span class="section-title" style="font-size:14px">Registro de ventas digitales</span>
-    <button class="btn-primary" style="background:#059669" onclick="abrirModal('venta-digital')">+ Nueva venta</button>
-  </div>
-  <div id="vd-list"><div class="empty-state">Registra tus ventas digitales aquí.</div></div>
-
-  <!-- SUBSECCIÓN CLIENTES -->
-  <div style="margin-top:24px">
-    <div class="section-header">
-      <span class="section-title" style="font-size:14px">👥 Clientes</span>
-      <button class="btn-primary" style="background:#059669;font-size:12px;padding:6px 12px" onclick="abrirModal('cliente')">+ Cliente</button>
-    </div>
-    <div class="grid3" style="margin-bottom:12px">
-      <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">👥 Total</div><div class="metric-value" style="color:#059669" id="cli-total">0</div></div>
-      <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">⭐ Top cliente</div><div class="metric-value" style="font-size:13px;color:#059669" id="cli-top">—</div></div>
-      <div class="metric" style="border-color:rgba(5,150,105,0.2)"><div class="metric-label">💰 Valor promedio</div><div class="metric-value" style="color:#059669" id="cli-promedio">$0</div></div>
-    </div>
-    <div id="clientes-list"><div class="empty-state">Agrega tus clientes frecuentes.</div></div>
-  </div>
-
-  <!-- SUBSECCIÓN PROVEEDORES -->
-  <div style="margin-top:24px">
-    <div class="section-header">
-      <span class="section-title" style="font-size:14px">🏭 Proveedores</span>
-      <button class="btn-primary" style="background:#059669;font-size:12px;padding:6px 12px" onclick="abrirModal('proveedor')">+ Proveedor</button>
-    </div>
-    <div id="proveedores-list"><div class="empty-state">Agrega tus proveedores.</div></div>
-  </div>
-</div>
-
 <!-- ADMIN -->
 <div id="page-admin" class="page content">
   <div class="section-header">
@@ -872,60 +809,6 @@
   <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="fi-desc" placeholder="Qué le fiaste..."></div>
   <div class="form-group"><label class="form-label">Teléfono (para cobrar)</label><input type="text" id="fi-tel" placeholder="300..."></div>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('fiado')">Cancelar</button><button class="btn-primary" onclick="guardarFiado()">Guardar</button></div>
-</div></div>
-
-<!-- MODAL VENTA DIGITAL -->
-<div class="overlay" id="overlay-venta-digital">
-<div class="modal">
-  <div class="modal-title" style="color:#059669">🟢 Registrar venta digital</div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">Plataforma</label>
-      <select id="vd-plataforma" onchange="autoComision()">
-        <option>Dropi</option>
-        <option>TikTok Shop</option>
-        <option>Instagram</option>
-        <option>Facebook</option>
-        <option>Mercado Libre</option>
-        <option>WhatsApp</option>
-        <option>Shopify</option>
-        <option>Rappi</option>
-        <option>Otra</option>
-      </select>
-    </div>
-    <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="vd-fecha"></div>
-  </div>
-  <div class="form-group"><label class="form-label">Producto vendido</label><input type="text" id="vd-producto" placeholder="Nombre del producto..."></div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">Precio de venta ($)</label><input type="number" id="vd-precio" placeholder="0" oninput="calcVD()"></div>
-    <div class="form-group"><label class="form-label">Costo del producto ($)</label><input type="number" id="vd-costo" placeholder="0" oninput="calcVD()"></div>
-  </div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">Cantidad</label><input type="number" id="vd-cantidad-input" placeholder="1" min="1" value="1" oninput="calcVD()"></div>
-    <div class="form-group">
-      <label class="form-label">% Comisión plataforma <span style="font-size:10px;color:#059669">(auto)</span></label>
-      <input type="number" id="vd-comision-pct" placeholder="0" min="0" max="100" oninput="calcVD()">
-    </div>
-  </div>
-  <div class="form-group">
-    <label class="form-label">Costo del flete / envío ($)</label>
-    <input type="number" id="vd-flete" placeholder="0" min="0" oninput="calcVD()">
-  </div>
-  <div style="background:#F0FDF4;border-radius:8px;padding:12px;border:1px solid rgba(5,150,105,0.2);margin-bottom:10px">
-    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-      <span style="color:#065F46">Comisión plataforma:</span>
-      <span id="vd-comision-valor" style="font-weight:600;color:#DC2626">$0</span>
-    </div>
-    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-      <span style="color:#065F46">Costo flete:</span>
-      <span id="vd-flete-valor" style="font-weight:600;color:#DC2626">$0</span>
-    </div>
-    <div style="border-top:1px solid rgba(5,150,105,0.15);padding-top:8px;display:flex;justify-content:space-between;font-size:13px">
-      <span style="color:#065F46;font-weight:500">Ganancia neta real:</span>
-      <span id="vd-ganancia-calc" style="font-weight:700;color:#059669">$0</span>
-    </div>
-  </div>
-  <div class="form-group"><label class="form-label">Notas</label><input type="text" id="vd-notas" placeholder="Opcional..."></div>
-  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('venta-digital')">Cancelar</button><button class="btn-primary" style="background:#059669" onclick="guardarVentaDigital()">Guardar</button></div>
 </div></div>
 
 <!-- MODAL RECIBO -->
@@ -1484,9 +1367,8 @@ function abrirModal(id) {
     actualizarCategoriasActivos();
   }
   if(id === 'venta-digital') {
-    document.getElementById('vd-fecha').value = new Date().toISOString().split('T')[0];
-    autoComision();
-    calcVD();
+    // Sección eliminada — retornar sin hacer nada
+    return;
   }
   if(id === 'fiado') {
     document.getElementById('fi-fecha').value = new Date().toISOString().split('T')[0];
@@ -1769,6 +1651,10 @@ function guardarCategoria(tipo) {
   document.getElementById('overlay-' + cfg.modal).style.display = 'none';
   guardarLS();
   actualizarTodasCategorias();
+  // Refrescar el panel de configuración si está visible
+  if(document.getElementById('page-configuracion').classList.contains('active')) {
+    renderCfgCategorias();
+  }
 }
 
 function actualizarTodasCategorias() {
@@ -3092,13 +2978,16 @@ function getPeriodoTx() {
     return state.transacciones.filter(t => t.fecha === hoyStr);
   } else if(periodo === 'semana') {
     const lunes = new Date(hoy);
-    lunes.setDate(hoy.getDate() - hoy.getDay() + 1);
+    const diaSemana = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1; // Lunes=0 ... Domingo=6
+    lunes.setDate(hoy.getDate() - diaSemana);
+    lunes.setHours(0,0,0,0);
     const lunesStr = lunes.toISOString().split('T')[0];
-    return state.transacciones.filter(t => t.fecha >= lunesStr);
+    return state.transacciones.filter(t => t.fecha >= lunesStr && t.fecha <= hoyStr);
   } else if(periodo === 'todo') {
     return state.transacciones;
   } else {
-    const mesesAtras = parseInt(periodo.replace('mes-','') || '0');
+    // 'mes' → 0 meses atrás, 'mes-1' → 1 mes atrás, etc.
+    const mesesAtras = parseInt(periodo.replace('mes-','') || '0') || 0;
     const d = new Date(hoy.getFullYear(), hoy.getMonth() - mesesAtras, 1);
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     return state.transacciones.filter(t => t.fecha.startsWith(key));
@@ -3116,18 +3005,23 @@ function renderReportes() {
   const totalDeuda = state.deudas.reduce((s,d)=>s+(d.total-d.pagado),0);
 
   // Calcular comisiones del período para ganancia neta
-  const inicio = periodo === 'hoy' ? new Date().toISOString().split('T')[0] :
-    periodo === 'semana' ? (() => { const h=new Date(); const l=new Date(h); l.setDate(h.getDate()-h.getDay()+1); return l.toISOString().split('T')[0]; })() :
-    periodo === 'todo' ? '2000-01-01' : (() => {
-      const h=new Date(); const atras=parseInt(periodo.replace('mes-','')||'0');
-      const d=new Date(h.getFullYear(),h.getMonth()-atras,1);
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;
-    })();
-  const fin = periodo === 'hoy' ? inicio : periodo === 'todo' ? '9999-12-31' : (() => {
-    const h=new Date(); const atras=parseInt(periodo.replace('mes-','')||'0');
-    const d=new Date(h.getFullYear(),h.getMonth()-atras+1,0);
-    return d.toISOString().split('T')[0];
-  })();
+  const hoyParaRango = new Date();
+  const hoyStrRango = hoyParaRango.toISOString().split('T')[0];
+  let inicio, fin;
+  if(periodo === 'hoy') {
+    inicio = hoyStrRango; fin = hoyStrRango;
+  } else if(periodo === 'semana') {
+    const l=new Date(hoyParaRango); l.setDate(hoyParaRango.getDate()-hoyParaRango.getDay()+1);
+    inicio = l.toISOString().split('T')[0]; fin = hoyStrRango;
+  } else if(periodo === 'todo') {
+    inicio = '2000-01-01'; fin = '9999-12-31';
+  } else {
+    const atras = parseInt(periodo.replace('mes-','') || '0');
+    const dI = new Date(hoyParaRango.getFullYear(), hoyParaRango.getMonth()-atras, 1);
+    const dF = new Date(hoyParaRango.getFullYear(), hoyParaRango.getMonth()-atras+1, 0);
+    inicio = `${dI.getFullYear()}-${String(dI.getMonth()+1).padStart(2,'0')}-01`;
+    fin = dF.toISOString().split('T')[0];
+  }
   let totalComisiones = 0;
   state.empleados.forEach(e => {
     (e.comisionLog||[]).filter(v => v.fecha >= inicio && v.fecha <= fin).forEach(v => {
@@ -3268,7 +3162,7 @@ function aplicarRestricciones(plan) {
   const esPremium = plan === 'premium' || plan === 'gratuito_total' || plan === 'admin';
   if(esPremium) return;
   // Tabs bloqueados para plan gratuito
-  const tabsBloqueados = ['empleados','inventario','calendario','reportes','fiado','ventas-digitales'];
+  const tabsBloqueados = ['empleados','inventario','calendario','reportes','fiado'];
   document.querySelectorAll('.tab').forEach(tab => {
     const onclick = tab.getAttribute('onclick') || '';
     tabsBloqueados.forEach(nombre => {
@@ -3318,7 +3212,6 @@ function mostrarUpgrade() {
         ⭐ Inventario completo<br>
         ⭐ Calendario de pagos<br>
         ⭐ Fiado — lo que te deben<br>
-        ⭐ Ventas digitales<br>
         ⭐ Reportes y gráficas avanzadas
       </div>
       <button onclick="window.open('https://creceapp-nine.vercel.app','_blank');this.closest('div[style*=fixed]').remove()" style="width:100%;padding:11px;border-radius:10px;background:#7C3AED;color:white;border:none;font-size:14px;font-family:Outfit,sans-serif;cursor:pointer;font-weight:500;margin-bottom:8px">¡Quiero el plan Premium! — $20.000/mes</button>
@@ -3668,142 +3561,6 @@ function calcMixto() {
   }
 }
 
-// ─── VENTAS DIGITALES ─────────────────────────────────────
-const COMISIONES_PLATAFORMA = {
-  'Dropi': 0,
-  'TikTok Shop': 5,
-  'Mercado Libre': 12,
-  'Instagram': 0,
-  'Facebook': 0,
-  'WhatsApp': 0,
-  'Shopify': 2,
-  'Rappi': 27,
-  'Otra': 0
-};
-
-function autoComision() {
-  const plat = document.getElementById('vd-plataforma').value;
-  const pct = COMISIONES_PLATAFORMA[plat] ?? 0;
-  const campo = document.getElementById('vd-comision-pct');
-  if(campo) campo.value = pct;
-  calcVD();
-}
-
-function calcVD() {
-  const precio = parseFloat(document.getElementById('vd-precio').value) || 0;
-  const costo = parseFloat(document.getElementById('vd-costo').value) || 0;
-  const cant = parseInt(document.getElementById('vd-cantidad-input').value) || 1;
-  const pct = parseFloat(document.getElementById('vd-comision-pct').value) || 0;
-  const flete = parseFloat(document.getElementById('vd-flete').value) || 0;
-  const comision = precio * cant * (pct / 100);
-  const ganancia = (precio - costo) * cant - comision - flete;
-  const elC = document.getElementById('vd-comision-valor');
-  const elF = document.getElementById('vd-flete-valor');
-  const elG = document.getElementById('vd-ganancia-calc');
-  if(elC) elC.textContent = fmt(comision);
-  if(elF) elF.textContent = fmt(flete);
-  if(elG) { elG.textContent = fmt(ganancia); elG.style.color = ganancia >= 0 ? '#059669' : '#DC2626'; }
-}
-
-function guardarVentaDigital() {
-  const producto = document.getElementById('vd-producto').value.trim();
-  const precio = parseFloat(document.getElementById('vd-precio').value) || 0;
-  const costo = parseFloat(document.getElementById('vd-costo').value) || 0;
-  const cant = parseInt(document.getElementById('vd-cantidad-input').value) || 1;
-  const plataforma = document.getElementById('vd-plataforma').value;
-  const comisionPct = parseFloat(document.getElementById('vd-comision-pct').value) || 0;
-  const fecha = document.getElementById('vd-fecha').value;
-  const notas = document.getElementById('vd-notas').value.trim();
-  if(!producto || !precio) return;
-  const flete = parseFloat(document.getElementById('vd-flete').value) || 0;
-  const comision = precio * cant * (comisionPct / 100);
-  const ganancia = (precio - costo) * cant - comision - flete;
-  if(!state.pedidos) state.pedidos = [];
-  state.pedidos.unshift({ desc:producto, precio, costo, cantidad:cant, plataforma, comisionPct, comision, flete, ganancia, fecha, notas, estado:'entregado', id:Date.now() });
-  ['vd-producto','vd-precio','vd-costo','vd-notas'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('vd-cantidad-input').value = '1';
-  document.getElementById('vd-comision-pct').value = '';
-  document.getElementById('vd-flete').value = '';
-  cerrarModal('venta-digital');
-  guardarLS();
-  renderVentasDigitales();
-}
-
-function renderVentasDigitales() {
-  const el = document.getElementById('vd-list');
-  if(!el) return;
-  const ventas = state.pedidos || [];
-  const totalVentas = ventas.reduce((s,v) => s + (v.precio * v.cantidad), 0);
-  const totalGanancia = ventas.reduce((s,v) => s + (v.ganancia || 0), 0);
-  const totalComisiones = ventas.reduce((s,v) => s + (v.comision || 0), 0);
-  const margen = totalVentas > 0 ? Math.round(totalGanancia / totalVentas * 100) : 0;
-
-  const vv = document.getElementById('vd-ventas');
-  const vg = document.getElementById('vd-ganancia');
-  const vc = document.getElementById('vd-comisiones');
-  const vm = document.getElementById('vd-margen');
-  const vcant = document.getElementById('vd-cantidad');
-  if(vv) vv.textContent = fmt(totalVentas);
-  if(vg) vg.textContent = fmt(totalGanancia);
-  if(vc) vc.textContent = fmt(totalComisiones);
-  if(vm) vm.textContent = margen + '%';
-  if(vcant) vcant.textContent = ventas.length;
-
-  // Mejor plataforma
-  const porPlat = {};
-  ventas.forEach(v => { porPlat[v.plataforma] = (porPlat[v.plataforma]||0) + v.ganancia; });
-  const mejor = Object.keys(porPlat).sort((a,b)=>porPlat[b]-porPlat[a])[0];
-  const vmej = document.getElementById('vd-mejor');
-  if(vmej) vmej.textContent = mejor || '—';
-
-  // Gráfica plataformas
-  if(charts.plat) charts.plat.destroy();
-  const platCanvas = document.getElementById('chartPlataformas');
-  if(platCanvas && Object.keys(porPlat).length) {
-    charts.plat = new Chart(platCanvas, {
-      type:'doughnut',
-      data:{ labels:Object.keys(porPlat), datasets:[{data:Object.values(porPlat).map(v=>Math.max(0,v)), backgroundColor:['#059669','#10B981','#34D399','#6EE7B7','#A7F3D0','#D1FAE5']}] },
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}
-    });
-  }
-
-  // Gráfica ganancia vs comisiones
-  if(charts.gvd) charts.gvd.destroy();
-  const gvdCanvas = document.getElementById('chartGananciasVD');
-  const meses = [];
-  const gans = [];
-  const coms = [];
-  for(let i=5;i>=0;i--){
-    const d=new Date();d.setMonth(d.getMonth()-i);
-    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    meses.push(d.toLocaleString('es',{month:'short'}));
-    gans.push(ventas.filter(v=>v.fecha&&v.fecha.startsWith(key)).reduce((s,v)=>s+(v.ganancia||0),0));
-    coms.push(ventas.filter(v=>v.fecha&&v.fecha.startsWith(key)).reduce((s,v)=>s+(v.comision||0),0));
-  }
-  if(gvdCanvas) {
-    charts.gvd = new Chart(gvdCanvas, {
-      type:'bar',
-      data:{labels:meses,datasets:[{label:'Ganancia',data:gans,backgroundColor:'#059669',borderRadius:4},{label:'Comisiones',data:coms,backgroundColor:'#FCA5A5',borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},boxWidth:10}}},scales:{x:{grid:{display:false}},y:{ticks:{callback:v=>'$'+v.toLocaleString()}}}}
-    });
-  }
-
-  if(!ventas.length) { el.innerHTML = '<div class="empty-state">Registra tu primera venta digital.</div>'; return; }
-  el.innerHTML = ventas.slice(0,20).map(v => `
-    <div class="tx-item">
-      <div class="tx-icon ingreso" style="background:#D1FAE5;color:#065F46;font-size:14px">📱</div>
-      <div class="tx-info">
-        <div class="tx-name">${v.desc} <span style="font-size:10px;background:#D1FAE5;color:#065F46;padding:1px 6px;border-radius:10px">${v.plataforma}</span></div>
-        <div class="tx-cat">x${v.cantidad} · ${v.fecha}${v.notas?' · '+v.notas:''}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:13px;font-weight:600;color:#059669">+${fmt(v.precio*v.cantidad)}</div>
-        <div style="font-size:11px;color:#059669">Gan: ${fmt(v.ganancia)}</div>
-        ${v.comision>0?`<div style="font-size:11px;color:#DC2626">Com: -${fmt(v.comision)}</div>`:''}
-      </div>
-    </div>`).join('');
-}
-
 // ─── DROPSHIPPING FUNCTIONS ──────────────────────────────
 let filtroPedido = 'todos';
 
@@ -4025,7 +3782,6 @@ function renderAll() {
   renderClientes();
   renderProveedores();
   renderFiados();
-  renderVentasDigitales();
   // Activos solo si la página está activa para no gastar recursos
   if(document.getElementById('page-activos')?.classList.contains('active')) renderActivos();
 }
@@ -4520,7 +4276,7 @@ function delCat(stateKey, nombre, tipo) {
   if(usadas.has(nombre)) { alert('No se puede eliminar "' + nombre + '" porque tiene registros asociados.'); return; }
   if(!confirm('¿Eliminar la categoría "' + nombre + '"?')) return;
   state[stateKey] = (state[stateKey]||[]).filter(function(c){ return c !== nombre; });
-  guardarLS(); renderCfgCategorias();
+  guardarLS(); renderCfgCategorias(); actualizarTodasCategorias();
 }
 
 function renderCfgEdiciones() {
