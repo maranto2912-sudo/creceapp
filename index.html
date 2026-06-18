@@ -3008,9 +3008,8 @@ function getPeriodoTx() {
   if(periodoReportes === 'hoy') {
     return state.transacciones.filter(t => t.fecha === hoyStr);
   } else {
-    const mesesAtras = parseInt(periodoReportes.replace('mes-','') || '0') || 0;
-    const d = new Date(hoy.getFullYear(), hoy.getMonth() - mesesAtras, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    // Usar getMes() directamente para garantizar el mismo resultado que el Dashboard
+    const key = getMes();
     return state.transacciones.filter(t => t.fecha.startsWith(key));
   }
 }
