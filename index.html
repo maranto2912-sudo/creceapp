@@ -1332,6 +1332,9 @@ function showPage(id, btn) {
     const tit = document.getElementById('r-mes-titulo');
     if(tit) tit.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
     renderReportes();
+    // Reintento si los datos de Supabase aún no han llegado
+    setTimeout(() => renderReportes(), 800);
+    setTimeout(() => renderReportes(), 2000);
   }
   if(id === 'calendario') renderCalendario();
   if(id === 'admin') renderAdmin();
@@ -3859,6 +3862,8 @@ function renderAll() {
   renderClientes();
   renderProveedores();
   renderFiados();
+  // Reportes: actualizar si la página está activa
+  if(document.getElementById('page-reportes')?.classList.contains('active')) renderReportes();
   // Activos solo si la página está activa para no gastar recursos
   if(document.getElementById('page-activos')?.classList.contains('active')) renderActivos();
 }
