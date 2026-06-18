@@ -455,7 +455,7 @@
   <div class="section-header">
     <span class="section-title">Reportes</span>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <select id="reporte-periodo" onchange="renderReportes()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid rgba(124,58,237,0.2);background:#F8F7FF;color:#1a1535">
+      <select id="reporte-periodo" onchange="renderReportes()" oninput="renderReportes()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid rgba(124,58,237,0.2);background:#F8F7FF;color:#1a1535">
         <option value="hoy">Hoy</option>
         <option value="mes" selected>Este mes</option>
         <option value="mes-1">Mes anterior</option>
@@ -1323,7 +1323,12 @@ function showPage(id, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   if(btn) btn.classList.add('active');
-  if(id === 'reportes') renderReportes();
+  if(id === 'reportes') {
+    // Resetear siempre a "Este mes" al entrar, para garantizar datos frescos
+    const selPeriodo = document.getElementById('reporte-periodo');
+    if(selPeriodo) selPeriodo.value = 'mes';
+    renderReportes();
+  }
   if(id === 'calendario') renderCalendario();
   if(id === 'admin') renderAdmin();
   if(id === 'activos') renderActivos();
@@ -4225,6 +4230,15 @@ function renderCfgCategorias() {
     { label: '👥 Cargos',           key: 'categoriasCargo',   addType: 'cat-cargo', defaults: CATS_CARGO_DEFAULT },
     { label: '💼 Activos',          key: 'categoriasActivos', addType: 'cat-activo',defaults: CATS_ACTIVOS_DEFAULT }
   ];
+
+  // Guardar qué paneles están abiertos ANTES de reconstruir
+  var estadoPaneles = {};
+  modulos.forEach(function(m, i) {
+    var pid = 'cp' + i;
+    var panel = document.getElementById(pid);
+    if(panel) estadoPaneles[pid] = panel.style.display === 'block';
+  });
+
   el.innerHTML = modulos.map(function(m, i) {
     var cats = state[m.key] || m.defaults;
     var usadas = new Set();
@@ -4235,23 +4249,24 @@ function renderCfgCategorias() {
     if(m.key==='categoriasCargo')   state.empleados.forEach(function(e){ usadas.add(e.cargo); });
     if(m.key==='categoriasActivos') state.activos.forEach(function(a){ usadas.add(a.cat); });
     var pid = 'cp' + i;
+    var estaAbierto = estadoPaneles[pid] === true;
     var stateKey = m.key;
     var addType = m.addType;
     var catBtns = cats.map(function(c) {
-      var safe = c.replace(/"/g,'&quot;');
+      var safe = c.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
       var delBtn = usadas.has(c)
         ? '<span style="color:#9CA3AF;font-size:10px">🔒</span>'
-        : '<button onclick="delCat(' + JSON.stringify(stateKey) + ',' + JSON.stringify(c) + ',' + JSON.stringify(addType) + ')" style="background:none;border:none;color:#DC2626;cursor:pointer;font-size:13px;padding:0;line-height:1">✕</button>';
+        : '<button onclick="delCat(\''+stateKey+'\',\''+c.replace(/'/g,"\\'") +'\',\''+addType+'\')" style="background:none;border:none;color:#DC2626;cursor:pointer;font-size:13px;padding:0;line-height:1">✕</button>';
       return '<div style="display:inline-flex;align-items:center;gap:5px;background:#F8F7FF;border:1px solid rgba(124,58,237,0.15);border-radius:20px;padding:4px 12px;font-size:12px"><span>' + safe + '</span>' + delBtn + '</div>';
     }).join('');
     return '<div style="border:1px solid rgba(124,58,237,0.1);border-radius:10px;margin-bottom:8px;overflow:hidden">'
-      + '<button onclick="toggleCatPanel(' + JSON.stringify(pid) + ')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#F8F7FF;border:none;cursor:pointer;font-family:DM Sans,sans-serif">'
+      + '<button onclick="toggleCatPanel(\''+pid+'\')" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#F8F7FF;border:none;cursor:pointer;font-family:DM Sans,sans-serif">'
       + '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:13px;font-weight:600;color:#1a1535">' + m.label + '</span>'
       + '<span style="font-size:11px;background:#EDE9FF;color:#7C3AED;padding:2px 8px;border-radius:10px">' + cats.length + '</span></div>'
-      + '<span id="' + pid + 'i" style="color:#7C3AED;font-size:13px">▼</span></button>'
-      + '<div id="' + pid + '" style="display:none;padding:14px;background:#fff">'
+      + '<span id="' + pid + 'i" style="color:#7C3AED;font-size:13px;transform:' + (estaAbierto ? 'rotate(180deg)' : '') + '">' + (estaAbierto ? '▲' : '▼') + '</span></button>'
+      + '<div id="' + pid + '" style="display:' + (estaAbierto ? 'block' : 'none') + ';padding:14px;background:#fff">'
       + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">' + catBtns + '</div>'
-      + '<button onclick="abrirModal(' + JSON.stringify(addType) + ')" style="font-size:12px;padding:5px 14px;background:none;border:1px dashed rgba(124,58,237,0.3);border-radius:20px;color:#7C3AED;cursor:pointer;font-family:DM Sans,sans-serif">+ Agregar</button>'
+      + '<button onclick="abrirModal(\''+addType+'\')" style="font-size:12px;padding:5px 14px;background:none;border:1px dashed rgba(124,58,237,0.3);border-radius:20px;color:#7C3AED;cursor:pointer;font-family:DM Sans,sans-serif">+ Agregar</button>'
       + '</div></div>';
   }).join('');
 }
