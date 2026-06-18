@@ -453,20 +453,14 @@
 <!-- REPORTES -->
 <div id="page-reportes" class="page content">
   <div class="section-header">
-    <span class="section-title">Reportes</span>
+    <span class="section-title">Reportes — <span id="r-mes-titulo" style="color:#7C3AED;font-size:14px"></span></span>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <select id="reporte-periodo" onchange="renderReportes()" oninput="renderReportes()" style="font-size:12px;padding:6px 10px;border-radius:8px;border:1px solid rgba(124,58,237,0.2);background:#F8F7FF;color:#1a1535">
-        <option value="hoy">Hoy</option>
-        <option value="mes" selected>Este mes</option>
-        <option value="mes-1">Mes anterior</option>
-        <option value="mes-2">Hace 2 meses</option>
-        <option value="mes-3">Hace 3 meses</option>
-        <option value="semana">Esta semana</option>
-        <option value="todo">Todo el historial</option>
-      </select>
+      <button class="btn-sm" onclick="abrirModal('historial-meses')">📊 Historial meses</button>
       <button class="btn-primary" onclick="exportar()">⬇ Exportar</button>
     </div>
   </div>
+  <!-- select oculto para compatibilidad con renderReportes -->
+  <select id="reporte-periodo" style="display:none"><option value="mes" selected>Este mes</option></select>
   <!-- Métricas principales -->
   <div class="grid3" style="margin-bottom:12px">
     <div class="metric"><div class="metric-label">📈 Ingresos brutos</div><div class="metric-value c-green" id="r-ing">$0</div><div class="metric-sub c-green" id="r-ing-n">0 transacciones</div></div>
@@ -809,6 +803,14 @@
   <div class="form-group"><label class="form-label">Descripción</label><input type="text" id="fi-desc" placeholder="Qué le fiaste..."></div>
   <div class="form-group"><label class="form-label">Teléfono (para cobrar)</label><input type="text" id="fi-tel" placeholder="300..."></div>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('fiado')">Cancelar</button><button class="btn-primary" onclick="guardarFiado()">Guardar</button></div>
+</div></div>
+
+<!-- MODAL HISTORIAL MESES -->
+<div class="overlay" id="overlay-historial-meses">
+<div class="modal" style="max-width:520px">
+  <div class="modal-title">📊 Historial por mes</div>
+  <div id="historial-meses-contenido"></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('historial-meses')">Cerrar</button></div>
 </div></div>
 
 <!-- MODAL RECIBO -->
@@ -1324,9 +1326,11 @@ function showPage(id, btn) {
   document.getElementById('page-' + id).classList.add('active');
   if(btn) btn.classList.add('active');
   if(id === 'reportes') {
-    // Resetear siempre a "Este mes" al entrar, para garantizar datos frescos
     const selPeriodo = document.getElementById('reporte-periodo');
     if(selPeriodo) selPeriodo.value = 'mes';
+    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const tit = document.getElementById('r-mes-titulo');
+    if(tit) tit.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
     renderReportes();
   }
   if(id === 'calendario') renderCalendario();
@@ -1341,6 +1345,11 @@ function abrirModal(id) {
   const catModals = ['cat','cat-inv','cat-resp','cat-deuda','cat-cargo','cat-activo'];
   if(catModals.includes(id)) {
     document.getElementById('overlay-' + id).style.display = 'flex';
+    return;
+  }
+  if(id === 'historial-meses') {
+    renderHistorialMeses();
+    document.getElementById('overlay-historial-meses').style.display = 'flex';
     return;
   }
   if(id === 'tx') {
@@ -3077,7 +3086,70 @@ function renderReportes() {
   charts.catE = new Chart(document.getElementById('chartCatE'), {type:'doughnut',data:{labels:Object.keys(catE).length?Object.keys(catE):['Sin datos'],datasets:[{data:Object.values(catE).length?Object.values(catE):[1],backgroundColor:Object.keys(catE).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
 }
 
-// ─── EXPORTAR ─────────────────────────────────────────────
+// ─── HISTORIAL DE MESES ───────────────────────────────────
+function renderHistorialMeses() {
+  const el = document.getElementById('historial-meses-contenido');
+  if(!el) return;
+  const nombresMes = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  // Recopilar todos los meses que tienen transacciones
+  const mesesSet = new Set();
+  state.transacciones.forEach(t => {
+    if(t.fecha) mesesSet.add(t.fecha.substring(0, 7)); // YYYY-MM
+  });
+
+  // Si no hay nada, mostrar mensaje
+  if(!mesesSet.size) {
+    el.innerHTML = '<div class="empty-state">No hay transacciones registradas aún.</div>';
+    return;
+  }
+
+  // Ordenar de más reciente a más antiguo
+  const mesesOrdenados = Array.from(mesesSet).sort((a,b) => b.localeCompare(a));
+
+  let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">'
+    + '<tr style="background:#F8F7FF;border-bottom:2px solid rgba(124,58,237,0.15)">'
+    + '<th style="padding:10px 8px;text-align:left;color:var(--text2);font-weight:600">Mes</th>'
+    + '<th style="padding:10px 8px;text-align:right;color:#059669;font-weight:600">Ingresos</th>'
+    + '<th style="padding:10px 8px;text-align:right;color:#DC2626;font-weight:600">Egresos</th>'
+    + '<th style="padding:10px 8px;text-align:right;color:#7C3AED;font-weight:600">Ganancia</th>'
+    + '<th style="padding:10px 8px;text-align:right;color:var(--text2);font-weight:600">Txs</th>'
+    + '</tr>';
+
+  let totalIng = 0, totalEgr = 0;
+  mesesOrdenados.forEach(key => {
+    const [anio, mes] = key.split('-');
+    const label = nombresMes[parseInt(mes)-1] + ' ' + anio;
+    const txs = state.transacciones.filter(t => t.fecha.startsWith(key));
+    const ing = txs.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+    const egr = txs.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
+    const gan = ing - egr;
+    totalIng += ing; totalEgr += egr;
+    const esActual = key === getMes();
+    html += '<tr style="border-bottom:1px solid rgba(124,58,237,0.07);'+(esActual?'background:#F5F3FF':'')+'">'
+      + '<td style="padding:10px 8px;font-weight:'+(esActual?'600':'400')+';color:#1a1535">'
+        + (esActual?'<span style="background:#7C3AED;color:white;font-size:10px;padding:1px 6px;border-radius:8px;margin-right:5px">Actual</span>':'')
+        + label + '</td>'
+      + '<td style="padding:10px 8px;text-align:right;color:#059669;font-weight:500">'+fmt(ing)+'</td>'
+      + '<td style="padding:10px 8px;text-align:right;color:#DC2626;font-weight:500">'+fmt(egr)+'</td>'
+      + '<td style="padding:10px 8px;text-align:right;font-weight:600;color:'+(gan>=0?'#7C3AED':'#DC2626')+'">'+fmt(gan)+'</td>'
+      + '<td style="padding:10px 8px;text-align:right;color:var(--text2)">'+txs.length+'</td>'
+      + '</tr>';
+  });
+
+  // Fila de totales
+  const ganTotal = totalIng - totalEgr;
+  html += '<tr style="background:#EDE9FF;font-weight:700;border-top:2px solid rgba(124,58,237,0.2)">'
+    + '<td style="padding:10px 8px;color:#1a1535">TOTAL HISTÓRICO</td>'
+    + '<td style="padding:10px 8px;text-align:right;color:#059669">'+fmt(totalIng)+'</td>'
+    + '<td style="padding:10px 8px;text-align:right;color:#DC2626">'+fmt(totalEgr)+'</td>'
+    + '<td style="padding:10px 8px;text-align:right;color:'+(ganTotal>=0?'#7C3AED':'#DC2626')+'">'+fmt(ganTotal)+'</td>'
+    + '<td style="padding:10px 8px;text-align:right;color:var(--text2)">'+state.transacciones.length+'</td>'
+    + '</tr>';
+
+  html += '</table></div>';
+  el.innerHTML = html;
+}
 function exportar() {
   const mes = getMes();
   const txMes = state.transacciones.filter(t => t.fecha.startsWith(mes));
