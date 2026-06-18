@@ -4241,22 +4241,13 @@ function renderCfgCategorias() {
 
   el.innerHTML = modulos.map(function(m, i) {
     var cats = state[m.key] || m.defaults;
-    var usadas = new Set();
-    if(m.key==='categorias')        state.transacciones.forEach(function(t){ usadas.add(t.cat); });
-    if(m.key==='categoriasInv')     state.inventario.forEach(function(p){ usadas.add(p.cat); });
-    if(m.key==='categoriasResp')    state.responsabilidades.forEach(function(r){ usadas.add(r.cat); });
-    if(m.key==='categoriasDeuda')   state.deudas.forEach(function(d){ usadas.add(d.cat); });
-    if(m.key==='categoriasCargo')   state.empleados.forEach(function(e){ usadas.add(e.cargo); });
-    if(m.key==='categoriasActivos') state.activos.forEach(function(a){ usadas.add(a.cat); });
     var pid = 'cp' + i;
     var estaAbierto = estadoPaneles[pid] === true;
     var stateKey = m.key;
     var addType = m.addType;
     var catBtns = cats.map(function(c) {
       var safe = c.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-      var delBtn = usadas.has(c)
-        ? '<span style="color:#9CA3AF;font-size:10px">🔒</span>'
-        : '<button onclick="delCat(\''+stateKey+'\',\''+c.replace(/'/g,"\\'") +'\',\''+addType+'\')" style="background:none;border:none;color:#DC2626;cursor:pointer;font-size:13px;padding:0;line-height:1">✕</button>';
+      var delBtn = '<button onclick="delCat(\''+stateKey+'\',\''+c.replace(/'/g,"\\'")+ '\',\''+addType+'\')" style="background:none;border:none;color:#DC2626;cursor:pointer;font-size:13px;padding:0;line-height:1">✕</button>';
       return '<div style="display:inline-flex;align-items:center;gap:5px;background:#F8F7FF;border:1px solid rgba(124,58,237,0.15);border-radius:20px;padding:4px 12px;font-size:12px"><span>' + safe + '</span>' + delBtn + '</div>';
     }).join('');
     return '<div style="border:1px solid rgba(124,58,237,0.1);border-radius:10px;margin-bottom:8px;overflow:hidden">'
@@ -4281,14 +4272,6 @@ function toggleCatPanel(id) {
 }
 
 function delCat(stateKey, nombre, tipo) {
-  var usadas = new Set();
-  if(stateKey==='categorias')        state.transacciones.forEach(function(t){ usadas.add(t.cat); });
-  if(stateKey==='categoriasInv')     state.inventario.forEach(function(p){ usadas.add(p.cat); });
-  if(stateKey==='categoriasResp')    state.responsabilidades.forEach(function(r){ usadas.add(r.cat); });
-  if(stateKey==='categoriasDeuda')   state.deudas.forEach(function(d){ usadas.add(d.cat); });
-  if(stateKey==='categoriasCargo')   state.empleados.forEach(function(e){ usadas.add(e.cargo); });
-  if(stateKey==='categoriasActivos') state.activos.forEach(function(a){ usadas.add(a.cat); });
-  if(usadas.has(nombre)) { alert('No se puede eliminar "' + nombre + '" porque tiene registros asociados.'); return; }
   if(!confirm('¿Eliminar la categoría "' + nombre + '"?')) return;
   state[stateKey] = (state[stateKey]||[]).filter(function(c){ return c !== nombre; });
   guardarLS(); renderCfgCategorias(); actualizarTodasCategorias();
