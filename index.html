@@ -455,7 +455,6 @@
   <div class="section-header">
     <span class="section-title">Reportes — <span id="r-mes-titulo" style="color:#7C3AED;font-size:14px"></span></span>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="btn-sm" id="btn-recargar" onclick="recargarDatos()">🔄 Recargar</button>
       <button class="btn-sm" onclick="abrirModal('historial-meses')">📊 Historial meses</button>
       <button class="btn-primary" onclick="exportar()">⬇ Exportar</button>
     </div>
@@ -1233,6 +1232,7 @@ async function guardarLS() {
 }
 
 async function cargarLS() {
+  // Resetear state antes de cargar para evitar mezcla con usuario anterior
   state = {
     transacciones: [], deudas: [], empleados: [], inventario: [],
     eventos: [], responsabilidades: [],
@@ -1243,10 +1243,37 @@ async function cargarLS() {
     pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT]
   };
   const key = currentUserId || DEVICE_ID;
-
-  // Primero cargar localStorage como base inmediata
-  try {
-    const d = localStorage.getItem('creceapp_' + key) || localStorage.getItem('creceapp');
+  if(currentUserId) {
+    try {
+      const { data } = await sb.from('creceapp_data').select('data').eq('device_id', currentUserId).single();
+      if(data && data.data) { 
+        // Reemplazo limpio — no merge para evitar datos del usuario anterior
+        const loaded = data.data;
+        state.transacciones = loaded.transacciones || [];
+        state.deudas = loaded.deudas || [];
+        state.empleados = loaded.empleados || [];
+        state.inventario = loaded.inventario || [];
+        state.eventos = loaded.eventos || [];
+        state.responsabilidades = loaded.responsabilidades || [];
+        state.meta = loaded.meta || 0;
+        state.pedidos = loaded.pedidos || [];
+        state.clientes = loaded.clientes || [];
+        state.proveedores = loaded.proveedores || [];
+        state.fiados = loaded.fiados || [];
+        state.activos = loaded.activos || [];
+        // Categorías — usar las guardadas si existen, si no las default
+        state.categorias = loaded.categorias || [...CATS_DEFAULT];
+        state.categoriasInv = loaded.categoriasInv || [...CATS_INV_DEFAULT];
+        state.categoriasResp = loaded.categoriasResp || [...CATS_RESP_DEFAULT];
+        state.categoriasDeuda = loaded.categoriasDeuda || [...CATS_DEUDA_DEFAULT];
+        state.categoriasCargo = loaded.categoriasCargo || [...CATS_CARGO_DEFAULT];
+        state.categoriasActivos = loaded.categoriasActivos || [...CATS_ACTIVOS_DEFAULT];
+        return; 
+      }
+    } catch(e) {}
+  }
+  try { 
+    const d = localStorage.getItem('creceapp_' + key) || localStorage.getItem('creceapp'); 
     if(d) {
       const loaded = JSON.parse(d);
       state.transacciones = loaded.transacciones || [];
@@ -1268,42 +1295,7 @@ async function cargarLS() {
       state.categoriasCargo = loaded.categoriasCargo || [...CATS_CARGO_DEFAULT];
       state.categoriasActivos = loaded.categoriasActivos || [...CATS_ACTIVOS_DEFAULT];
     }
-  } catch(e) {}
-
-  // Luego intentar Supabase con timeout de 5 segundos
-  if(currentUserId) {
-    try {
-      const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000));
-      const query = sb.from('creceapp_data').select('data').eq('device_id', currentUserId).maybeSingle();
-      const { data, error } = await Promise.race([query, timeout]);
-      if(data && data.data && !error) {
-        const loaded = data.data;
-        state.transacciones = loaded.transacciones || [];
-        state.deudas = loaded.deudas || [];
-        state.empleados = loaded.empleados || [];
-        state.inventario = loaded.inventario || [];
-        state.eventos = loaded.eventos || [];
-        state.responsabilidades = loaded.responsabilidades || [];
-        state.meta = loaded.meta || 0;
-        state.pedidos = loaded.pedidos || [];
-        state.clientes = loaded.clientes || [];
-        state.proveedores = loaded.proveedores || [];
-        state.fiados = loaded.fiados || [];
-        state.activos = loaded.activos || [];
-        state.categorias = loaded.categorias || [...CATS_DEFAULT];
-        state.categoriasInv = loaded.categoriasInv || [...CATS_INV_DEFAULT];
-        state.categoriasResp = loaded.categoriasResp || [...CATS_RESP_DEFAULT];
-        state.categoriasDeuda = loaded.categoriasDeuda || [...CATS_DEUDA_DEFAULT];
-        state.categoriasCargo = loaded.categoriasCargo || [...CATS_CARGO_DEFAULT];
-        state.categoriasActivos = loaded.categoriasActivos || [...CATS_ACTIVOS_DEFAULT];
-        // Guardar en localStorage como respaldo
-        try { localStorage.setItem('creceapp_' + key, JSON.stringify(state)); } catch(e) {}
-      }
-    } catch(e) {
-      // Timeout o error — ya tenemos los datos de localStorage, seguimos
-      console.log('Supabase load fallback a localStorage:', e.message);
-    }
-  }
+  } catch(e){}
 }
 
 // ─── UTILS ────────────────────────────────────────────────
@@ -1339,10 +1331,8 @@ function showPage(id, btn) {
     const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     const tit = document.getElementById('r-mes-titulo');
     if(tit) tit.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
-    renderReportes();
-    // Reintento si los datos de Supabase aún no han llegado
-    setTimeout(() => renderReportes(), 800);
-    setTimeout(() => renderReportes(), 2000);
+    // setTimeout 0 permite que el browser pinte la página antes de que Chart.js intente renderizar
+    setTimeout(() => renderReportes(), 0);
   }
   if(id === 'calendario') renderCalendario();
   if(id === 'admin') renderAdmin();
@@ -3870,23 +3860,10 @@ function renderAll() {
   renderClientes();
   renderProveedores();
   renderFiados();
+  // Reportes: actualizar si la página está activa
   if(document.getElementById('page-reportes')?.classList.contains('active')) renderReportes();
+  // Activos solo si la página está activa para no gastar recursos
   if(document.getElementById('page-activos')?.classList.contains('active')) renderActivos();
-}
-
-async function recargarDatos() {
-  const btn = document.getElementById('btn-recargar');
-  if(btn) { btn.textContent = '⏳'; btn.disabled = true; }
-  await cargarLS();
-  renderAll();
-  renderCalendario();
-  if(btn) { btn.textContent = '🔄 Recargar'; btn.disabled = false; }
-  const n = state.transacciones.length;
-  const msg = document.createElement('div');
-  msg.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#7C3AED;color:white;padding:12px 20px;border-radius:10px;font-size:13px;z-index:400;font-family:Outfit,sans-serif;white-space:nowrap';
-  msg.textContent = n > 0 ? '✓ ' + n + ' transacciones cargadas' : '⚠️ Sin datos encontrados';
-  document.body.appendChild(msg);
-  setTimeout(() => msg.remove(), 3000);
 }
 
 // Mostrar indicador de carga
