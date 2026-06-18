@@ -455,14 +455,12 @@
   <div class="section-header">
     <span class="section-title">Reportes — <span id="r-mes-titulo" style="color:#7C3AED;font-size:14px"></span></span>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="btn-sm" id="btn-rep-hoy" onclick="verReporteHoy(this)" style="font-weight:500">📅 Hoy</button>
-      <button class="btn-sm" id="btn-rep-mes" onclick="verReporteMes(this)" style="background:#EDE9FF;color:#7C3AED;border-color:#7C3AED;font-weight:500">📆 Este mes</button>
+      <button id="btn-rep-hoy" class="btn-sm" onclick="setPeriodoReporte('hoy',this)">📅 Hoy</button>
+      <button id="btn-rep-mes" class="btn-sm" onclick="setPeriodoReporte('mes',this)" style="background:#EDE9FF;color:#7C3AED;border-color:#7C3AED">📆 Este mes</button>
       <button class="btn-sm" onclick="abrirModal('historial-meses')">📊 Historial</button>
       <button class="btn-primary" onclick="exportar()">⬇ Exportar</button>
     </div>
   </div>
-  <!-- select oculto para compatibilidad con renderReportes -->
-  <select id="reporte-periodo" style="display:none"><option value="mes" selected>Este mes</option><option value="hoy">Hoy</option></select>
   <!-- Métricas principales -->
   <div class="grid3" style="margin-bottom:12px">
     <div class="metric"><div class="metric-label">📈 Ingresos brutos</div><div class="metric-value c-green" id="r-ing">$0</div><div class="metric-sub c-green" id="r-ing-n">0 transacciones</div></div>
@@ -1328,20 +1326,34 @@ function showPage(id, btn) {
   document.getElementById('page-' + id).classList.add('active');
   if(btn) btn.classList.add('active');
   if(id === 'reportes') {
-    const sel = document.getElementById('reporte-periodo');
-    if(sel) sel.value = 'mes';
+    periodoReportes = 'mes';
     const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     const tit = document.getElementById('r-mes-titulo');
     if(tit) tit.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
-    // Resetear botones al entrar
-    const bh = document.getElementById('btn-rep-hoy'); if(bh) { bh.style.background=''; bh.style.color=''; bh.style.borderColor=''; }
-    const bm = document.getElementById('btn-rep-mes'); if(bm) { bm.style.background='#EDE9FF'; bm.style.color='#7C3AED'; bm.style.borderColor='#7C3AED'; }
+    const bh = document.getElementById('btn-rep-hoy'); if(bh) bh.style.cssText='';
+    const bm = document.getElementById('btn-rep-mes'); if(bm) bm.style.cssText='background:#EDE9FF;color:#7C3AED;border-color:#7C3AED';
     setTimeout(() => renderReportes(), 0);
   }
   if(id === 'calendario') renderCalendario();
   if(id === 'admin') renderAdmin();
   if(id === 'activos') renderActivos();
   if(id === 'configuracion') renderConfiguracion();
+}
+
+function setPeriodoReporte(periodo, btn) {
+  periodoReportes = periodo;
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const tit = document.getElementById('r-mes-titulo');
+  if(periodo === 'hoy') {
+    if(tit) tit.textContent = 'Hoy — ' + new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long'});
+    const bh = document.getElementById('btn-rep-hoy'); if(bh) bh.style.cssText='background:#EDE9FF;color:#7C3AED;border-color:#7C3AED';
+    const bm = document.getElementById('btn-rep-mes'); if(bm) bm.style.cssText='';
+  } else {
+    if(tit) tit.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
+    const bh = document.getElementById('btn-rep-hoy'); if(bh) bh.style.cssText='';
+    const bm = document.getElementById('btn-rep-mes'); if(bm) bm.style.cssText='background:#EDE9FF;color:#7C3AED;border-color:#7C3AED';
+  }
+  setTimeout(() => renderReportes(), 0);
 }
 
 // ─── MODALES ──────────────────────────────────────────────
@@ -2988,25 +3000,15 @@ function renderCharts() {
 }
 
 // ─── RENDER REPORTES ──────────────────────────────────────
+let periodoReportes = 'mes'; // Variable global — no depende de ningún elemento HTML
+
 function getPeriodoTx() {
-  const sel = document.getElementById('reporte-periodo');
-  const periodo = sel ? sel.value : 'mes';
   const hoy = new Date();
   const hoyStr = hoy.toISOString().split('T')[0];
-  if(periodo === 'hoy') {
+  if(periodoReportes === 'hoy') {
     return state.transacciones.filter(t => t.fecha === hoyStr);
-  } else if(periodo === 'semana') {
-    const lunes = new Date(hoy);
-    const diaSemana = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1; // Lunes=0 ... Domingo=6
-    lunes.setDate(hoy.getDate() - diaSemana);
-    lunes.setHours(0,0,0,0);
-    const lunesStr = lunes.toISOString().split('T')[0];
-    return state.transacciones.filter(t => t.fecha >= lunesStr && t.fecha <= hoyStr);
-  } else if(periodo === 'todo') {
-    return state.transacciones;
   } else {
-    // 'mes' → 0 meses atrás, 'mes-1' → 1 mes atrás, etc.
-    const mesesAtras = parseInt(periodo.replace('mes-','') || '0') || 0;
+    const mesesAtras = parseInt(periodoReportes.replace('mes-','') || '0') || 0;
     const d = new Date(hoy.getFullYear(), hoy.getMonth() - mesesAtras, 1);
     const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
     return state.transacciones.filter(t => t.fecha.startsWith(key));
@@ -3014,7 +3016,7 @@ function getPeriodoTx() {
 }
 
 function renderReportes() {
-  const periodo = document.getElementById('reporte-periodo')?.value || 'mes';
+  const periodo = periodoReportes;
   const txPeriodo = getPeriodoTx();
   const ing = txPeriodo.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
   const egr = txPeriodo.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
@@ -3089,27 +3091,6 @@ function renderReportes() {
   charts.catI = new Chart(document.getElementById('chartCatI'), {type:'doughnut',data:{labels:Object.keys(catI).length?Object.keys(catI):['Sin datos'],datasets:[{data:Object.values(catI).length?Object.values(catI):[1],backgroundColor:Object.keys(catI).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
   if(charts.catE) charts.catE.destroy();
   charts.catE = new Chart(document.getElementById('chartCatE'), {type:'doughnut',data:{labels:Object.keys(catE).length?Object.keys(catE):['Sin datos'],datasets:[{data:Object.values(catE).length?Object.values(catE):[1],backgroundColor:Object.keys(catE).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
-}
-
-// ─── BOTONES PERÍODO REPORTES ─────────────────────────────
-function verReporteHoy(btn) {
-  const sel = document.getElementById('reporte-periodo');
-  if(sel) sel.value = 'hoy';
-  const tit = document.getElementById('r-mes-titulo');
-  if(tit) tit.textContent = 'Hoy — ' + new Date().toLocaleDateString('es-CO', {day:'numeric',month:'long'});
-  document.getElementById('btn-rep-hoy').style.cssText = 'background:#EDE9FF;color:#7C3AED;border-color:#7C3AED;font-weight:500';
-  document.getElementById('btn-rep-mes').style.cssText = '';
-  setTimeout(() => renderReportes(), 0);
-}
-function verReporteMes(btn) {
-  const sel = document.getElementById('reporte-periodo');
-  if(sel) sel.value = 'mes';
-  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const tit = document.getElementById('r-mes-titulo');
-  if(tit) tit.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
-  document.getElementById('btn-rep-mes').style.cssText = 'background:#EDE9FF;color:#7C3AED;border-color:#7C3AED;font-weight:500';
-  document.getElementById('btn-rep-hoy').style.cssText = '';
-  setTimeout(() => renderReportes(), 0);
 }
 
 // ─── HISTORIAL DE MESES ───────────────────────────────────
