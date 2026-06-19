@@ -453,47 +453,48 @@
 <!-- REPORTES -->
 <div id="page-reportes" class="page content">
   <div class="section-header">
-    <span class="section-title">Reportes — <span id="r-mes-titulo" style="color:#7C3AED;font-size:14px"></span></span>
+    <span class="section-title">Reportes</span>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button id="btn-rep-hoy" class="btn-sm" onclick="setPeriodoReporte('hoy',this)">📅 Hoy</button>
-      <button id="btn-rep-mes" class="btn-sm" onclick="setPeriodoReporte('mes',this)" style="background:#EDE9FF;color:#7C3AED;border-color:#7C3AED">📆 Este mes</button>
-      <button class="btn-sm" onclick="abrirModal('historial-meses')">📊 Historial</button>
+      <button class="btn-sm" onclick="abrirModal('historial-meses')">📊 Historial meses</button>
       <button class="btn-primary" onclick="exportar()">⬇ Exportar</button>
     </div>
   </div>
-  <!-- Métricas principales -->
-  <div class="grid3" style="margin-bottom:12px">
-    <div class="metric"><div class="metric-label">📈 Ingresos brutos</div><div class="metric-value c-green" id="r-ing">$0</div><div class="metric-sub c-green" id="r-ing-n">0 transacciones</div></div>
-    <div class="metric"><div class="metric-label">📉 Egresos totales</div><div class="metric-value c-red" id="r-egr">$0</div><div class="metric-sub c-red" id="r-egr-n">0 transacciones</div></div>
-    <div class="metric"><div class="metric-label">💰 Ganancia bruta</div><div class="metric-value" id="r-bruta">$0</div><div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div></div>
+
+  <!-- ── HOY ─────────────────────────────────────────── -->
+  <div style="font-size:12px;font-weight:600;color:#7C3AED;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px" id="r-hoy-label"></div>
+  <div class="grid3" style="margin-bottom:8px">
+    <div class="metric"><div class="metric-label">📈 Ingresos hoy</div><div class="metric-value c-green" id="r-ing">$0</div><div class="metric-sub c-green" id="r-ing-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">📉 Egresos hoy</div><div class="metric-value c-red" id="r-egr">$0</div><div class="metric-sub c-red" id="r-egr-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">💰 Ganancia bruta hoy</div><div class="metric-value" id="r-bruta">$0</div><div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div></div>
   </div>
-  <div class="grid3" style="margin-bottom:16px">
+  <div class="grid3" style="margin-bottom:20px">
     <div class="metric" style="border:1.5px solid rgba(124,58,237,0.25);background:#EDE9FF">
-      <div class="metric-label" style="color:#5B21B6">✨ Ganancia neta</div>
+      <div class="metric-label" style="color:#5B21B6">✨ Ganancia neta hoy</div>
       <div class="metric-value" id="r-neta" style="color:#5B21B6">$0</div>
       <div class="metric-sub" style="color:#7C3AED" id="r-neta-det">Bruta - Comisiones</div>
     </div>
-    <div class="metric"><div class="metric-label">🧾 Ticket promedio</div><div class="metric-value c-blue" id="r-ticket">$0</div></div>
+    <div class="metric"><div class="metric-label">🧾 Ticket promedio hoy</div><div class="metric-value c-blue" id="r-ticket">$0</div></div>
     <div class="metric"><div class="metric-label">💳 Deuda total</div><div class="metric-value c-amber" id="r-deuda">$0</div></div>
   </div>
-  <!-- Balance mensual adicional (siempre visible) -->
-  <div id="r-balance-mensual" class="card" style="margin-bottom:16px;border:1.5px solid rgba(124,58,237,0.2)">
-    <div class="card-header"><span class="card-title">📊 Balance mensual</span><span id="r-mes-label" style="font-size:11px;color:var(--text2)"></span></div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-      <div style="text-align:center;padding:10px;background:#F0EDFF;border-radius:8px">
-        <div style="font-size:11px;color:var(--text2)">Ingresos</div>
-        <div style="font-size:16px;font-weight:700;color:#059669" id="rm-ing">$0</div>
-      </div>
-      <div style="text-align:center;padding:10px;background:#FEE2E2;border-radius:8px">
-        <div style="font-size:11px;color:var(--text2)">Egresos</div>
-        <div style="font-size:16px;font-weight:700;color:#DC2626" id="rm-egr">$0</div>
-      </div>
-      <div style="text-align:center;padding:10px;background:#EDE9FF;border-radius:8px">
-        <div style="font-size:11px;color:var(--text2)">Ganancia neta</div>
-        <div style="font-size:16px;font-weight:700;color:#7C3AED" id="rm-neta">$0</div>
-      </div>
-    </div>
+
+  <!-- ── MES ─────────────────────────────────────────── -->
+  <div style="font-size:12px;font-weight:600;color:#7C3AED;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px" id="r-mes-titulo"></div>
+  <div class="grid3" style="margin-bottom:8px">
+    <div class="metric"><div class="metric-label">📈 Ingresos del mes</div><div class="metric-value c-green" id="rm-ing2">$0</div><div class="metric-sub c-green" id="rm-ing2-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">📉 Egresos del mes</div><div class="metric-value c-red" id="rm-egr2">$0</div><div class="metric-sub c-red" id="rm-egr2-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">💰 Ganancia bruta mes</div><div class="metric-value" id="rm-bruta">$0</div><div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div></div>
   </div>
+  <div class="grid3" style="margin-bottom:16px">
+    <div class="metric" style="border:1.5px solid rgba(124,58,237,0.25);background:#EDE9FF">
+      <div class="metric-label" style="color:#5B21B6">✨ Ganancia neta mes</div>
+      <div class="metric-value" id="rm-neta" style="color:#5B21B6">$0</div>
+      <div class="metric-sub" style="color:#7C3AED" id="rm-neta-det">Bruta - Comisiones</div>
+    </div>
+    <div class="metric"><div class="metric-label">🧾 Ticket promedio mes</div><div class="metric-value c-blue" id="rm-ticket">$0</div></div>
+    <div class="metric"><div class="metric-label">💳 Deuda total</div><div class="metric-value c-amber" id="rm-deuda">$0</div></div>
+  </div>
+
+  <!-- ── GRÁFICAS ────────────────────────────────────── -->
   <div class="grid2">
     <div class="card">
       <div class="card-header"><span class="card-title">Ingresos por categoría</span></div>
@@ -1325,35 +1326,11 @@ function showPage(id, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   if(btn) btn.classList.add('active');
-  if(id === 'reportes') {
-    periodoReportes = 'mes';
-    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    const tit = document.getElementById('r-mes-titulo');
-    if(tit) tit.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
-    const bh = document.getElementById('btn-rep-hoy'); if(bh) bh.style.cssText='';
-    const bm = document.getElementById('btn-rep-mes'); if(bm) bm.style.cssText='background:#EDE9FF;color:#7C3AED;border-color:#7C3AED';
-    setTimeout(() => renderReportes(), 0);
-  }
+  if(id === 'reportes') { setTimeout(() => renderReportes(), 0); }
   if(id === 'calendario') renderCalendario();
   if(id === 'admin') renderAdmin();
   if(id === 'activos') renderActivos();
   if(id === 'configuracion') renderConfiguracion();
-}
-
-function setPeriodoReporte(periodo, btn) {
-  periodoReportes = periodo;
-  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const tit = document.getElementById('r-mes-titulo');
-  if(periodo === 'hoy') {
-    if(tit) tit.textContent = 'Hoy — ' + new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long'});
-    const bh = document.getElementById('btn-rep-hoy'); if(bh) bh.style.cssText='background:#EDE9FF;color:#7C3AED;border-color:#7C3AED';
-    const bm = document.getElementById('btn-rep-mes'); if(bm) bm.style.cssText='';
-  } else {
-    if(tit) tit.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
-    const bh = document.getElementById('btn-rep-hoy'); if(bh) bh.style.cssText='';
-    const bm = document.getElementById('btn-rep-mes'); if(bm) bm.style.cssText='background:#EDE9FF;color:#7C3AED;border-color:#7C3AED';
-  }
-  setTimeout(() => renderReportes(), 0);
 }
 
 // ─── MODALES ──────────────────────────────────────────────
@@ -3000,96 +2977,89 @@ function renderCharts() {
 }
 
 // ─── RENDER REPORTES ──────────────────────────────────────
-let periodoReportes = 'mes'; // Variable global — no depende de ningún elemento HTML
-
-function getPeriodoTx() {
+function renderReportes() {
   const hoy = new Date();
   const hoyStr = hoy.toISOString().split('T')[0];
-  if(periodoReportes === 'hoy') {
-    return state.transacciones.filter(t => t.fecha === hoyStr);
-  } else {
-    // Usar getMes() directamente para garantizar el mismo resultado que el Dashboard
-    const key = getMes();
-    return state.transacciones.filter(t => t.fecha.startsWith(key));
-  }
-}
+  const mesActual = getMes();
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const s = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
 
-function renderReportes() {
-  const periodo = periodoReportes;
-  const txPeriodo = getPeriodoTx();
-  const ing = txPeriodo.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-  const egr = txPeriodo.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
-  const bruta = ing - egr;
-  const ingresosTx = txPeriodo.filter(t=>t.tipo==='ingreso');
-  const ticket = ingresosTx.length ? ing/ingresosTx.length : 0;
+  // Título hoy
+  const lbl = document.getElementById('r-hoy-label');
+  if(lbl) lbl.textContent = '📅 Hoy — ' + hoy.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  // Título mes
+  const titMes = document.getElementById('r-mes-titulo');
+  if(titMes) titMes.textContent = '📆 ' + meses[hoy.getMonth()] + ' ' + hoy.getFullYear();
+
+  // ── DATOS DE HOY ──────────────────────────────────────
+  const txHoy = state.transacciones.filter(t => t.fecha === hoyStr);
+  const ingHoy = txHoy.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const egrHoy = txHoy.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
+  const brutaHoy = ingHoy - egrHoy;
+  const ingHoyTx = txHoy.filter(t=>t.tipo==='ingreso');
+  const ticketHoy = ingHoyTx.length ? ingHoy/ingHoyTx.length : 0;
   const totalDeuda = state.deudas.reduce((s,d)=>s+(d.total-d.pagado),0);
-
-  // Calcular comisiones del período para ganancia neta
-  const hoyParaRango = new Date();
-  const hoyStrRango = hoyParaRango.toISOString().split('T')[0];
-  let inicio, fin;
-  if(periodo === 'hoy') {
-    inicio = hoyStrRango; fin = hoyStrRango;
-  } else if(periodo === 'semana') {
-    const l=new Date(hoyParaRango); l.setDate(hoyParaRango.getDate()-hoyParaRango.getDay()+1);
-    inicio = l.toISOString().split('T')[0]; fin = hoyStrRango;
-  } else if(periodo === 'todo') {
-    inicio = '2000-01-01'; fin = '9999-12-31';
-  } else {
-    const atras = parseInt(periodo.replace('mes-','') || '0');
-    const dI = new Date(hoyParaRango.getFullYear(), hoyParaRango.getMonth()-atras, 1);
-    const dF = new Date(hoyParaRango.getFullYear(), hoyParaRango.getMonth()-atras+1, 0);
-    inicio = `${dI.getFullYear()}-${String(dI.getMonth()+1).padStart(2,'0')}-01`;
-    fin = dF.toISOString().split('T')[0];
-  }
-  let totalComisiones = 0;
+  let comHoy = 0;
   state.empleados.forEach(e => {
-    (e.comisionLog||[]).filter(v => v.fecha >= inicio && v.fecha <= fin).forEach(v => {
-      totalComisiones += (v.venta||0) * ((v.comisionPct||0)/100);
+    (e.comisionLog||[]).filter(v=>v.fecha===hoyStr).forEach(v=>{
+      comHoy += (v.venta||0)*((v.comisionPct||0)/100);
     });
   });
-  const neta = bruta - totalComisiones;
+  const netaHoy = brutaHoy - comHoy;
 
-  // Actualizar métricas período seleccionado
-  const periodoLabel = {hoy:'Hoy',mes:'Este mes','mes-1':'Mes anterior','mes-2':'Hace 2 meses','mes-3':'Hace 3 meses',semana:'Esta semana',todo:'Todo el historial'}[periodo]||'';
-  document.getElementById('r-ing').textContent = fmt(ing);
-  const rIngN = document.getElementById('r-ing-n'); if(rIngN) rIngN.textContent = ingresosTx.length + ' transacciones';
-  document.getElementById('r-egr').textContent = fmt(egr);
-  const rEgrN = document.getElementById('r-egr-n'); if(rEgrN) rEgrN.textContent = txPeriodo.filter(t=>t.tipo==='egreso').length + ' transacciones';
-  const rBruta = document.getElementById('r-bruta'); if(rBruta) { rBruta.textContent = fmt(bruta); rBruta.className = 'metric-value ' + (bruta>=0?'c-green':'c-red'); }
-  const rNeta = document.getElementById('r-neta'); if(rNeta) { rNeta.textContent = fmt(neta); rNeta.style.color = neta>=0?'#5B21B6':'#DC2626'; }
-  const rNetaDet = document.getElementById('r-neta-det'); if(rNetaDet) rNetaDet.textContent = totalComisiones>0?`Bruta ${fmt(bruta)} - Com. ${fmt(totalComisiones)}`:'Sin comisiones en este período';
-  document.getElementById('r-ticket').textContent = fmt(ticket);
-  document.getElementById('r-deuda').textContent = fmt(totalDeuda);
+  s('r-ing', fmt(ingHoy));
+  s('r-ing-n', ingHoyTx.length + ' transacciones');
+  s('r-egr', fmt(egrHoy));
+  s('r-egr-n', txHoy.filter(t=>t.tipo==='egreso').length + ' transacciones');
+  s('r-ticket', fmt(ticketHoy));
+  s('r-deuda', fmt(totalDeuda));
+  s('r-neta-det', comHoy>0?`Bruta ${fmt(brutaHoy)} - Com. ${fmt(comHoy)}`:'Sin comisiones hoy');
+  const rBruta = document.getElementById('r-bruta');
+  if(rBruta){rBruta.textContent=fmt(brutaHoy);rBruta.className='metric-value '+(brutaHoy>=0?'c-green':'c-red');}
+  const rNeta = document.getElementById('r-neta');
+  if(rNeta){rNeta.textContent=fmt(netaHoy);rNeta.style.color=netaHoy>=0?'#5B21B6':'#DC2626';}
 
-  // Balance mensual (siempre del mes actual)
-  const mesActual = getMes();
+  // ── DATOS DEL MES ─────────────────────────────────────
   const txMes = state.transacciones.filter(t => t.fecha.startsWith(mesActual));
   const ingMes = txMes.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
   const egrMes = txMes.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
+  const brutaMes = ingMes - egrMes;
+  const ingMesTx = txMes.filter(t=>t.tipo==='ingreso');
+  const ticketMes = ingMesTx.length ? ingMes/ingMesTx.length : 0;
   let comMes = 0;
-  const inicioMes = mesActual + '-01';
   state.empleados.forEach(e => {
-    (e.comisionLog||[]).filter(v => v.fecha >= inicioMes && v.fecha.startsWith(mesActual)).forEach(v => {
-      comMes += (v.venta||0) * ((v.comisionPct||0)/100);
+    (e.comisionLog||[]).filter(v=>v.fecha.startsWith(mesActual)).forEach(v=>{
+      comMes += (v.venta||0)*((v.comisionPct||0)/100);
     });
   });
-  const netaMes = ingMes - egrMes - comMes;
-  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const mesLabel = document.getElementById('r-mes-label'); if(mesLabel) mesLabel.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
-  const rmIng = document.getElementById('rm-ing'); if(rmIng) rmIng.textContent = fmt(ingMes);
-  const rmEgr = document.getElementById('rm-egr'); if(rmEgr) rmEgr.textContent = fmt(egrMes);
-  const rmNeta = document.getElementById('rm-neta'); if(rmNeta) { rmNeta.textContent = fmt(netaMes); rmNeta.style.color = netaMes>=0?'#7C3AED':'#DC2626'; }
+  const netaMes = brutaMes - comMes;
 
-  // Gráficas
-  const colors = ['#1D9E75','#3266ad','#BA7517','#534AB7','#D85A30','#993556','#5F5E5A'];
-  const catI = {}, catE = {};
-  txPeriodo.filter(t=>t.tipo==='ingreso').forEach(t => { catI[t.cat]=(catI[t.cat]||0)+t.monto; });
-  txPeriodo.filter(t=>t.tipo==='egreso').forEach(t => { catE[t.cat]=(catE[t.cat]||0)+t.monto; });
-  if(charts.catI) charts.catI.destroy();
-  charts.catI = new Chart(document.getElementById('chartCatI'), {type:'doughnut',data:{labels:Object.keys(catI).length?Object.keys(catI):['Sin datos'],datasets:[{data:Object.values(catI).length?Object.values(catI):[1],backgroundColor:Object.keys(catI).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
-  if(charts.catE) charts.catE.destroy();
-  charts.catE = new Chart(document.getElementById('chartCatE'), {type:'doughnut',data:{labels:Object.keys(catE).length?Object.keys(catE):['Sin datos'],datasets:[{data:Object.values(catE).length?Object.values(catE):[1],backgroundColor:Object.keys(catE).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
+  s('rm-ing2', fmt(ingMes));
+  s('rm-ing2-n', ingMesTx.length + ' transacciones');
+  s('rm-egr2', fmt(egrMes));
+  s('rm-egr2-n', txMes.filter(t=>t.tipo==='egreso').length + ' transacciones');
+  s('rm-ticket', fmt(ticketMes));
+  s('rm-deuda', fmt(totalDeuda));
+  s('rm-neta-det', comMes>0?`Bruta ${fmt(brutaMes)} - Com. ${fmt(comMes)}`:'Sin comisiones este mes');
+  const rmBruta = document.getElementById('rm-bruta');
+  if(rmBruta){rmBruta.textContent=fmt(brutaMes);rmBruta.className='metric-value '+(brutaMes>=0?'c-green':'c-red');}
+  const rmNeta = document.getElementById('rm-neta');
+  if(rmNeta){rmNeta.textContent=fmt(netaMes);rmNeta.style.color=netaMes>=0?'#5B21B6':'#DC2626';}
+
+  // ── GRÁFICAS DEL MES ──────────────────────────────────
+  try {
+    const colors = ['#1D9E75','#3266ad','#BA7517','#534AB7','#D85A30','#993556','#5F5E5A'];
+    const catI={}, catE={};
+    txMes.filter(t=>t.tipo==='ingreso').forEach(t=>{catI[t.cat]=(catI[t.cat]||0)+t.monto;});
+    txMes.filter(t=>t.tipo==='egreso').forEach(t=>{catE[t.cat]=(catE[t.cat]||0)+t.monto;});
+    if(charts.catI){charts.catI.destroy();charts.catI=null;}
+    if(charts.catE){charts.catE.destroy();charts.catE=null;}
+    const cI=document.getElementById('chartCatI');
+    const cE=document.getElementById('chartCatE');
+    if(cI) charts.catI=new Chart(cI,{type:'doughnut',data:{labels:Object.keys(catI).length?Object.keys(catI):['Sin datos'],datasets:[{data:Object.values(catI).length?Object.values(catI):[1],backgroundColor:Object.keys(catI).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
+    if(cE) charts.catE=new Chart(cE,{type:'doughnut',data:{labels:Object.keys(catE).length?Object.keys(catE):['Sin datos'],datasets:[{data:Object.values(catE).length?Object.values(catE):[1],backgroundColor:Object.keys(catE).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
+  } catch(e){}
 }
 
 // ─── HISTORIAL DE MESES ───────────────────────────────────
