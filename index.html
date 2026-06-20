@@ -412,7 +412,7 @@
 
 <!-- MODAL DETALLE DEL DÍA -->
 <div class="overlay" id="overlay-dia-detalle">
-<div class="modal" style="max-width:420px">
+<div class="modal" style="max-width:760px">
   <div class="modal-title" id="dia-detalle-titulo">Detalle del día</div>
   <div id="dia-detalle-contenido"></div>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('dia-detalle')">Cerrar</button></div>
@@ -3023,27 +3023,47 @@ function abrirDetalleDia(d, m, y) {
   let html = '';
 
   if(citasDia.length) {
-    html += '<div style="font-size:12px;font-weight:600;color:#059669;margin-bottom:8px">📅 Citas (' + citasDia.length + ')</div>';
-    html += citasDia.map(c => {
-      const emp = state.empleados.find(e => String(e.id) === String(c.empleadoId));
-      return `<div style="background:#F0FDF4;border:1px solid rgba(5,150,105,0.2);border-radius:8px;padding:10px;margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:start">
-          <div>
-            <div style="font-size:13px;font-weight:600;color:#1a1535">${c.clienteNombre}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">${c.servicio||'Sin servicio'}${emp?' · '+emp.nombre:''}</div>
-            ${c.notas?`<div style="font-size:11px;color:var(--text3);margin-top:2px">📝 ${c.notas}</div>`:''}
-          </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:13px;font-weight:700;color:#059669">${c.hora}</div>
-            <button class="btn-danger" style="margin-top:4px;font-size:10px;padding:2px 6px" onclick="eliminarCita(${c.id});cerrarModal('dia-detalle');renderCalendario()">✕</button>
-          </div>
+    // Agrupar citas por empleado — "Sin asignar" al final
+    const grupos = {}; // empId (o 'sin') -> [citas]
+    citasDia.forEach(c => {
+      const key = c.empleadoId ? String(c.empleadoId) : 'sin';
+      if(!grupos[key]) grupos[key] = [];
+      grupos[key].push(c);
+    });
+    const claves = Object.keys(grupos).sort((a,b) => a==='sin'?1 : b==='sin'?-1 : 0);
+
+    html += '<div style="font-size:12px;font-weight:600;color:#059669;margin-bottom:10px">📅 Citas del día (' + citasDia.length + ') — organizadas por empleado</div>';
+    html += '<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px">';
+    html += claves.map(key => {
+      const lista = grupos[key];
+      const emp = key === 'sin' ? null : state.empleados.find(e => String(e.id) === key);
+      const nombreCol = emp ? emp.nombre : 'Sin asignar';
+      const colorBorde = emp ? 'rgba(5,150,105,0.25)' : 'rgba(156,163,175,0.3)';
+      const colorFondo = emp ? '#F0FDF4' : '#F9FAFB';
+      return `<div style="min-width:180px;flex:1;background:${colorFondo};border:1px solid ${colorBorde};border-radius:10px;padding:10px">
+        <div style="font-size:12px;font-weight:700;color:${emp?'#065F46':'#6B7280'};margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid ${colorBorde}">
+          ${emp?'👤 ':'❔ '}${nombreCol} <span style="font-weight:400;font-size:10px">(${lista.length})</span>
         </div>
+        ${lista.map(c => `<div style="background:#fff;border-radius:7px;padding:8px;margin-bottom:6px;border:1px solid rgba(0,0,0,0.06)">
+          <div style="display:flex;justify-content:space-between;align-items:start;gap:4px">
+            <div style="min-width:0">
+              <div style="font-size:12px;font-weight:600;color:#1a1535;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.clienteNombre}</div>
+              <div style="font-size:10px;color:var(--text2);margin-top:1px">${c.servicio||'Sin servicio'}</div>
+              ${c.notas?`<div style="font-size:10px;color:var(--text3);margin-top:1px">📝 ${c.notas}</div>`:''}
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:12px;font-weight:700;color:#059669">${c.hora}</div>
+            </div>
+          </div>
+          <button class="btn-danger" style="margin-top:5px;font-size:9px;padding:2px 6px;width:100%" onclick="eliminarCita(${c.id});cerrarModal('dia-detalle');renderCalendario()">✕ Eliminar</button>
+        </div>`).join('')}
       </div>`;
     }).join('');
+    html += '</div>';
   }
 
   if(deudasDia.length) {
-    html += '<div style="font-size:12px;font-weight:600;color:#D97706;margin-bottom:8px;margin-top:' + (citasDia.length?'14px':'0') + '">💳 Deudas que vencen</div>';
+    html += '<div style="font-size:12px;font-weight:600;color:#D97706;margin-bottom:8px;margin-top:' + (citasDia.length?'16px':'0') + '">💳 Deudas que vencen</div>';
     html += deudasDia.map(deb => `<div style="background:var(--amber-light);border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="font-size:13px;font-weight:600;color:#1a1535">${deb.nombre}</div>
       <div style="font-size:11px;color:#854F0B;margin-top:2px">Pendiente: ${fmt(deb.total-deb.pagado)}</div>
@@ -3051,7 +3071,7 @@ function abrirDetalleDia(d, m, y) {
   }
 
   if(eventosDia.length) {
-    html += '<div style="font-size:12px;font-weight:600;color:#7C3AED;margin-bottom:8px;margin-top:' + ((citasDia.length||deudasDia.length)?'14px':'0') + '">📌 Pagos fijos</div>';
+    html += '<div style="font-size:12px;font-weight:600;color:#7C3AED;margin-bottom:8px;margin-top:' + ((citasDia.length||deudasDia.length)?'16px':'0') + '">📌 Pagos fijos</div>';
     html += eventosDia.map(e => `<div style="background:#F0EDFF;border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="font-size:13px;font-weight:600;color:#1a1535">${e.desc}</div>
       <div style="font-size:11px;color:#7C3AED;margin-top:2px">${e.tipo==='cobro'?'Cobro':'Pago'}: ${fmt(e.monto)}</div>
