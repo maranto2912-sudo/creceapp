@@ -602,8 +602,13 @@
     <div id="cfg-clientes-list"></div>
   </div>
   <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
-    <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px">✏️ Historial de ediciones</div>
-    <div id="cfg-ediciones-list"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#1a1535">✏️ Transacciones editadas</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Revisa el historial de cambios en tus registros</div>
+      </div>
+      <button class="btn-sm" onclick="abrirModal('ediciones')">📋 Ver transacciones editadas</button>
+    </div>
   </div>
 </div>
 
@@ -831,6 +836,14 @@
   <div class="modal-title">📊 Historial por mes</div>
   <div id="historial-meses-contenido"></div>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('historial-meses')">Cerrar</button></div>
+</div></div>
+
+<!-- MODAL TRANSACCIONES EDITADAS -->
+<div class="overlay" id="overlay-ediciones">
+<div class="modal" style="max-width:520px">
+  <div class="modal-title">✏️ Transacciones editadas</div>
+  <div id="cfg-ediciones-list"></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('ediciones')">Cerrar</button></div>
 </div></div>
 
 <!-- MODAL RECIBO -->
@@ -1374,6 +1387,11 @@ function abrirModal(id) {
   if(id === 'historial-meses') {
     renderHistorialMeses();
     document.getElementById('overlay-historial-meses').style.display = 'flex';
+    return;
+  }
+  if(id === 'ediciones') {
+    renderCfgEdiciones();
+    document.getElementById('overlay-ediciones').style.display = 'flex';
     return;
   }
   if(id === 'tx') {
