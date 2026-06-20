@@ -476,8 +476,6 @@
       <button class="btn-primary" onclick="exportar()">⬇ Exportar</button>
     </div>
   </div>
-  <!-- select oculto para compatibilidad con renderReportes -->
-  <select id="reporte-periodo" style="display:none"><option value="mes" selected>Este mes</option></select>
   <!-- Métricas principales -->
   <div class="grid3" style="margin-bottom:12px">
     <div class="metric"><div class="metric-label">📈 Ingresos brutos</div><div class="metric-value c-green" id="r-ing">$0</div><div class="metric-sub c-green" id="r-ing-n">0 transacciones</div></div>
@@ -1410,15 +1408,10 @@ function showPage(id, btn) {
   document.getElementById('page-' + id).classList.add('active');
   if(btn) btn.classList.add('active');
   if(id === 'reportes') {
-    const selPeriodo = document.getElementById('reporte-periodo');
-    if(selPeriodo) selPeriodo.value = 'mes';
     const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     const tit = document.getElementById('r-mes-titulo');
     if(tit) tit.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
-    renderReportes();
-    // Reintento si los datos de Supabase aún no han llegado
-    setTimeout(() => renderReportes(), 800);
-    setTimeout(() => renderReportes(), 2000);
+    setTimeout(() => renderReportes(), 0);
   }
   if(id === 'calendario') renderCalendario();
   if(id === 'admin') renderAdmin();
@@ -3351,32 +3344,12 @@ function renderCharts() {
 
 // ─── RENDER REPORTES ──────────────────────────────────────
 function getPeriodoTx() {
-  const sel = document.getElementById('reporte-periodo');
-  const periodo = sel ? sel.value : 'mes';
-  const hoy = new Date();
-  const hoyStr = hoy.toISOString().split('T')[0];
-  if(periodo === 'hoy') {
-    return state.transacciones.filter(t => t.fecha === hoyStr);
-  } else if(periodo === 'semana') {
-    const lunes = new Date(hoy);
-    const diaSemana = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1; // Lunes=0 ... Domingo=6
-    lunes.setDate(hoy.getDate() - diaSemana);
-    lunes.setHours(0,0,0,0);
-    const lunesStr = lunes.toISOString().split('T')[0];
-    return state.transacciones.filter(t => t.fecha >= lunesStr && t.fecha <= hoyStr);
-  } else if(periodo === 'todo') {
-    return state.transacciones;
-  } else {
-    // 'mes' → 0 meses atrás, 'mes-1' → 1 mes atrás, etc.
-    const mesesAtras = parseInt(periodo.replace('mes-','') || '0') || 0;
-    const d = new Date(hoy.getFullYear(), hoy.getMonth() - mesesAtras, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    return state.transacciones.filter(t => t.fecha.startsWith(key));
-  }
+  // Siempre el mes actual — misma lógica exacta que usa el Dashboard
+  const key = getMes();
+  return state.transacciones.filter(t => t.fecha && t.fecha.startsWith(key));
 }
 
 function renderReportes() {
-  const periodo = document.getElementById('reporte-periodo')?.value || 'mes';
   const txPeriodo = getPeriodoTx();
   const ing = txPeriodo.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
   const egr = txPeriodo.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
@@ -3385,72 +3358,47 @@ function renderReportes() {
   const ticket = ingresosTx.length ? ing/ingresosTx.length : 0;
   const totalDeuda = state.deudas.reduce((s,d)=>s+(d.total-d.pagado),0);
 
-  // Calcular comisiones del período para ganancia neta
-  const hoyParaRango = new Date();
-  const hoyStrRango = hoyParaRango.toISOString().split('T')[0];
-  let inicio, fin;
-  if(periodo === 'hoy') {
-    inicio = hoyStrRango; fin = hoyStrRango;
-  } else if(periodo === 'semana') {
-    const l=new Date(hoyParaRango); l.setDate(hoyParaRango.getDate()-hoyParaRango.getDay()+1);
-    inicio = l.toISOString().split('T')[0]; fin = hoyStrRango;
-  } else if(periodo === 'todo') {
-    inicio = '2000-01-01'; fin = '9999-12-31';
-  } else {
-    const atras = parseInt(periodo.replace('mes-','') || '0');
-    const dI = new Date(hoyParaRango.getFullYear(), hoyParaRango.getMonth()-atras, 1);
-    const dF = new Date(hoyParaRango.getFullYear(), hoyParaRango.getMonth()-atras+1, 0);
-    inicio = `${dI.getFullYear()}-${String(dI.getMonth()+1).padStart(2,'0')}-01`;
-    fin = dF.toISOString().split('T')[0];
-  }
+  // Comisiones del mes actual
+  const mesActual = getMes();
   let totalComisiones = 0;
   state.empleados.forEach(e => {
-    (e.comisionLog||[]).filter(v => v.fecha >= inicio && v.fecha <= fin).forEach(v => {
+    (e.comisionLog||[]).filter(v => v.fecha && v.fecha.startsWith(mesActual)).forEach(v => {
       totalComisiones += (v.venta||0) * ((v.comisionPct||0)/100);
     });
   });
   const neta = bruta - totalComisiones;
 
-  // Actualizar métricas período seleccionado
-  const periodoLabel = {hoy:'Hoy',mes:'Este mes','mes-1':'Mes anterior','mes-2':'Hace 2 meses','mes-3':'Hace 3 meses',semana:'Esta semana',todo:'Todo el historial'}[periodo]||'';
-  document.getElementById('r-ing').textContent = fmt(ing);
-  const rIngN = document.getElementById('r-ing-n'); if(rIngN) rIngN.textContent = ingresosTx.length + ' transacciones';
-  document.getElementById('r-egr').textContent = fmt(egr);
-  const rEgrN = document.getElementById('r-egr-n'); if(rEgrN) rEgrN.textContent = txPeriodo.filter(t=>t.tipo==='egreso').length + ' transacciones';
+  const s = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  s('r-ing', fmt(ing));
+  s('r-ing-n', ingresosTx.length + ' transacciones');
+  s('r-egr', fmt(egr));
+  s('r-egr-n', txPeriodo.filter(t=>t.tipo==='egreso').length + ' transacciones');
   const rBruta = document.getElementById('r-bruta'); if(rBruta) { rBruta.textContent = fmt(bruta); rBruta.className = 'metric-value ' + (bruta>=0?'c-green':'c-red'); }
   const rNeta = document.getElementById('r-neta'); if(rNeta) { rNeta.textContent = fmt(neta); rNeta.style.color = neta>=0?'#5B21B6':'#DC2626'; }
   const rNetaDet = document.getElementById('r-neta-det'); if(rNetaDet) rNetaDet.textContent = totalComisiones>0?`Bruta ${fmt(bruta)} - Com. ${fmt(totalComisiones)}`:'Sin comisiones en este período';
-  document.getElementById('r-ticket').textContent = fmt(ticket);
-  document.getElementById('r-deuda').textContent = fmt(totalDeuda);
+  s('r-ticket', fmt(ticket));
+  s('r-deuda', fmt(totalDeuda));
 
-  // Balance mensual (siempre del mes actual)
-  const mesActual = getMes();
-  const txMes = state.transacciones.filter(t => t.fecha.startsWith(mesActual));
-  const ingMes = txMes.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-  const egrMes = txMes.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
-  let comMes = 0;
-  const inicioMes = mesActual + '-01';
-  state.empleados.forEach(e => {
-    (e.comisionLog||[]).filter(v => v.fecha >= inicioMes && v.fecha.startsWith(mesActual)).forEach(v => {
-      comMes += (v.venta||0) * ((v.comisionPct||0)/100);
-    });
-  });
-  const netaMes = ingMes - egrMes - comMes;
+  // Balance mensual (igual período, mismo cálculo, solo otra etiqueta visual)
   const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const mesLabel = document.getElementById('r-mes-label'); if(mesLabel) mesLabel.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
-  const rmIng = document.getElementById('rm-ing'); if(rmIng) rmIng.textContent = fmt(ingMes);
-  const rmEgr = document.getElementById('rm-egr'); if(rmEgr) rmEgr.textContent = fmt(egrMes);
-  const rmNeta = document.getElementById('rm-neta'); if(rmNeta) { rmNeta.textContent = fmt(netaMes); rmNeta.style.color = netaMes>=0?'#7C3AED':'#DC2626'; }
+  s('rm-ing', fmt(ing));
+  s('rm-egr', fmt(egr));
+  const rmNeta = document.getElementById('rm-neta'); if(rmNeta) { rmNeta.textContent = fmt(neta); rmNeta.style.color = neta>=0?'#7C3AED':'#DC2626'; }
 
   // Gráficas
-  const colors = ['#1D9E75','#3266ad','#BA7517','#534AB7','#D85A30','#993556','#5F5E5A'];
-  const catI = {}, catE = {};
-  txPeriodo.filter(t=>t.tipo==='ingreso').forEach(t => { catI[t.cat]=(catI[t.cat]||0)+t.monto; });
-  txPeriodo.filter(t=>t.tipo==='egreso').forEach(t => { catE[t.cat]=(catE[t.cat]||0)+t.monto; });
-  if(charts.catI) charts.catI.destroy();
-  charts.catI = new Chart(document.getElementById('chartCatI'), {type:'doughnut',data:{labels:Object.keys(catI).length?Object.keys(catI):['Sin datos'],datasets:[{data:Object.values(catI).length?Object.values(catI):[1],backgroundColor:Object.keys(catI).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
-  if(charts.catE) charts.catE.destroy();
-  charts.catE = new Chart(document.getElementById('chartCatE'), {type:'doughnut',data:{labels:Object.keys(catE).length?Object.keys(catE):['Sin datos'],datasets:[{data:Object.values(catE).length?Object.values(catE):[1],backgroundColor:Object.keys(catE).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
+  try {
+    const colors = ['#1D9E75','#3266ad','#BA7517','#534AB7','#D85A30','#993556','#5F5E5A'];
+    const catI = {}, catE = {};
+    txPeriodo.filter(t=>t.tipo==='ingreso').forEach(t => { catI[t.cat]=(catI[t.cat]||0)+t.monto; });
+    txPeriodo.filter(t=>t.tipo==='egreso').forEach(t => { catE[t.cat]=(catE[t.cat]||0)+t.monto; });
+    if(charts.catI) { charts.catI.destroy(); charts.catI = null; }
+    if(charts.catE) { charts.catE.destroy(); charts.catE = null; }
+    const cI = document.getElementById('chartCatI');
+    const cE = document.getElementById('chartCatE');
+    if(cI) charts.catI = new Chart(cI, {type:'doughnut',data:{labels:Object.keys(catI).length?Object.keys(catI):['Sin datos'],datasets:[{data:Object.values(catI).length?Object.values(catI):[1],backgroundColor:Object.keys(catI).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
+    if(cE) charts.catE = new Chart(cE, {type:'doughnut',data:{labels:Object.keys(catE).length?Object.keys(catE):['Sin datos'],datasets:[{data:Object.values(catE).length?Object.values(catE):[1],backgroundColor:Object.keys(catE).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
+  } catch(e) { console.log('renderReportes charts error:', e); }
 }
 
 // ─── HISTORIAL DE MESES ───────────────────────────────────
