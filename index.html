@@ -470,25 +470,44 @@
 <!-- REPORTES -->
 <div id="page-reportes" class="page content">
   <div class="section-header">
-    <span class="section-title">Reportes — <span id="r-mes-titulo" style="color:#7C3AED;font-size:14px"></span></span>
+    <span class="section-title">Reportes</span>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn-sm" onclick="abrirModal('historial-meses')">📊 Historial meses</button>
       <button class="btn-primary" onclick="exportar()">⬇ Exportar</button>
     </div>
   </div>
-  <!-- Métricas principales -->
+
+  <!-- HOY -->
+  <div style="font-size:12px;font-weight:600;color:#7C3AED;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px" id="r-hoy-label"></div>
+  <div class="grid3" style="margin-bottom:8px">
+    <div class="metric"><div class="metric-label">📈 Ingresos hoy</div><div class="metric-value c-green" id="rh-ing">$0</div><div class="metric-sub c-green" id="rh-ing-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">📉 Egresos hoy</div><div class="metric-value c-red" id="rh-egr">$0</div><div class="metric-sub c-red" id="rh-egr-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">💰 Ganancia bruta hoy</div><div class="metric-value" id="rh-bruta">$0</div><div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div></div>
+  </div>
+  <div class="grid3" style="margin-bottom:20px">
+    <div class="metric" style="border:1.5px solid rgba(124,58,237,0.25);background:#EDE9FF">
+      <div class="metric-label" style="color:#5B21B6">✨ Ganancia neta hoy</div>
+      <div class="metric-value" id="rh-neta" style="color:#5B21B6">$0</div>
+      <div class="metric-sub" style="color:#7C3AED" id="rh-neta-det">Bruta - Comisiones</div>
+    </div>
+    <div class="metric"><div class="metric-label">🧾 Ticket promedio hoy</div><div class="metric-value c-blue" id="rh-ticket">$0</div></div>
+    <div class="metric"><div class="metric-label">💳 Deuda total</div><div class="metric-value c-amber" id="rh-deuda">$0</div></div>
+  </div>
+
+  <!-- MES -->
+  <div style="font-size:12px;font-weight:600;color:#7C3AED;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px" id="r-mes-titulo"></div>
   <div class="grid3" style="margin-bottom:12px">
-    <div class="metric"><div class="metric-label">📈 Ingresos brutos</div><div class="metric-value c-green" id="r-ing">$0</div><div class="metric-sub c-green" id="r-ing-n">0 transacciones</div></div>
-    <div class="metric"><div class="metric-label">📉 Egresos totales</div><div class="metric-value c-red" id="r-egr">$0</div><div class="metric-sub c-red" id="r-egr-n">0 transacciones</div></div>
-    <div class="metric"><div class="metric-label">💰 Ganancia bruta</div><div class="metric-value" id="r-bruta">$0</div><div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div></div>
+    <div class="metric"><div class="metric-label">📈 Ingresos del mes</div><div class="metric-value c-green" id="r-ing">$0</div><div class="metric-sub c-green" id="r-ing-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">📉 Egresos del mes</div><div class="metric-value c-red" id="r-egr">$0</div><div class="metric-sub c-red" id="r-egr-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">💰 Ganancia bruta mes</div><div class="metric-value" id="r-bruta">$0</div><div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div></div>
   </div>
   <div class="grid3" style="margin-bottom:16px">
     <div class="metric" style="border:1.5px solid rgba(124,58,237,0.25);background:#EDE9FF">
-      <div class="metric-label" style="color:#5B21B6">✨ Ganancia neta</div>
+      <div class="metric-label" style="color:#5B21B6">✨ Ganancia neta mes</div>
       <div class="metric-value" id="r-neta" style="color:#5B21B6">$0</div>
       <div class="metric-sub" style="color:#7C3AED" id="r-neta-det">Bruta - Comisiones</div>
     </div>
-    <div class="metric"><div class="metric-label">🧾 Ticket promedio</div><div class="metric-value c-blue" id="r-ticket">$0</div></div>
+    <div class="metric"><div class="metric-label">🧾 Ticket promedio mes</div><div class="metric-value c-blue" id="r-ticket">$0</div></div>
     <div class="metric"><div class="metric-label">💳 Deuda total</div><div class="metric-value c-amber" id="r-deuda">$0</div></div>
   </div>
   <!-- Balance mensual adicional (siempre visible) -->
@@ -3344,54 +3363,91 @@ function renderCharts() {
 
 // ─── RENDER REPORTES ──────────────────────────────────────
 function getPeriodoTx() {
-  // Siempre el mes actual — misma lógica exacta que usa el Dashboard
+  // Mantenido por compatibilidad — devuelve las transacciones del mes
   const key = getMes();
   return state.transacciones.filter(t => t.fecha && t.fecha.startsWith(key));
 }
 
 function renderReportes() {
-  const txPeriodo = getPeriodoTx();
-  const ing = txPeriodo.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-  const egr = txPeriodo.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
-  const bruta = ing - egr;
-  const ingresosTx = txPeriodo.filter(t=>t.tipo==='ingreso');
-  const ticket = ingresosTx.length ? ing/ingresosTx.length : 0;
+  const hoy = new Date();
+  const hoyStr = hoy.toISOString().split('T')[0];
+  const mesActual = getMes();
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const s = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
   const totalDeuda = state.deudas.reduce((s,d)=>s+(d.total-d.pagado),0);
 
-  // Comisiones del mes actual
-  const mesActual = getMes();
-  let totalComisiones = 0;
+  // ── HOY ──────────────────────────────────────────────
+  const lblHoy = document.getElementById('r-hoy-label');
+  if(lblHoy) lblHoy.textContent = '📅 Hoy — ' + hoy.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  const txHoy = state.transacciones.filter(t => t.fecha === hoyStr);
+  const ingHoy = txHoy.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const egrHoy = txHoy.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
+  const brutaHoy = ingHoy - egrHoy;
+  const ingHoyTx = txHoy.filter(t=>t.tipo==='ingreso');
+  const ticketHoy = ingHoyTx.length ? ingHoy/ingHoyTx.length : 0;
+  let comHoy = 0;
   state.empleados.forEach(e => {
-    (e.comisionLog||[]).filter(v => v.fecha && v.fecha.startsWith(mesActual)).forEach(v => {
-      totalComisiones += (v.venta||0) * ((v.comisionPct||0)/100);
+    (e.comisionLog||[]).filter(v => v.fecha === hoyStr).forEach(v => {
+      comHoy += (v.venta||0) * ((v.comisionPct||0)/100);
     });
   });
-  const neta = bruta - totalComisiones;
+  const netaHoy = brutaHoy - comHoy;
 
-  const s = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
-  s('r-ing', fmt(ing));
-  s('r-ing-n', ingresosTx.length + ' transacciones');
-  s('r-egr', fmt(egr));
-  s('r-egr-n', txPeriodo.filter(t=>t.tipo==='egreso').length + ' transacciones');
-  const rBruta = document.getElementById('r-bruta'); if(rBruta) { rBruta.textContent = fmt(bruta); rBruta.className = 'metric-value ' + (bruta>=0?'c-green':'c-red'); }
-  const rNeta = document.getElementById('r-neta'); if(rNeta) { rNeta.textContent = fmt(neta); rNeta.style.color = neta>=0?'#5B21B6':'#DC2626'; }
-  const rNetaDet = document.getElementById('r-neta-det'); if(rNetaDet) rNetaDet.textContent = totalComisiones>0?`Bruta ${fmt(bruta)} - Com. ${fmt(totalComisiones)}`:'Sin comisiones en este período';
-  s('r-ticket', fmt(ticket));
+  s('rh-ing', fmt(ingHoy));
+  s('rh-ing-n', ingHoyTx.length + ' transacciones');
+  s('rh-egr', fmt(egrHoy));
+  s('rh-egr-n', txHoy.filter(t=>t.tipo==='egreso').length + ' transacciones');
+  s('rh-ticket', fmt(ticketHoy));
+  s('rh-deuda', fmt(totalDeuda));
+  s('rh-neta-det', comHoy>0?`Bruta ${fmt(brutaHoy)} - Com. ${fmt(comHoy)}`:'Sin comisiones hoy');
+  const rhBruta = document.getElementById('rh-bruta');
+  if(rhBruta) { rhBruta.textContent = fmt(brutaHoy); rhBruta.className = 'metric-value ' + (brutaHoy>=0?'c-green':'c-red'); }
+  const rhNeta = document.getElementById('rh-neta');
+  if(rhNeta) { rhNeta.textContent = fmt(netaHoy); rhNeta.style.color = netaHoy>=0?'#5B21B6':'#DC2626'; }
+
+  // ── MES ──────────────────────────────────────────────
+  const titMes = document.getElementById('r-mes-titulo');
+  if(titMes) titMes.textContent = '📆 ' + meses[hoy.getMonth()] + ' ' + hoy.getFullYear();
+
+  const txMes = state.transacciones.filter(t => t.fecha && t.fecha.startsWith(mesActual));
+  const ingMes = txMes.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const egrMes = txMes.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
+  const brutaMes = ingMes - egrMes;
+  const ingMesTx = txMes.filter(t=>t.tipo==='ingreso');
+  const ticketMes = ingMesTx.length ? ingMes/ingMesTx.length : 0;
+  let comMes = 0;
+  state.empleados.forEach(e => {
+    (e.comisionLog||[]).filter(v => v.fecha && v.fecha.startsWith(mesActual)).forEach(v => {
+      comMes += (v.venta||0) * ((v.comisionPct||0)/100);
+    });
+  });
+  const netaMes = brutaMes - comMes;
+
+  s('r-ing', fmt(ingMes));
+  s('r-ing-n', ingMesTx.length + ' transacciones');
+  s('r-egr', fmt(egrMes));
+  s('r-egr-n', txMes.filter(t=>t.tipo==='egreso').length + ' transacciones');
+  s('r-ticket', fmt(ticketMes));
   s('r-deuda', fmt(totalDeuda));
+  s('r-neta-det', comMes>0?`Bruta ${fmt(brutaMes)} - Com. ${fmt(comMes)}`:'Sin comisiones este mes');
+  const rBruta = document.getElementById('r-bruta');
+  if(rBruta) { rBruta.textContent = fmt(brutaMes); rBruta.className = 'metric-value ' + (brutaMes>=0?'c-green':'c-red'); }
+  const rNeta = document.getElementById('r-neta');
+  if(rNeta) { rNeta.textContent = fmt(netaMes); rNeta.style.color = netaMes>=0?'#5B21B6':'#DC2626'; }
 
-  // Balance mensual (igual período, mismo cálculo, solo otra etiqueta visual)
-  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const mesLabel = document.getElementById('r-mes-label'); if(mesLabel) mesLabel.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
-  s('rm-ing', fmt(ing));
-  s('rm-egr', fmt(egr));
-  const rmNeta = document.getElementById('rm-neta'); if(rmNeta) { rmNeta.textContent = fmt(neta); rmNeta.style.color = neta>=0?'#7C3AED':'#DC2626'; }
+  // Balance mensual (misma data del mes, otra etiqueta visual)
+  const mesLabel = document.getElementById('r-mes-label'); if(mesLabel) mesLabel.textContent = meses[hoy.getMonth()] + ' ' + hoy.getFullYear();
+  s('rm-ing', fmt(ingMes));
+  s('rm-egr', fmt(egrMes));
+  const rmNeta = document.getElementById('rm-neta'); if(rmNeta) { rmNeta.textContent = fmt(netaMes); rmNeta.style.color = netaMes>=0?'#7C3AED':'#DC2626'; }
 
-  // Gráficas
+  // Gráficas (del mes)
   try {
     const colors = ['#1D9E75','#3266ad','#BA7517','#534AB7','#D85A30','#993556','#5F5E5A'];
     const catI = {}, catE = {};
-    txPeriodo.filter(t=>t.tipo==='ingreso').forEach(t => { catI[t.cat]=(catI[t.cat]||0)+t.monto; });
-    txPeriodo.filter(t=>t.tipo==='egreso').forEach(t => { catE[t.cat]=(catE[t.cat]||0)+t.monto; });
+    txMes.filter(t=>t.tipo==='ingreso').forEach(t => { catI[t.cat]=(catI[t.cat]||0)+t.monto; });
+    txMes.filter(t=>t.tipo==='egreso').forEach(t => { catE[t.cat]=(catE[t.cat]||0)+t.monto; });
     if(charts.catI) { charts.catI.destroy(); charts.catI = null; }
     if(charts.catE) { charts.catE.destroy(); charts.catE = null; }
     const cI = document.getElementById('chartCatI');
