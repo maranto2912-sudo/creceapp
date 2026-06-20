@@ -140,6 +140,7 @@
   .cal-day.empty { color: var(--text3); opacity: .4; }
   .cal-day.has-event { background: var(--green-light); color: var(--green-dark); font-weight: 500; cursor: pointer; }
   .cal-day.has-debt { background: var(--amber-light); color: #854F0B; font-weight: 500; cursor: pointer; }
+  .cal-day.has-cita { background: #D1FAE5; color: #065F46; font-weight: 500; cursor: pointer; }
   .cal-day.today { border: 2px solid var(--green); font-weight: 600; }
 
   /* MODAL */
@@ -374,8 +375,11 @@
 <!-- CALENDARIO -->
 <div id="page-calendario" class="page content">
   <div class="section-header">
-    <span class="section-title">Calendario de pagos</span>
-    <button class="btn-primary" onclick="abrirModal('evento')">+ Pago fijo</button>
+    <span class="section-title">Calendario de pagos y citas</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-primary" style="background:#059669" onclick="abrirModal('cita')">📅 + Cita</button>
+      <button class="btn-primary" onclick="abrirModal('evento')">+ Pago fijo</button>
+    </div>
   </div>
   <div class="grid2">
     <div class="card">
@@ -390,6 +394,10 @@
       <div class="card-header"><span class="card-title">Próximos vencimientos</span></div>
       <div id="proximos"></div>
     </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-header"><span class="card-title">📅 Próximas citas</span></div>
+    <div id="proximas-citas"></div>
   </div>
 </div>
 
@@ -1183,6 +1191,28 @@
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('evento')">Cancelar</button><button class="btn-primary" onclick="guardarEvento()">Guardar</button></div>
 </div></div>
 
+<!-- MODAL NUEVA CITA -->
+<div class="overlay" id="overlay-cita">
+<div class="modal">
+  <div class="modal-title" style="color:#059669">📅 Nueva cita</div>
+  <div class="form-group" style="position:relative">
+    <label class="form-label">Cliente <span style="font-size:10px;color:var(--text3)">(busca por nombre, teléfono o cédula)</span></label>
+    <input type="text" id="cita-cliente-buscador" placeholder="🔍 Buscar cliente..." oninput="buscarClienteCita()" onfocus="buscarClienteCita()" autocomplete="off">
+    <input type="hidden" id="cita-cliente-id" value="">
+    <div id="cita-cliente-resultados" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid rgba(5,150,105,0.25);border-radius:8px;margin-top:4px;max-height:180px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Servicio</label><input type="text" id="cita-servicio" placeholder="Ej: Corte, manicure, tinte..."></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="cita-fecha"></div>
+    <div class="form-group"><label class="form-label">Hora</label><input type="time" id="cita-hora"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Empleado que atiende <span style="font-size:10px;color:var(--text3)">(opcional)</span></label>
+    <select id="cita-empleado"><option value="">— Sin asignar —</option></select>
+  </div>
+  <div class="form-group"><label class="form-label">Notas <span style="font-size:10px;color:var(--text3)">(opcional)</span></label><input type="text" id="cita-notas" placeholder="Observaciones..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cita')">Cancelar</button><button class="btn-primary" style="background:#059669" onclick="guardarCita()">Guardar cita</button></div>
+</div></div>
+
 <div class="overlay" id="overlay-meta">
 <div class="modal">
   <div class="modal-title">Meta mensual de ingresos</div>
@@ -1242,7 +1272,8 @@ let state = {
   clientes: [],
   proveedores: [],
   fiados: [],
-  activos: []
+  activos: [],
+  citas: []
 };
 
 function getDeviceId() {
@@ -1274,7 +1305,7 @@ async function cargarLS() {
     categoriasResp: [...CATS_RESP_DEFAULT], categoriasDeuda: [...CATS_DEUDA_DEFAULT],
     categoriasCargo: [...CATS_CARGO_DEFAULT],
     meta: 0, adminEmail: 'maranto2912@gmail.com',
-    pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT]
+    pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT], citas: []
   };
   const key = currentUserId || DEVICE_ID;
   if(currentUserId) {
@@ -1294,6 +1325,7 @@ async function cargarLS() {
         state.clientes = loaded.clientes || [];
         state.proveedores = loaded.proveedores || [];
         state.fiados = loaded.fiados || [];
+        state.citas = loaded.citas || [];
         state.activos = loaded.activos || [];
         // Categorías — usar las guardadas si existen, si no las default
         state.categorias = loaded.categorias || [...CATS_DEFAULT];
@@ -1321,6 +1353,7 @@ async function cargarLS() {
       state.clientes = loaded.clientes || [];
       state.proveedores = loaded.proveedores || [];
       state.fiados = loaded.fiados || [];
+      state.citas = loaded.citas || [];
       state.activos = loaded.activos || [];
       state.categorias = loaded.categorias || [...CATS_DEFAULT];
       state.categoriasInv = loaded.categoriasInv || [...CATS_INV_DEFAULT];
@@ -1435,6 +1468,15 @@ function abrirModal(id) {
   if(id === 'fiado') {
     document.getElementById('fi-fecha').value = new Date().toISOString().split('T')[0];
   }
+  if(id === 'cita') {
+    document.getElementById('cita-fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('cita-cliente-buscador').value = '';
+    document.getElementById('cita-cliente-id').value = '';
+    document.getElementById('cita-cliente-resultados').style.display = 'none';
+    const selEmp = document.getElementById('cita-empleado');
+    selEmp.innerHTML = '<option value="">— Sin asignar —</option>';
+    state.empleados.forEach(e => selEmp.innerHTML += `<option value="${e.id}">${e.nombre}</option>`);
+  }
   if(id === 'pedido') {
     document.getElementById('ped-fecha').value = new Date().toISOString().split('T')[0];
     const sel = document.getElementById('ped-cliente');
@@ -1451,6 +1493,9 @@ document.addEventListener('click', e => {
   const grupo = document.getElementById('tx-cliente-group');
   const resultados = document.getElementById('tx-cliente-resultados');
   if(grupo && resultados && !grupo.contains(e.target)) resultados.style.display = 'none';
+  const grupoCita = document.getElementById('cita-cliente-buscador')?.parentElement;
+  const resultadosCita = document.getElementById('cita-cliente-resultados');
+  if(grupoCita && resultadosCita && !grupoCita.contains(e.target)) resultadosCita.style.display = 'none';
 });
 
 // ─── GUARDAR DATOS ────────────────────────────────────────
@@ -2085,6 +2130,93 @@ function guardarEvento() {
   renderCalendario();
 }
 
+// ─── CITAS DE CLIENTES ────────────────────────────────────
+function buscarClienteCita() {
+  const input = document.getElementById('cita-cliente-buscador');
+  const resultados = document.getElementById('cita-cliente-resultados');
+  if(!input || !resultados) return;
+  const q = input.value.trim().toLowerCase();
+  const lista = state.clientes || [];
+  const filtrados = q ?
+    lista.filter(c => (c.nombre||'').toLowerCase().includes(q) || (c.telefono||'').toLowerCase().includes(q) || (c.cedula||'').toLowerCase().includes(q)) :
+    lista.slice(0, 5);
+  if(!lista.length) {
+    resultados.style.display = 'block';
+    resultados.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text3)">No tienes clientes registrados. Agrégalos en Configuración → Clientes.</div>';
+    return;
+  }
+  if(!filtrados.length) {
+    resultados.style.display = 'block';
+    resultados.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text3)">Sin coincidencias para "' + q + '".</div>';
+    return;
+  }
+  resultados.style.display = 'block';
+  resultados.innerHTML = filtrados.map(c =>
+    `<div onclick="seleccionarClienteCita(${c.id},'${c.nombre.replace(/'/g,"\\'")}')" style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(5,150,105,0.07)" onmouseover="this.style.background='#F0FDF4'" onmouseout="this.style.background='#fff'">
+      <div style="font-weight:500;color:#1a1535">${c.nombre}</div>
+      <div style="font-size:11px;color:var(--text3)">${c.cedula?'CC '+c.cedula+' · ':''}${c.telefono||'Sin teléfono'}</div>
+    </div>`
+  ).join('');
+}
+
+function seleccionarClienteCita(id, nombre) {
+  document.getElementById('cita-cliente-id').value = id;
+  document.getElementById('cita-cliente-buscador').value = nombre;
+  document.getElementById('cita-cliente-resultados').style.display = 'none';
+}
+
+function guardarCita() {
+  const clienteId = document.getElementById('cita-cliente-id').value;
+  const clienteNombre = document.getElementById('cita-cliente-buscador').value.trim();
+  const servicio = document.getElementById('cita-servicio').value.trim();
+  const fecha = document.getElementById('cita-fecha').value;
+  const hora = document.getElementById('cita-hora').value;
+  const empleadoId = document.getElementById('cita-empleado').value;
+  const notas = document.getElementById('cita-notas').value.trim();
+  if(!clienteNombre || !fecha || !hora) { alert('Por favor completa cliente, fecha y hora.'); return; }
+  if(!state.citas) state.citas = [];
+  state.citas.push({ clienteId, clienteNombre, servicio, fecha, hora, empleadoId, notas, id: Date.now() });
+  ['cita-servicio','cita-notas'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('cita-cliente-buscador').value = '';
+  document.getElementById('cita-cliente-id').value = '';
+  cerrarModal('cita');
+  guardarLS();
+  renderCalendario();
+}
+
+function eliminarCita(id) {
+  if(!confirm('¿Eliminar esta cita?')) return;
+  state.citas = state.citas.filter(x => x.id !== id);
+  guardarLS();
+  renderCalendario();
+}
+
+function renderProximasCitas() {
+  const el = document.getElementById('proximas-citas');
+  if(!el) return;
+  const hoy = new Date().toISOString().split('T')[0];
+  const citas = (state.citas||[]).filter(c => c.fecha >= hoy).sort((a,b) => (a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+  if(!citas.length) { el.innerHTML = '<div class="empty-state">No tienes citas programadas.</div>'; return; }
+  el.innerHTML = citas.slice(0,15).map(c => {
+    const emp = state.empleados.find(e => String(e.id) === String(c.empleadoId));
+    const esHoy = c.fecha === hoy;
+    const fechaFmt = new Date(c.fecha+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'short'});
+    return `<div class="tx-item" style="${esHoy?'border-color:rgba(5,150,105,0.3);background:#F0FDF4':''}">
+      <div class="tx-icon" style="background:#D1FAE5;color:#065F46;font-size:14px">📅</div>
+      <div class="tx-info">
+        <div class="tx-name">${c.clienteNombre} ${esHoy?'<span style="font-size:10px;background:#059669;color:white;padding:1px 6px;border-radius:10px">Hoy</span>':''}</div>
+        <div class="tx-cat">${c.servicio||'Sin servicio especificado'}${emp?' · '+emp.nombre:''}</div>
+        ${c.notas?`<div style="font-size:11px;color:var(--text3);margin-top:2px">📝 ${c.notas}</div>`:''}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:13px;font-weight:600;color:#059669">${fechaFmt}</div>
+        <div style="font-size:12px;color:var(--text2)">${c.hora}</div>
+        <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarCita(${c.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function guardarMeta() {
   state.meta = parseFloat(document.getElementById('meta-val').value) || 0;
   cerrarModal('meta');
@@ -2281,6 +2413,18 @@ function renderAlertas() {
   state.responsabilidades.filter(r=>!r.pagado).forEach(r => {
     const diff = r.dia - hoyNum;
     if(diff >= 0 && diff <= 3) alertas.push({tipo:'warning', ico:'📋', txt:`"${r.desc}" vence en ${diff===0?'hoy':diff+' días'}`, sub:`Monto: ${fmt(r.monto)}`});
+  });
+
+  // Alertas de citas — desde 1 día antes
+  const hoyStrCita = hoyD.toISOString().split('T')[0];
+  const mananaD = new Date(hoyD); mananaD.setDate(hoyD.getDate()+1);
+  const mananaStrCita = mananaD.toISOString().split('T')[0];
+  (state.citas||[]).forEach(c => {
+    if(c.fecha === hoyStrCita) {
+      alertas.push({tipo:'success', ico:'📅', txt:`Cita con ${c.clienteNombre} hoy a las ${c.hora}`, sub:c.servicio||'Sin servicio especificado'});
+    } else if(c.fecha === mananaStrCita) {
+      alertas.push({tipo:'info', ico:'📅', txt:`Cita con ${c.clienteNombre} mañana a las ${c.hora}`, sub:c.servicio||'Sin servicio especificado'});
+    }
   });
 
   document.getElementById('alertas').innerHTML = alertas.map(a =>
@@ -2826,7 +2970,8 @@ function renderCalendario() {
     const isHoy = d===hoyD.getDate() && m===hoyD.getMonth() && y===hoyD.getFullYear();
     const hasEv = state.eventos.some(e => e.dia === d);
     const hasDebt = state.deudas.some(deb => { const fd = new Date(deb.fecha+'T12:00:00'); return fd.getDate()===d && fd.getMonth()===m && fd.getFullYear()===y && deb.pagado<deb.total; });
-    const cls = hasDebt ? 'has-debt' : hasEv ? 'has-event' : '';
+    const hasCita = (state.citas||[]).some(c => { const fd = new Date(c.fecha+'T12:00:00'); return fd.getDate()===d && fd.getMonth()===m && fd.getFullYear()===y; });
+    const cls = hasDebt ? 'has-debt' : hasCita ? 'has-cita' : hasEv ? 'has-event' : '';
     html += `<div class="cal-day ${cls}${isHoy?' today':''}">${d}</div>`;
   }
   document.getElementById('cal-grid').innerHTML = html;
@@ -2842,6 +2987,7 @@ function renderCalendario() {
       ${p.id ? `<button class="btn-danger" style="font-size:11px;padding:3px 8px;flex-shrink:0" onclick="eliminarEvento(${p.id})">✕</button>` : ''}
     </div>`
   ).join('') : '<div class="empty-state">Sin eventos este mes.</div>';
+  renderProximasCitas();
 }
 function cambiarMes(d) { calFecha.setMonth(calFecha.getMonth()+d); renderCalendario(); }
 
@@ -4181,7 +4327,7 @@ async function cerrarSesion() {
     categoriasResp: [...CATS_RESP_DEFAULT], categoriasDeuda: [...CATS_DEUDA_DEFAULT],
     categoriasCargo: [...CATS_CARGO_DEFAULT],
     meta: 0, adminEmail: 'maranto2912@gmail.com',
-    pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT]
+    pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT], citas: []
   };
   await sb.auth.signOut();
   document.getElementById('auth-screen').style.display = 'flex';
