@@ -596,6 +596,9 @@
       <div class="metric" style="padding:10px"><div class="metric-label" style="font-size:10px">⭐ Top cliente</div><div class="metric-value" style="font-size:13px;color:#7C3AED" id="cli-top">—</div></div>
       <div class="metric" style="padding:10px"><div class="metric-label" style="font-size:10px">💰 Promedio</div><div class="metric-value" style="font-size:18px;color:#7C3AED" id="cli-promedio">$0</div></div>
     </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <input type="text" id="cli-buscador" placeholder="🔍 Buscar por nombre, teléfono o cédula..." oninput="renderClientes()" style="font-size:13px">
+    </div>
     <div id="cfg-clientes-list"></div>
   </div>
   <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
@@ -690,9 +693,11 @@
     <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="tx-fecha"></div>
   </div>
   <div class="form-group"><label class="form-label">Descripción general</label><input type="text" id="tx-desc" placeholder="Ej: Venta productos, servicio corte..."></div>
-  <div class="form-group" id="tx-cliente-group" style="display:none">
-    <label class="form-label">Cliente <span style="font-size:10px;color:var(--text3)">(opcional — para llevar su historial)</span></label>
-    <select id="tx-cliente-id"><option value="">— Sin cliente —</option></select>
+  <div class="form-group" id="tx-cliente-group" style="display:none;position:relative">
+    <label class="form-label">Cliente <span style="font-size:10px;color:var(--text3)">(opcional — busca por nombre, teléfono o cédula)</span></label>
+    <input type="text" id="tx-cliente-buscador" placeholder="🔍 Buscar cliente..." oninput="buscarClienteTx()" onfocus="buscarClienteTx()" autocomplete="off">
+    <input type="hidden" id="tx-cliente-id" value="">
+    <div id="tx-cliente-resultados" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid rgba(124,58,237,0.25);border-radius:8px;margin-top:4px;max-height:180px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
   </div>
   <div class="form-row">
     <div class="form-group">
@@ -891,9 +896,10 @@
   <div class="modal-title">Nuevo cliente</div>
   <div class="form-group"><label class="form-label">Nombre completo</label><input type="text" id="cl-nombre" placeholder="Nombre..."></div>
   <div class="form-row">
+    <div class="form-group"><label class="form-label">Cédula / Documento</label><input type="text" id="cl-cedula" placeholder="1234567890"></div>
     <div class="form-group"><label class="form-label">Teléfono / WhatsApp</label><input type="text" id="cl-telefono" placeholder="300..."></div>
-    <div class="form-group"><label class="form-label">Ciudad</label><input type="text" id="cl-ciudad" placeholder="Pereira..."></div>
   </div>
+  <div class="form-group"><label class="form-label">Ciudad</label><input type="text" id="cl-ciudad" placeholder="Pereira..."></div>
   <div class="form-group"><label class="form-label">Notas</label><input type="text" id="cl-notas" placeholder="Cliente frecuente, preferencias..."></div>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cliente')">Cancelar</button><button class="btn-primary" onclick="guardarCliente()">Guardar</button></div>
 </div></div>
@@ -1378,6 +1384,10 @@ function abrirModal(id) {
     state.empleados.forEach(e => sel.innerHTML += `<option value="${e.id}">${e.nombre}</option>`);
     const selCli = document.getElementById('tx-cliente-id');
     if(selCli) selCli.value = '';
+    const buscCli = document.getElementById('tx-cliente-buscador');
+    if(buscCli) buscCli.value = '';
+    const resCli = document.getElementById('tx-cliente-resultados');
+    if(resCli) resCli.style.display = 'none';
     // Limpiar campos manuales
     const mv = document.getElementById('tx-monto-manual-val');
     if(mv) mv.value = '';
@@ -1419,6 +1429,11 @@ function abrirModal(id) {
 }
 function cerrarModal(id) { document.getElementById('overlay-' + id).style.display = 'none'; }
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target === o) o.style.display = 'none'; }));
+document.addEventListener('click', e => {
+  const grupo = document.getElementById('tx-cliente-group');
+  const resultados = document.getElementById('tx-cliente-resultados');
+  if(grupo && resultados && !grupo.contains(e.target)) resultados.style.display = 'none';
+});
 
 // ─── GUARDAR DATOS ────────────────────────────────────────
 // Items de la transacción actual
@@ -1658,14 +1673,42 @@ function actualizarSelectorDeudas() {
 }
 
 function actualizarSelectorClientesTx() {
-  const sel = document.getElementById('tx-cliente-id');
-  if(!sel) return;
-  const actual = sel.value;
-  sel.innerHTML = '<option value="">— Sin cliente —</option>';
-  (state.clientes||[]).forEach(c => {
-    sel.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
-  });
-  if(actual) sel.value = actual;
+  // Ya no llena un <select> — el buscador se actualiza en buscarClienteTx()
+}
+
+function buscarClienteTx() {
+  const input = document.getElementById('tx-cliente-buscador');
+  const resultados = document.getElementById('tx-cliente-resultados');
+  if(!input || !resultados) return;
+  const q = input.value.trim().toLowerCase();
+  const lista = state.clientes || [];
+  // Si el campo está vacío, mostrar los primeros 5 clientes (acceso rápido)
+  const filtrados = q ?
+    lista.filter(c => (c.nombre||'').toLowerCase().includes(q) || (c.telefono||'').toLowerCase().includes(q) || (c.cedula||'').toLowerCase().includes(q)) :
+    lista.slice(0, 5);
+  if(!lista.length) {
+    resultados.style.display = 'block';
+    resultados.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text3)">No tienes clientes registrados. Agrégalos en Configuración → Clientes.</div>';
+    return;
+  }
+  if(!filtrados.length) {
+    resultados.style.display = 'block';
+    resultados.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text3)">Sin coincidencias para "' + q + '".</div>';
+    return;
+  }
+  resultados.style.display = 'block';
+  resultados.innerHTML = filtrados.map(c =>
+    `<div onclick="seleccionarClienteTx(${c.id},'${c.nombre.replace(/'/g,"\\'")}')" style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(124,58,237,0.07)" onmouseover="this.style.background='#F8F7FF'" onmouseout="this.style.background='#fff'">
+      <div style="font-weight:500;color:#1a1535">${c.nombre}</div>
+      <div style="font-size:11px;color:var(--text3)">${c.cedula?'CC '+c.cedula+' · ':''}${c.telefono||'Sin teléfono'}</div>
+    </div>`
+  ).join('');
+}
+
+function seleccionarClienteTx(id, nombre) {
+  document.getElementById('tx-cliente-id').value = id;
+  document.getElementById('tx-cliente-buscador').value = nombre;
+  document.getElementById('tx-cliente-resultados').style.display = 'none';
 }
 
 function toggleDetalles() {
@@ -3716,15 +3759,17 @@ function guardarCliente() {
   if(!nombre) return;
   state.clientes.push({
     nombre,
+    cedula: document.getElementById('cl-cedula').value.trim(),
     telefono: document.getElementById('cl-telefono').value.trim(),
     ciudad: document.getElementById('cl-ciudad').value.trim(),
     notas: document.getElementById('cl-notas').value.trim(),
     id: Date.now()
   });
-  ['cl-nombre','cl-telefono','cl-ciudad','cl-notas'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  ['cl-nombre','cl-cedula','cl-telefono','cl-ciudad','cl-notas'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   cerrarModal('cliente');
   guardarLS();
   renderClientes();
+  actualizarSelectorClientesTx();
 }
 
 function guardarProveedor() {
@@ -3857,14 +3902,23 @@ function renderClientes() {
   if(cliProm) cliProm.textContent = clientesList.length ? fmt(totalCompras/clientesList.length) : '$0';
 
   if(!el) return;
+  const buscador = document.getElementById('cli-buscador');
+  const q = (buscador ? buscador.value : '').trim().toLowerCase();
+  const filtrados = q ? clientesList.filter(c =>
+    (c.nombre||'').toLowerCase().includes(q) ||
+    (c.telefono||'').toLowerCase().includes(q) ||
+    (c.cedula||'').toLowerCase().includes(q)
+  ) : clientesList;
+
   if(!clientesList.length) { el.innerHTML = '<div class="empty-state">Agrega tus clientes frecuentes para llevar su historial de compras.</div>'; return; }
-  el.innerHTML = clientesList.map(c => {
+  if(!filtrados.length) { el.innerHTML = '<div class="empty-state">No se encontró ningún cliente con "' + q + '".</div>'; return; }
+  el.innerHTML = filtrados.map(c => {
     const d = comprasPorCli[c.id] || {total:0, count:0, ultima:''};
     return `<div class="emp-card">
       <div class="emp-avatar">${c.nombre[0].toUpperCase()}</div>
       <div class="emp-info">
         <div class="emp-name">${c.nombre}</div>
-        <div class="emp-role">${c.ciudad||'Sin ciudad'} · ${c.telefono||'Sin teléfono'}</div>
+        <div class="emp-role">${c.cedula?'CC '+c.cedula+' · ':''}${c.telefono||'Sin teléfono'}${c.ciudad?' · '+c.ciudad:''}</div>
         ${c.notas?`<div style="font-size:11px;color:var(--text3);margin-top:2px">📝 ${c.notas}</div>`:''}
         ${d.ultima?`<div style="font-size:11px;color:#059669;margin-top:2px">Última compra: ${d.ultima}</div>`:''}
       </div>
@@ -3882,6 +3936,7 @@ function editarCliente(id) {
   const c = state.clientes.find(x => x.id === id);
   if(!c) return;
   document.getElementById('cl-nombre').value = c.nombre;
+  document.getElementById('cl-cedula').value = c.cedula || '';
   document.getElementById('cl-telefono').value = c.telefono || '';
   document.getElementById('cl-ciudad').value = c.ciudad || '';
   document.getElementById('cl-notas').value = c.notas || '';
