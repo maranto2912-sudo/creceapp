@@ -375,31 +375,48 @@
 <!-- CALENDARIO -->
 <div id="page-calendario" class="page content">
   <div class="section-header">
-    <span class="section-title">Calendario de pagos y citas</span>
+    <span class="section-title">Calendario</span>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn-primary" style="background:#059669" onclick="abrirModal('cita')">📅 + Cita</button>
       <button class="btn-primary" onclick="abrirModal('evento')">+ Pago fijo</button>
     </div>
   </div>
+
+  <!-- CALENDARIO ANCHO COMPLETO -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <button class="btn-sm" onclick="cambiarMes(-1)">‹</button>
+      <span class="card-title" id="cal-titulo"></span>
+      <button class="btn-sm" onclick="cambiarMes(1)">›</button>
+    </div>
+    <div style="display:flex;gap:14px;margin-bottom:12px;font-size:11px;color:var(--text2)">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:var(--amber-light);display:inline-block"></span> Pago/deuda</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#D1FAE5;display:inline-block"></span> Cita</span>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px">👆 Toca un día para ver el detalle</div>
+  </div>
+
+  <!-- TARJETAS DEBAJO -->
   <div class="grid2">
     <div class="card">
-      <div class="card-header">
-        <button class="btn-sm" onclick="cambiarMes(-1)">‹</button>
-        <span class="card-title" id="cal-titulo"></span>
-        <button class="btn-sm" onclick="cambiarMes(1)">›</button>
-      </div>
-      <div class="cal-grid" id="cal-grid"></div>
-    </div>
-    <div class="card">
-      <div class="card-header"><span class="card-title">Próximos vencimientos</span></div>
+      <div class="card-header"><span class="card-title">💳 Próximos vencimientos</span></div>
       <div id="proximos"></div>
     </div>
-  </div>
-  <div class="card" style="margin-top:16px">
-    <div class="card-header"><span class="card-title">📅 Próximas citas</span></div>
-    <div id="proximas-citas"></div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">📅 Próximas citas</span></div>
+      <div id="proximas-citas"></div>
+    </div>
   </div>
 </div>
+
+<!-- MODAL DETALLE DEL DÍA -->
+<div class="overlay" id="overlay-dia-detalle">
+<div class="modal" style="max-width:420px">
+  <div class="modal-title" id="dia-detalle-titulo">Detalle del día</div>
+  <div id="dia-detalle-contenido"></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('dia-detalle')">Cerrar</button></div>
+</div></div>
 
 <!-- FIADO -->
 <div id="page-fiado" class="page content">
@@ -2970,9 +2987,12 @@ function renderCalendario() {
     const isHoy = d===hoyD.getDate() && m===hoyD.getMonth() && y===hoyD.getFullYear();
     const hasEv = state.eventos.some(e => e.dia === d);
     const hasDebt = state.deudas.some(deb => { const fd = new Date(deb.fecha+'T12:00:00'); return fd.getDate()===d && fd.getMonth()===m && fd.getFullYear()===y && deb.pagado<deb.total; });
-    const hasCita = (state.citas||[]).some(c => { const fd = new Date(c.fecha+'T12:00:00'); return fd.getDate()===d && fd.getMonth()===m && fd.getFullYear()===y; });
+    const citasDelDia = (state.citas||[]).filter(c => { const fd = new Date(c.fecha+'T12:00:00'); return fd.getDate()===d && fd.getMonth()===m && fd.getFullYear()===y; });
+    const hasCita = citasDelDia.length > 0;
+    const tieneAlgo = hasEv || hasDebt || hasCita;
     const cls = hasDebt ? 'has-debt' : hasCita ? 'has-cita' : hasEv ? 'has-event' : '';
-    html += `<div class="cal-day ${cls}${isHoy?' today':''}">${d}</div>`;
+    const badgeCitas = hasCita && citasDelDia.length > 1 ? `<span style="position:absolute;top:1px;right:2px;font-size:8px;background:#059669;color:white;border-radius:50%;width:13px;height:13px;display:flex;align-items:center;justify-content:center;line-height:1">${citasDelDia.length}</span>` : '';
+    html += `<div class="cal-day ${cls}${isHoy?' today':''}" style="position:relative;${tieneAlgo?'cursor:pointer':''}" ${tieneAlgo?`onclick="abrirDetalleDia(${d},${m},${y})"`:''}>${d}${badgeCitas}</div>`;
   }
   document.getElementById('cal-grid').innerHTML = html;
   const todos = [
@@ -2990,6 +3010,59 @@ function renderCalendario() {
   renderProximasCitas();
 }
 function cambiarMes(d) { calFecha.setMonth(calFecha.getMonth()+d); renderCalendario(); }
+
+function abrirDetalleDia(d, m, y) {
+  const fechaStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const nombres = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('dia-detalle-titulo').textContent = `📅 ${d} de ${nombres[m]} ${y}`;
+
+  const citasDia = (state.citas||[]).filter(c => c.fecha === fechaStr).sort((a,b)=>a.hora.localeCompare(b.hora));
+  const eventosDia = state.eventos.filter(e => e.dia === d);
+  const deudasDia = state.deudas.filter(deb => { const fd = new Date(deb.fecha+'T12:00:00'); return fd.getDate()===d && fd.getMonth()===m && fd.getFullYear()===y && deb.pagado<deb.total; });
+
+  let html = '';
+
+  if(citasDia.length) {
+    html += '<div style="font-size:12px;font-weight:600;color:#059669;margin-bottom:8px">📅 Citas (' + citasDia.length + ')</div>';
+    html += citasDia.map(c => {
+      const emp = state.empleados.find(e => String(e.id) === String(c.empleadoId));
+      return `<div style="background:#F0FDF4;border:1px solid rgba(5,150,105,0.2);border-radius:8px;padding:10px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#1a1535">${c.clienteNombre}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">${c.servicio||'Sin servicio'}${emp?' · '+emp.nombre:''}</div>
+            ${c.notas?`<div style="font-size:11px;color:var(--text3);margin-top:2px">📝 ${c.notas}</div>`:''}
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:13px;font-weight:700;color:#059669">${c.hora}</div>
+            <button class="btn-danger" style="margin-top:4px;font-size:10px;padding:2px 6px" onclick="eliminarCita(${c.id});cerrarModal('dia-detalle');renderCalendario()">✕</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if(deudasDia.length) {
+    html += '<div style="font-size:12px;font-weight:600;color:#D97706;margin-bottom:8px;margin-top:' + (citasDia.length?'14px':'0') + '">💳 Deudas que vencen</div>';
+    html += deudasDia.map(deb => `<div style="background:var(--amber-light);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:600;color:#1a1535">${deb.nombre}</div>
+      <div style="font-size:11px;color:#854F0B;margin-top:2px">Pendiente: ${fmt(deb.total-deb.pagado)}</div>
+    </div>`).join('');
+  }
+
+  if(eventosDia.length) {
+    html += '<div style="font-size:12px;font-weight:600;color:#7C3AED;margin-bottom:8px;margin-top:' + ((citasDia.length||deudasDia.length)?'14px':'0') + '">📌 Pagos fijos</div>';
+    html += eventosDia.map(e => `<div style="background:#F0EDFF;border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:600;color:#1a1535">${e.desc}</div>
+      <div style="font-size:11px;color:#7C3AED;margin-top:2px">${e.tipo==='cobro'?'Cobro':'Pago'}: ${fmt(e.monto)}</div>
+    </div>`).join('');
+  }
+
+  if(!html) html = '<div class="empty-state">Sin eventos este día.</div>';
+
+  document.getElementById('dia-detalle-contenido').innerHTML = html;
+  document.getElementById('overlay-dia-detalle').style.display = 'flex';
+}
 
 function calcHorasHoy(e) {
   const hoy = new Date().toISOString().split('T')[0];
