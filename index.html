@@ -453,48 +453,47 @@
 <!-- REPORTES -->
 <div id="page-reportes" class="page content">
   <div class="section-header">
-    <span class="section-title">Reportes</span>
+    <span class="section-title">Reportes — <span id="r-mes-titulo" style="color:#7C3AED;font-size:14px"></span></span>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn-sm" onclick="abrirModal('historial-meses')">📊 Historial meses</button>
       <button class="btn-primary" onclick="exportar()">⬇ Exportar</button>
     </div>
   </div>
-
-  <!-- ── HOY ─────────────────────────────────────────── -->
-  <div style="font-size:12px;font-weight:600;color:#7C3AED;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px" id="r-hoy-label"></div>
-  <div class="grid3" style="margin-bottom:8px">
-    <div class="metric"><div class="metric-label">📈 Ingresos hoy</div><div class="metric-value c-green" id="r-ing">$0</div><div class="metric-sub c-green" id="r-ing-n">0 transacciones</div></div>
-    <div class="metric"><div class="metric-label">📉 Egresos hoy</div><div class="metric-value c-red" id="r-egr">$0</div><div class="metric-sub c-red" id="r-egr-n">0 transacciones</div></div>
-    <div class="metric"><div class="metric-label">💰 Ganancia bruta hoy</div><div class="metric-value" id="r-bruta">$0</div><div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div></div>
-  </div>
-  <div class="grid3" style="margin-bottom:20px">
-    <div class="metric" style="border:1.5px solid rgba(124,58,237,0.25);background:#EDE9FF">
-      <div class="metric-label" style="color:#5B21B6">✨ Ganancia neta hoy</div>
-      <div class="metric-value" id="r-neta" style="color:#5B21B6">$0</div>
-      <div class="metric-sub" style="color:#7C3AED" id="r-neta-det">Bruta - Comisiones</div>
-    </div>
-    <div class="metric"><div class="metric-label">🧾 Ticket promedio hoy</div><div class="metric-value c-blue" id="r-ticket">$0</div></div>
-    <div class="metric"><div class="metric-label">💳 Deuda total</div><div class="metric-value c-amber" id="r-deuda">$0</div></div>
-  </div>
-
-  <!-- ── MES ─────────────────────────────────────────── -->
-  <div style="font-size:12px;font-weight:600;color:#7C3AED;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px" id="r-mes-titulo"></div>
-  <div class="grid3" style="margin-bottom:8px">
-    <div class="metric"><div class="metric-label">📈 Ingresos del mes</div><div class="metric-value c-green" id="rm-ing2">$0</div><div class="metric-sub c-green" id="rm-ing2-n">0 transacciones</div></div>
-    <div class="metric"><div class="metric-label">📉 Egresos del mes</div><div class="metric-value c-red" id="rm-egr2">$0</div><div class="metric-sub c-red" id="rm-egr2-n">0 transacciones</div></div>
-    <div class="metric"><div class="metric-label">💰 Ganancia bruta mes</div><div class="metric-value" id="rm-bruta">$0</div><div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div></div>
+  <!-- select oculto para compatibilidad con renderReportes -->
+  <select id="reporte-periodo" style="display:none"><option value="mes" selected>Este mes</option></select>
+  <!-- Métricas principales -->
+  <div class="grid3" style="margin-bottom:12px">
+    <div class="metric"><div class="metric-label">📈 Ingresos brutos</div><div class="metric-value c-green" id="r-ing">$0</div><div class="metric-sub c-green" id="r-ing-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">📉 Egresos totales</div><div class="metric-value c-red" id="r-egr">$0</div><div class="metric-sub c-red" id="r-egr-n">0 transacciones</div></div>
+    <div class="metric"><div class="metric-label">💰 Ganancia bruta</div><div class="metric-value" id="r-bruta">$0</div><div class="metric-sub" style="color:var(--text2)">Ingresos - Egresos</div></div>
   </div>
   <div class="grid3" style="margin-bottom:16px">
     <div class="metric" style="border:1.5px solid rgba(124,58,237,0.25);background:#EDE9FF">
-      <div class="metric-label" style="color:#5B21B6">✨ Ganancia neta mes</div>
-      <div class="metric-value" id="rm-neta" style="color:#5B21B6">$0</div>
-      <div class="metric-sub" style="color:#7C3AED" id="rm-neta-det">Bruta - Comisiones</div>
+      <div class="metric-label" style="color:#5B21B6">✨ Ganancia neta</div>
+      <div class="metric-value" id="r-neta" style="color:#5B21B6">$0</div>
+      <div class="metric-sub" style="color:#7C3AED" id="r-neta-det">Bruta - Comisiones</div>
     </div>
-    <div class="metric"><div class="metric-label">🧾 Ticket promedio mes</div><div class="metric-value c-blue" id="rm-ticket">$0</div></div>
-    <div class="metric"><div class="metric-label">💳 Deuda total</div><div class="metric-value c-amber" id="rm-deuda">$0</div></div>
+    <div class="metric"><div class="metric-label">🧾 Ticket promedio</div><div class="metric-value c-blue" id="r-ticket">$0</div></div>
+    <div class="metric"><div class="metric-label">💳 Deuda total</div><div class="metric-value c-amber" id="r-deuda">$0</div></div>
   </div>
-
-  <!-- ── GRÁFICAS ────────────────────────────────────── -->
+  <!-- Balance mensual adicional (siempre visible) -->
+  <div id="r-balance-mensual" class="card" style="margin-bottom:16px;border:1.5px solid rgba(124,58,237,0.2)">
+    <div class="card-header"><span class="card-title">📊 Balance mensual</span><span id="r-mes-label" style="font-size:11px;color:var(--text2)"></span></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div style="text-align:center;padding:10px;background:#F0EDFF;border-radius:8px">
+        <div style="font-size:11px;color:var(--text2)">Ingresos</div>
+        <div style="font-size:16px;font-weight:700;color:#059669" id="rm-ing">$0</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:#FEE2E2;border-radius:8px">
+        <div style="font-size:11px;color:var(--text2)">Egresos</div>
+        <div style="font-size:16px;font-weight:700;color:#DC2626" id="rm-egr">$0</div>
+      </div>
+      <div style="text-align:center;padding:10px;background:#EDE9FF;border-radius:8px">
+        <div style="font-size:11px;color:var(--text2)">Ganancia neta</div>
+        <div style="font-size:16px;font-weight:700;color:#7C3AED" id="rm-neta">$0</div>
+      </div>
+    </div>
+  </div>
   <div class="grid2">
     <div class="card">
       <div class="card-header"><span class="card-title">Ingresos por categoría</span></div>
@@ -586,7 +585,18 @@
   <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
     <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px">🏷️ Categorías</div>
     <div id="cfg-cats-container"></div>
-    <div style="margin-top:10px;padding:10px;background:#F8F7FF;border-radius:8px;font-size:11px;color:var(--text2)">💡 Las categorías con registros no se pueden eliminar.</div>
+  </div>
+  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:14px;font-weight:600;color:#1a1535">👤 Clientes</div>
+      <button onclick="abrirModal('cliente')" class="btn-primary" style="font-size:12px;padding:6px 14px">+ Nuevo cliente</button>
+    </div>
+    <div class="grid3" style="margin-bottom:12px">
+      <div class="metric" style="padding:10px"><div class="metric-label" style="font-size:10px">👥 Total</div><div class="metric-value" style="font-size:18px;color:#7C3AED" id="cli-total">0</div></div>
+      <div class="metric" style="padding:10px"><div class="metric-label" style="font-size:10px">⭐ Top cliente</div><div class="metric-value" style="font-size:13px;color:#7C3AED" id="cli-top">—</div></div>
+      <div class="metric" style="padding:10px"><div class="metric-label" style="font-size:10px">💰 Promedio</div><div class="metric-value" style="font-size:18px;color:#7C3AED" id="cli-promedio">$0</div></div>
+    </div>
+    <div id="cfg-clientes-list"></div>
   </div>
   <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
     <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px">✏️ Historial de ediciones</div>
@@ -680,6 +690,10 @@
     <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="tx-fecha"></div>
   </div>
   <div class="form-group"><label class="form-label">Descripción general</label><input type="text" id="tx-desc" placeholder="Ej: Venta productos, servicio corte..."></div>
+  <div class="form-group" id="tx-cliente-group" style="display:none">
+    <label class="form-label">Cliente <span style="font-size:10px;color:var(--text3)">(opcional — para llevar su historial)</span></label>
+    <select id="tx-cliente-id"><option value="">— Sin cliente —</option></select>
+  </div>
   <div class="form-row">
     <div class="form-group">
       <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat')">+ Nueva</span></label>
@@ -1326,7 +1340,17 @@ function showPage(id, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   if(btn) btn.classList.add('active');
-  if(id === 'reportes') { setTimeout(() => renderReportes(), 0); }
+  if(id === 'reportes') {
+    const selPeriodo = document.getElementById('reporte-periodo');
+    if(selPeriodo) selPeriodo.value = 'mes';
+    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const tit = document.getElementById('r-mes-titulo');
+    if(tit) tit.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
+    renderReportes();
+    // Reintento si los datos de Supabase aún no han llegado
+    setTimeout(() => renderReportes(), 800);
+    setTimeout(() => renderReportes(), 2000);
+  }
   if(id === 'calendario') renderCalendario();
   if(id === 'admin') renderAdmin();
   if(id === 'activos') renderActivos();
@@ -1352,6 +1376,8 @@ function abrirModal(id) {
     const sel = document.getElementById('tx-emp');
     sel.innerHTML = '<option value="">— ninguno —</option>';
     state.empleados.forEach(e => sel.innerHTML += `<option value="${e.id}">${e.nombre}</option>`);
+    const selCli = document.getElementById('tx-cliente-id');
+    if(selCli) selCli.value = '';
     // Limpiar campos manuales
     const mv = document.getElementById('tx-monto-manual-val');
     if(mv) mv.value = '';
@@ -1402,6 +1428,13 @@ function toggleVentaFields() {
   const tipo = document.getElementById('tx-tipo').value;
   const cat = document.getElementById('tx-cat').value;
   const empId = document.getElementById('tx-emp').value;
+
+  // Mostrar/ocultar selector de cliente (solo en ingresos)
+  const cliGroup = document.getElementById('tx-cliente-group');
+  if(cliGroup) {
+    cliGroup.style.display = tipo === 'ingreso' ? 'block' : 'none';
+    if(tipo === 'ingreso') actualizarSelectorClientesTx();
+  }
 
   // Mostrar/ocultar selector de deuda
   const deudaSelector = document.getElementById('deuda-selector');
@@ -1624,6 +1657,17 @@ function actualizarSelectorDeudas() {
   });
 }
 
+function actualizarSelectorClientesTx() {
+  const sel = document.getElementById('tx-cliente-id');
+  if(!sel) return;
+  const actual = sel.value;
+  sel.innerHTML = '<option value="">— Sin cliente —</option>';
+  (state.clientes||[]).forEach(c => {
+    sel.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+  });
+  if(actual) sel.value = actual;
+}
+
 function toggleDetalles() {
   const fields = document.getElementById('venta-fields');
   const btn = document.getElementById('detalles-btn-text');
@@ -1735,6 +1779,8 @@ function guardarTx() {
   const desc = document.getElementById('tx-desc').value.trim();
   const cat = document.getElementById('tx-cat').value;
   const empId = document.getElementById('tx-emp').value;
+  const clienteIdEl = document.getElementById('tx-cliente-id');
+  const clienteId = clienteIdEl ? clienteIdEl.value : '';
   const fecha = document.getElementById('tx-fecha').value;
   const notas = document.getElementById('tx-notas').value.trim();
   const costoEl = document.getElementById('tx-costo');
@@ -1811,7 +1857,7 @@ function guardarTx() {
     // Guardar items en la transacción para historial
     const ganancia = monto - costo;
     state.transacciones.unshift({
-      tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas,
+      tipo, monto, desc, cat, empId, clienteId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas,
       items: txItems.map(i => ({...i})),
       editado: false, id: Date.now()
     });
@@ -1824,7 +1870,7 @@ function guardarTx() {
     monto = parseFloat(montoManualEl?.value) || 0;
     if(!monto || !desc) { alert('Por favor ingresa la descripción y el monto.'); return; }
     const ganancia = monto - costo;
-    state.transacciones.unshift({ tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas, editado: false, id: Date.now() });
+    state.transacciones.unshift({ tipo, monto, desc, cat, empId, clienteId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas, editado: false, id: Date.now() });
 
     // Comisión simple
     const comPctEl = document.getElementById('tx-comision-pct');
@@ -2977,89 +3023,107 @@ function renderCharts() {
 }
 
 // ─── RENDER REPORTES ──────────────────────────────────────
-function renderReportes() {
+function getPeriodoTx() {
+  const sel = document.getElementById('reporte-periodo');
+  const periodo = sel ? sel.value : 'mes';
   const hoy = new Date();
   const hoyStr = hoy.toISOString().split('T')[0];
-  const mesActual = getMes();
-  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const s = (id,val) => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  if(periodo === 'hoy') {
+    return state.transacciones.filter(t => t.fecha === hoyStr);
+  } else if(periodo === 'semana') {
+    const lunes = new Date(hoy);
+    const diaSemana = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1; // Lunes=0 ... Domingo=6
+    lunes.setDate(hoy.getDate() - diaSemana);
+    lunes.setHours(0,0,0,0);
+    const lunesStr = lunes.toISOString().split('T')[0];
+    return state.transacciones.filter(t => t.fecha >= lunesStr && t.fecha <= hoyStr);
+  } else if(periodo === 'todo') {
+    return state.transacciones;
+  } else {
+    // 'mes' → 0 meses atrás, 'mes-1' → 1 mes atrás, etc.
+    const mesesAtras = parseInt(periodo.replace('mes-','') || '0') || 0;
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - mesesAtras, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    return state.transacciones.filter(t => t.fecha.startsWith(key));
+  }
+}
 
-  // Título hoy
-  const lbl = document.getElementById('r-hoy-label');
-  if(lbl) lbl.textContent = '📅 Hoy — ' + hoy.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-
-  // Título mes
-  const titMes = document.getElementById('r-mes-titulo');
-  if(titMes) titMes.textContent = '📆 ' + meses[hoy.getMonth()] + ' ' + hoy.getFullYear();
-
-  // ── DATOS DE HOY ──────────────────────────────────────
-  const txHoy = state.transacciones.filter(t => t.fecha === hoyStr);
-  const ingHoy = txHoy.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
-  const egrHoy = txHoy.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
-  const brutaHoy = ingHoy - egrHoy;
-  const ingHoyTx = txHoy.filter(t=>t.tipo==='ingreso');
-  const ticketHoy = ingHoyTx.length ? ingHoy/ingHoyTx.length : 0;
+function renderReportes() {
+  const periodo = document.getElementById('reporte-periodo')?.value || 'mes';
+  const txPeriodo = getPeriodoTx();
+  const ing = txPeriodo.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
+  const egr = txPeriodo.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
+  const bruta = ing - egr;
+  const ingresosTx = txPeriodo.filter(t=>t.tipo==='ingreso');
+  const ticket = ingresosTx.length ? ing/ingresosTx.length : 0;
   const totalDeuda = state.deudas.reduce((s,d)=>s+(d.total-d.pagado),0);
-  let comHoy = 0;
+
+  // Calcular comisiones del período para ganancia neta
+  const hoyParaRango = new Date();
+  const hoyStrRango = hoyParaRango.toISOString().split('T')[0];
+  let inicio, fin;
+  if(periodo === 'hoy') {
+    inicio = hoyStrRango; fin = hoyStrRango;
+  } else if(periodo === 'semana') {
+    const l=new Date(hoyParaRango); l.setDate(hoyParaRango.getDate()-hoyParaRango.getDay()+1);
+    inicio = l.toISOString().split('T')[0]; fin = hoyStrRango;
+  } else if(periodo === 'todo') {
+    inicio = '2000-01-01'; fin = '9999-12-31';
+  } else {
+    const atras = parseInt(periodo.replace('mes-','') || '0');
+    const dI = new Date(hoyParaRango.getFullYear(), hoyParaRango.getMonth()-atras, 1);
+    const dF = new Date(hoyParaRango.getFullYear(), hoyParaRango.getMonth()-atras+1, 0);
+    inicio = `${dI.getFullYear()}-${String(dI.getMonth()+1).padStart(2,'0')}-01`;
+    fin = dF.toISOString().split('T')[0];
+  }
+  let totalComisiones = 0;
   state.empleados.forEach(e => {
-    (e.comisionLog||[]).filter(v=>v.fecha===hoyStr).forEach(v=>{
-      comHoy += (v.venta||0)*((v.comisionPct||0)/100);
+    (e.comisionLog||[]).filter(v => v.fecha >= inicio && v.fecha <= fin).forEach(v => {
+      totalComisiones += (v.venta||0) * ((v.comisionPct||0)/100);
     });
   });
-  const netaHoy = brutaHoy - comHoy;
+  const neta = bruta - totalComisiones;
 
-  s('r-ing', fmt(ingHoy));
-  s('r-ing-n', ingHoyTx.length + ' transacciones');
-  s('r-egr', fmt(egrHoy));
-  s('r-egr-n', txHoy.filter(t=>t.tipo==='egreso').length + ' transacciones');
-  s('r-ticket', fmt(ticketHoy));
-  s('r-deuda', fmt(totalDeuda));
-  s('r-neta-det', comHoy>0?`Bruta ${fmt(brutaHoy)} - Com. ${fmt(comHoy)}`:'Sin comisiones hoy');
-  const rBruta = document.getElementById('r-bruta');
-  if(rBruta){rBruta.textContent=fmt(brutaHoy);rBruta.className='metric-value '+(brutaHoy>=0?'c-green':'c-red');}
-  const rNeta = document.getElementById('r-neta');
-  if(rNeta){rNeta.textContent=fmt(netaHoy);rNeta.style.color=netaHoy>=0?'#5B21B6':'#DC2626';}
+  // Actualizar métricas período seleccionado
+  const periodoLabel = {hoy:'Hoy',mes:'Este mes','mes-1':'Mes anterior','mes-2':'Hace 2 meses','mes-3':'Hace 3 meses',semana:'Esta semana',todo:'Todo el historial'}[periodo]||'';
+  document.getElementById('r-ing').textContent = fmt(ing);
+  const rIngN = document.getElementById('r-ing-n'); if(rIngN) rIngN.textContent = ingresosTx.length + ' transacciones';
+  document.getElementById('r-egr').textContent = fmt(egr);
+  const rEgrN = document.getElementById('r-egr-n'); if(rEgrN) rEgrN.textContent = txPeriodo.filter(t=>t.tipo==='egreso').length + ' transacciones';
+  const rBruta = document.getElementById('r-bruta'); if(rBruta) { rBruta.textContent = fmt(bruta); rBruta.className = 'metric-value ' + (bruta>=0?'c-green':'c-red'); }
+  const rNeta = document.getElementById('r-neta'); if(rNeta) { rNeta.textContent = fmt(neta); rNeta.style.color = neta>=0?'#5B21B6':'#DC2626'; }
+  const rNetaDet = document.getElementById('r-neta-det'); if(rNetaDet) rNetaDet.textContent = totalComisiones>0?`Bruta ${fmt(bruta)} - Com. ${fmt(totalComisiones)}`:'Sin comisiones en este período';
+  document.getElementById('r-ticket').textContent = fmt(ticket);
+  document.getElementById('r-deuda').textContent = fmt(totalDeuda);
 
-  // ── DATOS DEL MES ─────────────────────────────────────
+  // Balance mensual (siempre del mes actual)
+  const mesActual = getMes();
   const txMes = state.transacciones.filter(t => t.fecha.startsWith(mesActual));
   const ingMes = txMes.filter(t=>t.tipo==='ingreso').reduce((s,t)=>s+t.monto,0);
   const egrMes = txMes.filter(t=>t.tipo==='egreso').reduce((s,t)=>s+t.monto,0);
-  const brutaMes = ingMes - egrMes;
-  const ingMesTx = txMes.filter(t=>t.tipo==='ingreso');
-  const ticketMes = ingMesTx.length ? ingMes/ingMesTx.length : 0;
   let comMes = 0;
+  const inicioMes = mesActual + '-01';
   state.empleados.forEach(e => {
-    (e.comisionLog||[]).filter(v=>v.fecha.startsWith(mesActual)).forEach(v=>{
-      comMes += (v.venta||0)*((v.comisionPct||0)/100);
+    (e.comisionLog||[]).filter(v => v.fecha >= inicioMes && v.fecha.startsWith(mesActual)).forEach(v => {
+      comMes += (v.venta||0) * ((v.comisionPct||0)/100);
     });
   });
-  const netaMes = brutaMes - comMes;
+  const netaMes = ingMes - egrMes - comMes;
+  const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesLabel = document.getElementById('r-mes-label'); if(mesLabel) mesLabel.textContent = meses[new Date().getMonth()] + ' ' + new Date().getFullYear();
+  const rmIng = document.getElementById('rm-ing'); if(rmIng) rmIng.textContent = fmt(ingMes);
+  const rmEgr = document.getElementById('rm-egr'); if(rmEgr) rmEgr.textContent = fmt(egrMes);
+  const rmNeta = document.getElementById('rm-neta'); if(rmNeta) { rmNeta.textContent = fmt(netaMes); rmNeta.style.color = netaMes>=0?'#7C3AED':'#DC2626'; }
 
-  s('rm-ing2', fmt(ingMes));
-  s('rm-ing2-n', ingMesTx.length + ' transacciones');
-  s('rm-egr2', fmt(egrMes));
-  s('rm-egr2-n', txMes.filter(t=>t.tipo==='egreso').length + ' transacciones');
-  s('rm-ticket', fmt(ticketMes));
-  s('rm-deuda', fmt(totalDeuda));
-  s('rm-neta-det', comMes>0?`Bruta ${fmt(brutaMes)} - Com. ${fmt(comMes)}`:'Sin comisiones este mes');
-  const rmBruta = document.getElementById('rm-bruta');
-  if(rmBruta){rmBruta.textContent=fmt(brutaMes);rmBruta.className='metric-value '+(brutaMes>=0?'c-green':'c-red');}
-  const rmNeta = document.getElementById('rm-neta');
-  if(rmNeta){rmNeta.textContent=fmt(netaMes);rmNeta.style.color=netaMes>=0?'#5B21B6':'#DC2626';}
-
-  // ── GRÁFICAS DEL MES ──────────────────────────────────
-  try {
-    const colors = ['#1D9E75','#3266ad','#BA7517','#534AB7','#D85A30','#993556','#5F5E5A'];
-    const catI={}, catE={};
-    txMes.filter(t=>t.tipo==='ingreso').forEach(t=>{catI[t.cat]=(catI[t.cat]||0)+t.monto;});
-    txMes.filter(t=>t.tipo==='egreso').forEach(t=>{catE[t.cat]=(catE[t.cat]||0)+t.monto;});
-    if(charts.catI){charts.catI.destroy();charts.catI=null;}
-    if(charts.catE){charts.catE.destroy();charts.catE=null;}
-    const cI=document.getElementById('chartCatI');
-    const cE=document.getElementById('chartCatE');
-    if(cI) charts.catI=new Chart(cI,{type:'doughnut',data:{labels:Object.keys(catI).length?Object.keys(catI):['Sin datos'],datasets:[{data:Object.values(catI).length?Object.values(catI):[1],backgroundColor:Object.keys(catI).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
-    if(cE) charts.catE=new Chart(cE,{type:'doughnut',data:{labels:Object.keys(catE).length?Object.keys(catE):['Sin datos'],datasets:[{data:Object.values(catE).length?Object.values(catE):[1],backgroundColor:Object.keys(catE).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
-  } catch(e){}
+  // Gráficas
+  const colors = ['#1D9E75','#3266ad','#BA7517','#534AB7','#D85A30','#993556','#5F5E5A'];
+  const catI = {}, catE = {};
+  txPeriodo.filter(t=>t.tipo==='ingreso').forEach(t => { catI[t.cat]=(catI[t.cat]||0)+t.monto; });
+  txPeriodo.filter(t=>t.tipo==='egreso').forEach(t => { catE[t.cat]=(catE[t.cat]||0)+t.monto; });
+  if(charts.catI) charts.catI.destroy();
+  charts.catI = new Chart(document.getElementById('chartCatI'), {type:'doughnut',data:{labels:Object.keys(catI).length?Object.keys(catI):['Sin datos'],datasets:[{data:Object.values(catI).length?Object.values(catI):[1],backgroundColor:Object.keys(catI).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
+  if(charts.catE) charts.catE.destroy();
+  charts.catE = new Chart(document.getElementById('chartCatE'), {type:'doughnut',data:{labels:Object.keys(catE).length?Object.keys(catE):['Sin datos'],datasets:[{data:Object.values(catE).length?Object.values(catE):[1],backgroundColor:Object.keys(catE).length?colors:['#D3D1C7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},boxWidth:10}}}}});
 }
 
 // ─── HISTORIAL DE MESES ───────────────────────────────────
@@ -3751,40 +3815,79 @@ function eliminarPedido(id) {
 }
 
 function renderClientes() {
-  const el = document.getElementById('clientes-list');
-  if(!el) return;
+  const el = document.getElementById('cfg-clientes-list');
   const cliTotal = document.getElementById('cli-total');
   const cliTop = document.getElementById('cli-top');
   const cliProm = document.getElementById('cli-promedio');
-  if(cliTotal) cliTotal.textContent = state.clientes.length;
-  // Calcular cliente top por pedidos
-  const comprasPorCli = {};
-  const pedidosList = state.pedidos || [];
-  pedidosList.forEach(p => { if(p.clienteId) comprasPorCli[p.clienteId] = (comprasPorCli[p.clienteId]||0) + p.precio*p.cantidad; });
-  const topId = Object.keys(comprasPorCli).sort((a,b)=>comprasPorCli[b]-comprasPorCli[a])[0];
-  const topCli = topId ? state.clientes.find(c=>c.id==topId) : null;
-  if(cliTop) cliTop.textContent = topCli ? topCli.nombre : '—';
-  const totalCompras = Object.values(comprasPorCli).reduce((s,v)=>s+v,0);
-  if(cliProm) cliProm.textContent = state.clientes.length ? fmt(totalCompras/state.clientes.length) : '$0';
   const clientesList = state.clientes || [];
-  if(!clientesList.length) { el.innerHTML = '<div class="empty-state">Agrega tus clientes frecuentes.</div>'; return; }
+  if(cliTotal) cliTotal.textContent = clientesList.length;
+
+  // Calcular compras por cliente: transacciones de ingreso + pedidos + fiados
+  const comprasPorCli = {}; // clienteId -> {total, count, ultima}
+  state.transacciones.filter(t => t.tipo==='ingreso' && t.clienteId).forEach(t => {
+    const cid = t.clienteId;
+    if(!comprasPorCli[cid]) comprasPorCli[cid] = {total:0, count:0, ultima:''};
+    comprasPorCli[cid].total += t.monto;
+    comprasPorCli[cid].count += 1;
+    if(t.fecha > comprasPorCli[cid].ultima) comprasPorCli[cid].ultima = t.fecha;
+  });
+  (state.pedidos||[]).forEach(p => {
+    if(!p.clienteId) return;
+    const cid = p.clienteId;
+    if(!comprasPorCli[cid]) comprasPorCli[cid] = {total:0, count:0, ultima:''};
+    comprasPorCli[cid].total += (p.precio*p.cantidad);
+    comprasPorCli[cid].count += 1;
+    if(p.fecha > comprasPorCli[cid].ultima) comprasPorCli[cid].ultima = p.fecha;
+  });
+  // Fiados: vincular por nombre exacto del cliente (no tienen clienteId)
+  (state.fiados||[]).forEach(f => {
+    const cli = clientesList.find(c => c.nombre.toLowerCase() === (f.nombre||'').toLowerCase());
+    if(!cli) return;
+    const cid = cli.id;
+    if(!comprasPorCli[cid]) comprasPorCli[cid] = {total:0, count:0, ultima:''};
+    comprasPorCli[cid].total += f.monto;
+    comprasPorCli[cid].count += 1;
+    if(f.fecha > comprasPorCli[cid].ultima) comprasPorCli[cid].ultima = f.fecha;
+  });
+
+  const topId = Object.keys(comprasPorCli).sort((a,b)=>comprasPorCli[b].total-comprasPorCli[a].total)[0];
+  const topCli = topId ? clientesList.find(c=>c.id==topId) : null;
+  if(cliTop) cliTop.textContent = topCli ? topCli.nombre : '—';
+  const totalCompras = Object.values(comprasPorCli).reduce((s,v)=>s+v.total,0);
+  if(cliProm) cliProm.textContent = clientesList.length ? fmt(totalCompras/clientesList.length) : '$0';
+
+  if(!el) return;
+  if(!clientesList.length) { el.innerHTML = '<div class="empty-state">Agrega tus clientes frecuentes para llevar su historial de compras.</div>'; return; }
   el.innerHTML = clientesList.map(c => {
-    const compras = comprasPorCli[c.id] || 0;
-    const numPedidos = pedidosList.filter(p=>p.clienteId==c.id).length;
+    const d = comprasPorCli[c.id] || {total:0, count:0, ultima:''};
     return `<div class="emp-card">
       <div class="emp-avatar">${c.nombre[0].toUpperCase()}</div>
       <div class="emp-info">
         <div class="emp-name">${c.nombre}</div>
         <div class="emp-role">${c.ciudad||'Sin ciudad'} · ${c.telefono||'Sin teléfono'}</div>
         ${c.notas?`<div style="font-size:11px;color:var(--text3);margin-top:2px">📝 ${c.notas}</div>`:''}
+        ${d.ultima?`<div style="font-size:11px;color:#059669;margin-top:2px">Última compra: ${d.ultima}</div>`:''}
       </div>
       <div class="emp-stats">
-        <div class="emp-total">${fmt(compras)}</div>
-        <div class="emp-detail">${numPedidos} pedido${numPedidos!==1?'s':''}</div>
-        <button class="btn-danger" style="margin-top:6px;font-size:11px" onclick="eliminarCliente(${c.id})">✕ Eliminar</button>
+        <div class="emp-total">${fmt(d.total)}</div>
+        <div class="emp-detail">${d.count} compra${d.count!==1?'s':''}</div>
+        <button class="btn-sm" style="margin-top:6px;font-size:11px" onclick="editarCliente(${c.id})">✏️ Editar</button>
+        <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarCliente(${c.id})">✕ Eliminar</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function editarCliente(id) {
+  const c = state.clientes.find(x => x.id === id);
+  if(!c) return;
+  document.getElementById('cl-nombre').value = c.nombre;
+  document.getElementById('cl-telefono').value = c.telefono || '';
+  document.getElementById('cl-ciudad').value = c.ciudad || '';
+  document.getElementById('cl-notas').value = c.notas || '';
+  // Eliminamos el viejo para crear uno nuevo al guardar (simplicidad)
+  state.clientes = state.clientes.filter(x => x.id !== id);
+  abrirModal('cliente');
 }
 
 function eliminarCliente(id) {
@@ -4219,6 +4322,7 @@ function renderConfiguracion() {
   if(cfgMeta) cfgMeta.value = state.meta || '';
   renderCfgEmpleados();
   renderCfgCategorias();
+  renderClientes();
   renderCfgEdiciones();
 }
 
