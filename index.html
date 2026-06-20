@@ -568,6 +568,15 @@
     <div style="font-size:13px;opacity:0.8">Administra tu negocio, empleados y categorías</div>
   </div>
   <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#1a1535">✏️ Transacciones editadas</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Revisa el historial de cambios en tus registros</div>
+      </div>
+      <button class="btn-sm" onclick="abrirModal('ediciones')">📋 Ver transacciones editadas</button>
+    </div>
+  </div>
+  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
     <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px">🏪 Mi negocio</div>
     <div style="display:grid;gap:10px">
       <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Nombre del negocio</label><input type="text" id="cfg-negocio" placeholder="Ej: Salón Bella..." style="width:100%;padding:9px 12px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF"></div>
@@ -600,15 +609,6 @@
       <input type="text" id="cli-buscador" placeholder="🔍 Buscar por nombre, teléfono o cédula..." oninput="renderClientes()" style="font-size:13px">
     </div>
     <div id="cfg-clientes-list"></div>
-  </div>
-  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <div style="font-size:14px;font-weight:600;color:#1a1535">✏️ Transacciones editadas</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">Revisa el historial de cambios en tus registros</div>
-      </div>
-      <button class="btn-sm" onclick="abrirModal('ediciones')">📋 Ver transacciones editadas</button>
-    </div>
   </div>
 </div>
 
