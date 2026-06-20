@@ -140,6 +140,7 @@
   .cal-day.empty { color: var(--text3); opacity: .4; }
   .cal-day.has-event { background: var(--green-light); color: var(--green-dark); font-weight: 500; cursor: pointer; }
   .cal-day.has-debt { background: var(--amber-light); color: #854F0B; font-weight: 500; cursor: pointer; }
+  .cal-day.has-cita { background: #D1FAE5; color: #065F46; font-weight: 500; cursor: pointer; }
   .cal-day.today { border: 2px solid var(--green); font-weight: 600; }
 
   /* MODAL */
@@ -374,21 +375,37 @@
 <!-- CALENDARIO -->
 <div id="page-calendario" class="page content">
   <div class="section-header">
-    <span class="section-title">Calendario de pagos</span>
-    <button class="btn-primary" onclick="abrirModal('evento')">+ Pago fijo</button>
+    <span class="section-title">Calendario</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-primary" style="background:#059669" onclick="abrirModal('cita')">📅 + Cita</button>
+      <button class="btn-primary" onclick="abrirModal('evento')">+ Pago fijo</button>
+    </div>
   </div>
+
+  <!-- CALENDARIO ANCHO COMPLETO -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <button class="btn-sm" onclick="cambiarMes(-1)">‹</button>
+      <span class="card-title" id="cal-titulo"></span>
+      <button class="btn-sm" onclick="cambiarMes(1)">›</button>
+    </div>
+    <div style="display:flex;gap:14px;margin-bottom:12px;font-size:11px;color:var(--text2)">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:var(--amber-light);display:inline-block"></span> Pago/deuda</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#D1FAE5;display:inline-block"></span> Cita</span>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:10px">👆 Toca un día para ver el detalle</div>
+  </div>
+
+  <!-- TARJETAS DEBAJO -->
   <div class="grid2">
     <div class="card">
-      <div class="card-header">
-        <button class="btn-sm" onclick="cambiarMes(-1)">‹</button>
-        <span class="card-title" id="cal-titulo"></span>
-        <button class="btn-sm" onclick="cambiarMes(1)">›</button>
-      </div>
-      <div class="cal-grid" id="cal-grid"></div>
+      <div class="card-header"><span class="card-title">💳 Próximos vencimientos</span></div>
+      <div id="proximos"></div>
     </div>
     <div class="card">
-      <div class="card-header"><span class="card-title">Próximos vencimientos</span></div>
-      <div id="proximos"></div>
+      <div class="card-header"><span class="card-title">📅 Próximas citas</span></div>
+      <div id="proximas-citas"></div>
     </div>
   </div>
 </div>
@@ -568,6 +585,15 @@
     <div style="font-size:13px;opacity:0.8">Administra tu negocio, empleados y categorías</div>
   </div>
   <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#1a1535">✏️ Transacciones editadas</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Revisa el historial de cambios en tus registros</div>
+      </div>
+      <button class="btn-sm" onclick="abrirModal('ediciones')">📋 Ver transacciones editadas</button>
+    </div>
+  </div>
+  <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
     <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px">🏪 Mi negocio</div>
     <div style="display:grid;gap:10px">
       <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Nombre del negocio</label><input type="text" id="cfg-negocio" placeholder="Ej: Salón Bella..." style="width:100%;padding:9px 12px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:13px;background:#F8F7FF"></div>
@@ -585,11 +611,21 @@
   <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
     <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px">🏷️ Categorías</div>
     <div id="cfg-cats-container"></div>
-    <div style="margin-top:10px;padding:10px;background:#F8F7FF;border-radius:8px;font-size:11px;color:var(--text2)">💡 Las categorías con registros no se pueden eliminar.</div>
   </div>
   <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
-    <div style="font-size:14px;font-weight:600;color:#1a1535;margin-bottom:14px">✏️ Historial de ediciones</div>
-    <div id="cfg-ediciones-list"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:14px;font-weight:600;color:#1a1535">👤 Clientes</div>
+      <button onclick="abrirModal('cliente')" class="btn-primary" style="font-size:12px;padding:6px 14px">+ Nuevo cliente</button>
+    </div>
+    <div class="grid3" style="margin-bottom:12px">
+      <div class="metric" style="padding:10px"><div class="metric-label" style="font-size:10px">👥 Total</div><div class="metric-value" style="font-size:18px;color:#7C3AED" id="cli-total">0</div></div>
+      <div class="metric" style="padding:10px"><div class="metric-label" style="font-size:10px">⭐ Top cliente</div><div class="metric-value" style="font-size:13px;color:#7C3AED" id="cli-top">—</div></div>
+      <div class="metric" style="padding:10px"><div class="metric-label" style="font-size:10px">💰 Promedio</div><div class="metric-value" style="font-size:18px;color:#7C3AED" id="cli-promedio">$0</div></div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <input type="text" id="cli-buscador" placeholder="🔍 Buscar por nombre, teléfono o cédula..." oninput="renderClientes()" style="font-size:13px">
+    </div>
+    <div id="cfg-clientes-list"></div>
   </div>
 </div>
 
@@ -679,6 +715,12 @@
     <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="tx-fecha"></div>
   </div>
   <div class="form-group"><label class="form-label">Descripción general</label><input type="text" id="tx-desc" placeholder="Ej: Venta productos, servicio corte..."></div>
+  <div class="form-group" id="tx-cliente-group" style="display:none;position:relative">
+    <label class="form-label">Cliente <span style="font-size:10px;color:var(--text3)">(busca por nombre, teléfono o cédula)</span></label>
+    <input type="text" id="tx-cliente-buscador" placeholder="🔍 Buscar cliente..." oninput="buscarClienteTx()" onfocus="buscarClienteTx()" autocomplete="off">
+    <input type="hidden" id="tx-cliente-id" value="">
+    <div id="tx-cliente-resultados" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid rgba(124,58,237,0.25);border-radius:8px;margin-top:4px;max-height:180px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
+  </div>
   <div class="form-row">
     <div class="form-group">
       <label class="form-label">Categoría <span style="font-size:10px;color:#7C3AED;cursor:pointer;text-decoration:underline" onclick="abrirModal('cat')">+ Nueva</span></label>
@@ -813,6 +855,44 @@
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('historial-meses')">Cerrar</button></div>
 </div></div>
 
+<!-- MODAL TRANSACCIONES EDITADAS -->
+<div class="overlay" id="overlay-ediciones">
+<div class="modal" style="max-width:520px">
+  <div class="modal-title">✏️ Transacciones editadas</div>
+  <div id="cfg-ediciones-list"></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('ediciones')">Cerrar</button></div>
+</div></div>
+
+<!-- MODAL NUEVA CITA -->
+<div class="overlay" id="overlay-cita">
+<div class="modal">
+  <div class="modal-title" style="color:#059669">📅 Nueva cita</div>
+  <div class="form-group" style="position:relative">
+    <label class="form-label">Cliente <span style="font-size:10px;color:var(--text3)">(busca por nombre, teléfono o cédula)</span></label>
+    <input type="text" id="cita-cliente-buscador" placeholder="🔍 Buscar cliente..." oninput="buscarClienteCita()" onfocus="buscarClienteCita()" autocomplete="off">
+    <input type="hidden" id="cita-cliente-id" value="">
+    <div id="cita-cliente-resultados" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid rgba(5,150,105,0.25);border-radius:8px;margin-top:4px;max-height:180px;overflow-y:auto;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,0.1)"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Servicio</label><input type="text" id="cita-servicio" placeholder="Ej: Corte, manicure, tinte..."></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Fecha</label><input type="date" id="cita-fecha"></div>
+    <div class="form-group"><label class="form-label">Hora</label><input type="time" id="cita-hora"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Empleado que atiende <span style="font-size:10px;color:var(--text3)">(opcional)</span></label>
+    <select id="cita-empleado"><option value="">— Sin asignar —</option></select>
+  </div>
+  <div class="form-group"><label class="form-label">Notas <span style="font-size:10px;color:var(--text3)">(opcional)</span></label><input type="text" id="cita-notas" placeholder="Observaciones..."></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cita')">Cancelar</button><button class="btn-primary" style="background:#059669" onclick="guardarCita()">Guardar cita</button></div>
+</div></div>
+
+<!-- MODAL DETALLE DEL DÍA -->
+<div class="overlay" id="overlay-dia-detalle">
+<div class="modal" style="max-width:760px">
+  <div class="modal-title" id="dia-detalle-titulo">Detalle del día</div>
+  <div id="dia-detalle-contenido"></div>
+  <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('dia-detalle')">Cerrar</button></div>
+</div></div>
+
 <!-- MODAL RECIBO -->
 <div class="overlay" id="overlay-recibo">
 <div class="modal">
@@ -876,9 +956,10 @@
   <div class="modal-title">Nuevo cliente</div>
   <div class="form-group"><label class="form-label">Nombre completo</label><input type="text" id="cl-nombre" placeholder="Nombre..."></div>
   <div class="form-row">
+    <div class="form-group"><label class="form-label">Cédula / Documento</label><input type="text" id="cl-cedula" placeholder="1234567890"></div>
     <div class="form-group"><label class="form-label">Teléfono / WhatsApp</label><input type="text" id="cl-telefono" placeholder="300..."></div>
-    <div class="form-group"><label class="form-label">Ciudad</label><input type="text" id="cl-ciudad" placeholder="Pereira..."></div>
   </div>
+  <div class="form-group"><label class="form-label">Ciudad</label><input type="text" id="cl-ciudad" placeholder="Pereira..."></div>
   <div class="form-group"><label class="form-label">Notas</label><input type="text" id="cl-notas" placeholder="Cliente frecuente, preferencias..."></div>
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('cliente')">Cancelar</button><button class="btn-primary" onclick="guardarCliente()">Guardar</button></div>
 </div></div>
@@ -1208,7 +1289,8 @@ let state = {
   clientes: [],
   proveedores: [],
   fiados: [],
-  activos: []
+  activos: [],
+  citas: []
 };
 
 function getDeviceId() {
@@ -1240,7 +1322,7 @@ async function cargarLS() {
     categoriasResp: [...CATS_RESP_DEFAULT], categoriasDeuda: [...CATS_DEUDA_DEFAULT],
     categoriasCargo: [...CATS_CARGO_DEFAULT],
     meta: 0, adminEmail: 'maranto2912@gmail.com',
-    pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT]
+    pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT], citas: []
   };
   const key = currentUserId || DEVICE_ID;
   if(currentUserId) {
@@ -1260,6 +1342,7 @@ async function cargarLS() {
         state.clientes = loaded.clientes || [];
         state.proveedores = loaded.proveedores || [];
         state.fiados = loaded.fiados || [];
+        state.citas = loaded.citas || [];
         state.activos = loaded.activos || [];
         // Categorías — usar las guardadas si existen, si no las default
         state.categorias = loaded.categorias || [...CATS_DEFAULT];
@@ -1287,6 +1370,7 @@ async function cargarLS() {
       state.clientes = loaded.clientes || [];
       state.proveedores = loaded.proveedores || [];
       state.fiados = loaded.fiados || [];
+      state.citas = loaded.citas || [];
       state.activos = loaded.activos || [];
       state.categorias = loaded.categorias || [...CATS_DEFAULT];
       state.categoriasInv = loaded.categoriasInv || [...CATS_INV_DEFAULT];
@@ -1355,12 +1439,34 @@ function abrirModal(id) {
     document.getElementById('overlay-historial-meses').style.display = 'flex';
     return;
   }
+  if(id === 'ediciones') {
+    renderCfgEdiciones();
+    document.getElementById('overlay-ediciones').style.display = 'flex';
+    return;
+  }
+  if(id === 'cita') {
+    document.getElementById('cita-fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('cita-cliente-buscador').value = '';
+    document.getElementById('cita-cliente-id').value = '';
+    document.getElementById('cita-cliente-resultados').style.display = 'none';
+    const selEmpCita = document.getElementById('cita-empleado');
+    selEmpCita.innerHTML = '<option value="">— Sin asignar —</option>';
+    state.empleados.forEach(e => selEmpCita.innerHTML += `<option value="${e.id}">${e.nombre}</option>`);
+    document.getElementById('overlay-cita').style.display = 'flex';
+    return;
+  }
   if(id === 'tx') {
     txItems = [];
     document.getElementById('tx-fecha').value = new Date().toISOString().split('T')[0];
     const sel = document.getElementById('tx-emp');
     sel.innerHTML = '<option value="">— ninguno —</option>';
     state.empleados.forEach(e => sel.innerHTML += `<option value="${e.id}">${e.nombre}</option>`);
+    const buscCli = document.getElementById('tx-cliente-buscador');
+    if(buscCli) buscCli.value = '';
+    const idCli = document.getElementById('tx-cliente-id');
+    if(idCli) idCli.value = '';
+    const resCli = document.getElementById('tx-cliente-resultados');
+    if(resCli) resCli.style.display = 'none';
     // Limpiar campos manuales
     const mv = document.getElementById('tx-monto-manual-val');
     if(mv) mv.value = '';
@@ -1411,6 +1517,10 @@ function toggleVentaFields() {
   const tipo = document.getElementById('tx-tipo').value;
   const cat = document.getElementById('tx-cat').value;
   const empId = document.getElementById('tx-emp').value;
+
+  // Mostrar/ocultar selector de cliente (solo en ingresos)
+  const cliGroup = document.getElementById('tx-cliente-group');
+  if(cliGroup) cliGroup.style.display = tipo === 'ingreso' ? 'block' : 'none';
 
   // Mostrar/ocultar selector de deuda
   const deudaSelector = document.getElementById('deuda-selector');
@@ -1744,6 +1854,8 @@ function guardarTx() {
   const desc = document.getElementById('tx-desc').value.trim();
   const cat = document.getElementById('tx-cat').value;
   const empId = document.getElementById('tx-emp').value;
+  const clienteIdEl = document.getElementById('tx-cliente-id');
+  const clienteId = clienteIdEl ? clienteIdEl.value : '';
   const fecha = document.getElementById('tx-fecha').value;
   const notas = document.getElementById('tx-notas').value.trim();
   const costoEl = document.getElementById('tx-costo');
@@ -1820,7 +1932,7 @@ function guardarTx() {
     // Guardar items en la transacción para historial
     const ganancia = monto - costo;
     state.transacciones.unshift({
-      tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas,
+      tipo, monto, desc, cat, empId, clienteId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas,
       items: txItems.map(i => ({...i})),
       editado: false, id: Date.now()
     });
@@ -1833,7 +1945,7 @@ function guardarTx() {
     monto = parseFloat(montoManualEl?.value) || 0;
     if(!monto || !desc) { alert('Por favor ingresa la descripción y el monto.'); return; }
     const ganancia = monto - costo;
-    state.transacciones.unshift({ tipo, monto, desc, cat, empId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas, editado: false, id: Date.now() });
+    state.transacciones.unshift({ tipo, monto, desc, cat, empId, clienteId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas, editado: false, id: Date.now() });
 
     // Comisión simple
     const comPctEl = document.getElementById('tx-comision-pct');
@@ -2782,8 +2894,12 @@ function renderCalendario() {
     const isHoy = d===hoyD.getDate() && m===hoyD.getMonth() && y===hoyD.getFullYear();
     const hasEv = state.eventos.some(e => e.dia === d);
     const hasDebt = state.deudas.some(deb => { const fd = new Date(deb.fecha+'T12:00:00'); return fd.getDate()===d && fd.getMonth()===m && fd.getFullYear()===y && deb.pagado<deb.total; });
-    const cls = hasDebt ? 'has-debt' : hasEv ? 'has-event' : '';
-    html += `<div class="cal-day ${cls}${isHoy?' today':''}">${d}</div>`;
+    const citasDelDia = (state.citas||[]).filter(c => { const fd = new Date(c.fecha+'T12:00:00'); return fd.getDate()===d && fd.getMonth()===m && fd.getFullYear()===y; });
+    const hasCita = citasDelDia.length > 0;
+    const tieneAlgo = hasEv || hasDebt || hasCita;
+    const cls = hasDebt ? 'has-debt' : hasCita ? 'has-cita' : hasEv ? 'has-event' : '';
+    const badgeCitas = hasCita && citasDelDia.length > 1 ? `<span style="position:absolute;top:1px;right:2px;font-size:8px;background:#059669;color:white;border-radius:50%;width:13px;height:13px;display:flex;align-items:center;justify-content:center;line-height:1">${citasDelDia.length}</span>` : '';
+    html += `<div class="cal-day ${cls}${isHoy?' today':''}" style="position:relative;${tieneAlgo?'cursor:pointer':''}" ${tieneAlgo?`onclick="abrirDetalleDia(${d},${m},${y})"`:''}>${d}${badgeCitas}</div>`;
   }
   document.getElementById('cal-grid').innerHTML = html;
   const todos = [
@@ -2798,8 +2914,202 @@ function renderCalendario() {
       ${p.id ? `<button class="btn-danger" style="font-size:11px;padding:3px 8px;flex-shrink:0" onclick="eliminarEvento(${p.id})">✕</button>` : ''}
     </div>`
   ).join('') : '<div class="empty-state">Sin eventos este mes.</div>';
+  renderProximasCitas();
 }
 function cambiarMes(d) { calFecha.setMonth(calFecha.getMonth()+d); renderCalendario(); }
+
+function abrirDetalleDia(d, m, y) {
+  const fechaStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const nombres = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('dia-detalle-titulo').textContent = `📅 ${d} de ${nombres[m]} ${y}`;
+
+  const citasDia = (state.citas||[]).filter(c => c.fecha === fechaStr).sort((a,b)=>a.hora.localeCompare(b.hora));
+  const eventosDia = state.eventos.filter(e => e.dia === d);
+  const deudasDia = state.deudas.filter(deb => { const fd = new Date(deb.fecha+'T12:00:00'); return fd.getDate()===d && fd.getMonth()===m && fd.getFullYear()===y && deb.pagado<deb.total; });
+
+  let html = '';
+
+  if(citasDia.length) {
+    const grupos = {};
+    citasDia.forEach(c => {
+      const key = c.empleadoId ? String(c.empleadoId) : 'sin';
+      if(!grupos[key]) grupos[key] = [];
+      grupos[key].push(c);
+    });
+    const claves = Object.keys(grupos).sort((a,b) => a==='sin'?1 : b==='sin'?-1 : 0);
+
+    html += '<div style="font-size:12px;font-weight:600;color:#059669;margin-bottom:10px">📅 Citas del día (' + citasDia.length + ') — organizadas por empleado</div>';
+    html += '<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px">';
+    html += claves.map(key => {
+      const lista = grupos[key];
+      const emp = key === 'sin' ? null : state.empleados.find(e => String(e.id) === key);
+      const nombreCol = emp ? emp.nombre : 'Sin asignar';
+      const colorBorde = emp ? 'rgba(5,150,105,0.25)' : 'rgba(156,163,175,0.3)';
+      const colorFondo = emp ? '#F0FDF4' : '#F9FAFB';
+      return `<div style="min-width:180px;flex:1;background:${colorFondo};border:1px solid ${colorBorde};border-radius:10px;padding:10px">
+        <div style="font-size:12px;font-weight:700;color:${emp?'#065F46':'#6B7280'};margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid ${colorBorde}">
+          ${emp?'👤 ':'❔ '}${nombreCol} <span style="font-weight:400;font-size:10px">(${lista.length})</span>
+        </div>
+        ${lista.map(c => `<div style="background:#fff;border-radius:7px;padding:8px;margin-bottom:6px;border:1px solid rgba(0,0,0,0.06)">
+          <div style="display:flex;justify-content:space-between;align-items:start;gap:4px">
+            <div style="min-width:0">
+              <div style="font-size:12px;font-weight:600;color:#1a1535;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.clienteNombre}</div>
+              <div style="font-size:10px;color:var(--text2);margin-top:1px">${c.servicio||'Sin servicio'}</div>
+              ${c.notas?`<div style="font-size:10px;color:var(--text3);margin-top:1px">📝 ${c.notas}</div>`:''}
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:12px;font-weight:700;color:#059669">${c.hora}</div>
+            </div>
+          </div>
+          <button class="btn-danger" style="margin-top:5px;font-size:9px;padding:2px 6px;width:100%" onclick="eliminarCita(${c.id});cerrarModal('dia-detalle');renderCalendario()">✕ Eliminar</button>
+        </div>`).join('')}
+      </div>`;
+    }).join('');
+    html += '</div>';
+  }
+
+  if(deudasDia.length) {
+    html += '<div style="font-size:12px;font-weight:600;color:#D97706;margin-bottom:8px;margin-top:' + (citasDia.length?'16px':'0') + '">💳 Deudas que vencen</div>';
+    html += deudasDia.map(deb => `<div style="background:var(--amber-light);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:600;color:#1a1535">${deb.nombre}</div>
+      <div style="font-size:11px;color:#854F0B;margin-top:2px">Pendiente: ${fmt(deb.total-deb.pagado)}</div>
+    </div>`).join('');
+  }
+
+  if(eventosDia.length) {
+    html += '<div style="font-size:12px;font-weight:600;color:#7C3AED;margin-bottom:8px;margin-top:' + ((citasDia.length||deudasDia.length)?'16px':'0') + '">📌 Pagos fijos</div>';
+    html += eventosDia.map(e => `<div style="background:#F0EDFF;border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:600;color:#1a1535">${e.desc}</div>
+      <div style="font-size:11px;color:#7C3AED;margin-top:2px">${e.tipo==='cobro'?'Cobro':'Pago'}: ${fmt(e.monto)}</div>
+    </div>`).join('');
+  }
+
+  if(!html) html = '<div class="empty-state">Sin eventos este día.</div>';
+
+  document.getElementById('dia-detalle-contenido').innerHTML = html;
+  document.getElementById('overlay-dia-detalle').style.display = 'flex';
+}
+
+// ─── CITAS DE CLIENTES ────────────────────────────────────
+function buscarClienteTx() {
+  const input = document.getElementById('tx-cliente-buscador');
+  const resultados = document.getElementById('tx-cliente-resultados');
+  if(!input || !resultados) return;
+  const q = input.value.trim().toLowerCase();
+  const lista = state.clientes || [];
+  const filtrados = q ?
+    lista.filter(c => (c.nombre||'').toLowerCase().includes(q) || (c.telefono||'').toLowerCase().includes(q) || (c.cedula||'').toLowerCase().includes(q)) :
+    lista.slice(0, 5);
+  if(!lista.length) {
+    resultados.style.display = 'block';
+    resultados.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text3)">No tienes clientes registrados. Agrégalos en Configuración → Clientes.</div>';
+    return;
+  }
+  if(!filtrados.length) {
+    resultados.style.display = 'block';
+    resultados.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text3)">Sin coincidencias para "' + q + '".</div>';
+    return;
+  }
+  resultados.style.display = 'block';
+  resultados.innerHTML = filtrados.map(c =>
+    `<div onclick="seleccionarClienteTx(${c.id},'${c.nombre.replace(/'/g,"\\'")}')" style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(124,58,237,0.07)" onmouseover="this.style.background='#F8F7FF'" onmouseout="this.style.background='#fff'">
+      <div style="font-weight:500;color:#1a1535">${c.nombre}</div>
+      <div style="font-size:11px;color:var(--text3)">${c.cedula?'CC '+c.cedula+' · ':''}${c.telefono||'Sin teléfono'}</div>
+    </div>`
+  ).join('');
+}
+
+function seleccionarClienteTx(id, nombre) {
+  document.getElementById('tx-cliente-id').value = id;
+  document.getElementById('tx-cliente-buscador').value = nombre;
+  document.getElementById('tx-cliente-resultados').style.display = 'none';
+}
+
+function buscarClienteCita() {
+  const input = document.getElementById('cita-cliente-buscador');
+  const resultados = document.getElementById('cita-cliente-resultados');
+  if(!input || !resultados) return;
+  const q = input.value.trim().toLowerCase();
+  const lista = state.clientes || [];
+  const filtrados = q ?
+    lista.filter(c => (c.nombre||'').toLowerCase().includes(q) || (c.telefono||'').toLowerCase().includes(q) || (c.cedula||'').toLowerCase().includes(q)) :
+    lista.slice(0, 5);
+  if(!lista.length) {
+    resultados.style.display = 'block';
+    resultados.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text3)">No tienes clientes registrados. Agrégalos en Configuración → Clientes.</div>';
+    return;
+  }
+  if(!filtrados.length) {
+    resultados.style.display = 'block';
+    resultados.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text3)">Sin coincidencias para "' + q + '".</div>';
+    return;
+  }
+  resultados.style.display = 'block';
+  resultados.innerHTML = filtrados.map(c =>
+    `<div onclick="seleccionarClienteCita(${c.id},'${c.nombre.replace(/'/g,"\\'")}')" style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(5,150,105,0.07)" onmouseover="this.style.background='#F0FDF4'" onmouseout="this.style.background='#fff'">
+      <div style="font-weight:500;color:#1a1535">${c.nombre}</div>
+      <div style="font-size:11px;color:var(--text3)">${c.cedula?'CC '+c.cedula+' · ':''}${c.telefono||'Sin teléfono'}</div>
+    </div>`
+  ).join('');
+}
+
+function seleccionarClienteCita(id, nombre) {
+  document.getElementById('cita-cliente-id').value = id;
+  document.getElementById('cita-cliente-buscador').value = nombre;
+  document.getElementById('cita-cliente-resultados').style.display = 'none';
+}
+
+function guardarCita() {
+  const clienteId = document.getElementById('cita-cliente-id').value;
+  const clienteNombre = document.getElementById('cita-cliente-buscador').value.trim();
+  const servicio = document.getElementById('cita-servicio').value.trim();
+  const fecha = document.getElementById('cita-fecha').value;
+  const hora = document.getElementById('cita-hora').value;
+  const empleadoId = document.getElementById('cita-empleado').value;
+  const notas = document.getElementById('cita-notas').value.trim();
+  if(!clienteNombre || !fecha || !hora) { alert('Por favor completa cliente, fecha y hora.'); return; }
+  if(!state.citas) state.citas = [];
+  state.citas.push({ clienteId, clienteNombre, servicio, fecha, hora, empleadoId, notas, id: Date.now() });
+  ['cita-servicio','cita-notas'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  document.getElementById('cita-cliente-buscador').value = '';
+  document.getElementById('cita-cliente-id').value = '';
+  cerrarModal('cita');
+  guardarLS();
+  renderCalendario();
+}
+
+function eliminarCita(id) {
+  if(!confirm('¿Eliminar esta cita?')) return;
+  state.citas = state.citas.filter(x => x.id !== id);
+  guardarLS();
+  renderCalendario();
+}
+
+function renderProximasCitas() {
+  const el = document.getElementById('proximas-citas');
+  if(!el) return;
+  const hoy = new Date().toISOString().split('T')[0];
+  const citas = (state.citas||[]).filter(c => c.fecha >= hoy).sort((a,b) => (a.fecha+a.hora).localeCompare(b.fecha+b.hora));
+  if(!citas.length) { el.innerHTML = '<div class="empty-state">No tienes citas programadas.</div>'; return; }
+  el.innerHTML = citas.slice(0,15).map(c => {
+    const emp = state.empleados.find(e => String(e.id) === String(c.empleadoId));
+    const esHoy = c.fecha === hoy;
+    const fechaFmt = new Date(c.fecha+'T12:00:00').toLocaleDateString('es-CO',{day:'numeric',month:'short'});
+    return `<div class="tx-item" style="${esHoy?'border-color:rgba(5,150,105,0.3);background:#F0FDF4':''}">
+      <div class="tx-icon" style="background:#D1FAE5;color:#065F46;font-size:14px">📅</div>
+      <div class="tx-info">
+        <div class="tx-name">${c.clienteNombre} ${esHoy?'<span style="font-size:10px;background:#059669;color:white;padding:1px 6px;border-radius:10px">Hoy</span>':''}</div>
+        <div class="tx-cat">${c.servicio||'Sin servicio especificado'}${emp?' · '+emp.nombre:''}</div>
+        ${c.notas?`<div style="font-size:11px;color:var(--text3);margin-top:2px">📝 ${c.notas}</div>`:''}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:13px;font-weight:600;color:#059669">${fechaFmt}</div>
+        <div style="font-size:12px;color:var(--text2)">${c.hora}</div>
+        <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarCita(${c.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
 
 function calcHorasHoy(e) {
   const hoy = new Date().toISOString().split('T')[0];
@@ -3733,12 +4043,13 @@ function guardarCliente() {
   if(!nombre) return;
   state.clientes.push({
     nombre,
+    cedula: document.getElementById('cl-cedula').value.trim(),
     telefono: document.getElementById('cl-telefono').value.trim(),
     ciudad: document.getElementById('cl-ciudad').value.trim(),
     notas: document.getElementById('cl-notas').value.trim(),
     id: Date.now()
   });
-  ['cl-nombre','cl-telefono','cl-ciudad','cl-notas'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  ['cl-nombre','cl-cedula','cl-telefono','cl-ciudad','cl-notas'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   cerrarModal('cliente');
   guardarLS();
   renderClientes();
@@ -3832,40 +4143,87 @@ function eliminarPedido(id) {
 }
 
 function renderClientes() {
-  const el = document.getElementById('clientes-list');
-  if(!el) return;
+  const el = document.getElementById('cfg-clientes-list');
   const cliTotal = document.getElementById('cli-total');
   const cliTop = document.getElementById('cli-top');
   const cliProm = document.getElementById('cli-promedio');
-  if(cliTotal) cliTotal.textContent = state.clientes.length;
-  // Calcular cliente top por pedidos
-  const comprasPorCli = {};
-  const pedidosList = state.pedidos || [];
-  pedidosList.forEach(p => { if(p.clienteId) comprasPorCli[p.clienteId] = (comprasPorCli[p.clienteId]||0) + p.precio*p.cantidad; });
-  const topId = Object.keys(comprasPorCli).sort((a,b)=>comprasPorCli[b]-comprasPorCli[a])[0];
-  const topCli = topId ? state.clientes.find(c=>c.id==topId) : null;
-  if(cliTop) cliTop.textContent = topCli ? topCli.nombre : '—';
-  const totalCompras = Object.values(comprasPorCli).reduce((s,v)=>s+v,0);
-  if(cliProm) cliProm.textContent = state.clientes.length ? fmt(totalCompras/state.clientes.length) : '$0';
   const clientesList = state.clientes || [];
-  if(!clientesList.length) { el.innerHTML = '<div class="empty-state">Agrega tus clientes frecuentes.</div>'; return; }
-  el.innerHTML = clientesList.map(c => {
-    const compras = comprasPorCli[c.id] || 0;
-    const numPedidos = pedidosList.filter(p=>p.clienteId==c.id).length;
+  if(cliTotal) cliTotal.textContent = clientesList.length;
+
+  // Calcular compras por cliente: transacciones de ingreso + pedidos + fiados
+  const comprasPorCli = {};
+  state.transacciones.filter(t => t.tipo==='ingreso' && t.clienteId).forEach(t => {
+    const cid = t.clienteId;
+    if(!comprasPorCli[cid]) comprasPorCli[cid] = {total:0, count:0, ultima:''};
+    comprasPorCli[cid].total += t.monto;
+    comprasPorCli[cid].count += 1;
+    if(t.fecha > comprasPorCli[cid].ultima) comprasPorCli[cid].ultima = t.fecha;
+  });
+  (state.pedidos||[]).forEach(p => {
+    if(!p.clienteId) return;
+    const cid = p.clienteId;
+    if(!comprasPorCli[cid]) comprasPorCli[cid] = {total:0, count:0, ultima:''};
+    comprasPorCli[cid].total += (p.precio*p.cantidad);
+    comprasPorCli[cid].count += 1;
+    if(p.fecha > comprasPorCli[cid].ultima) comprasPorCli[cid].ultima = p.fecha;
+  });
+  (state.fiados||[]).forEach(f => {
+    const cli = clientesList.find(c => c.nombre.toLowerCase() === (f.nombre||'').toLowerCase());
+    if(!cli) return;
+    const cid = cli.id;
+    if(!comprasPorCli[cid]) comprasPorCli[cid] = {total:0, count:0, ultima:''};
+    comprasPorCli[cid].total += f.monto;
+    comprasPorCli[cid].count += 1;
+    if(f.fecha > comprasPorCli[cid].ultima) comprasPorCli[cid].ultima = f.fecha;
+  });
+
+  const topId = Object.keys(comprasPorCli).sort((a,b)=>comprasPorCli[b].total-comprasPorCli[a].total)[0];
+  const topCli = topId ? clientesList.find(c=>c.id==topId) : null;
+  if(cliTop) cliTop.textContent = topCli ? topCli.nombre : '—';
+  const totalCompras = Object.values(comprasPorCli).reduce((s,v)=>s+v.total,0);
+  if(cliProm) cliProm.textContent = clientesList.length ? fmt(totalCompras/clientesList.length) : '$0';
+
+  if(!el) return;
+  const buscador = document.getElementById('cli-buscador');
+  const q = (buscador ? buscador.value : '').trim().toLowerCase();
+  const filtrados = q ? clientesList.filter(c =>
+    (c.nombre||'').toLowerCase().includes(q) ||
+    (c.telefono||'').toLowerCase().includes(q) ||
+    (c.cedula||'').toLowerCase().includes(q)
+  ) : clientesList;
+
+  if(!clientesList.length) { el.innerHTML = '<div class="empty-state">Agrega tus clientes frecuentes para llevar su historial de compras.</div>'; return; }
+  if(!filtrados.length) { el.innerHTML = '<div class="empty-state">No se encontró ningún cliente con "' + q + '".</div>'; return; }
+  el.innerHTML = filtrados.map(c => {
+    const d = comprasPorCli[c.id] || {total:0, count:0, ultima:''};
     return `<div class="emp-card">
       <div class="emp-avatar">${c.nombre[0].toUpperCase()}</div>
       <div class="emp-info">
         <div class="emp-name">${c.nombre}</div>
-        <div class="emp-role">${c.ciudad||'Sin ciudad'} · ${c.telefono||'Sin teléfono'}</div>
+        <div class="emp-role">${c.cedula?'CC '+c.cedula+' · ':''}${c.telefono||'Sin teléfono'}${c.ciudad?' · '+c.ciudad:''}</div>
         ${c.notas?`<div style="font-size:11px;color:var(--text3);margin-top:2px">📝 ${c.notas}</div>`:''}
+        ${d.ultima?`<div style="font-size:11px;color:#059669;margin-top:2px">Última compra: ${d.ultima}</div>`:''}
       </div>
       <div class="emp-stats">
-        <div class="emp-total">${fmt(compras)}</div>
-        <div class="emp-detail">${numPedidos} pedido${numPedidos!==1?'s':''}</div>
-        <button class="btn-danger" style="margin-top:6px;font-size:11px" onclick="eliminarCliente(${c.id})">✕ Eliminar</button>
+        <div class="emp-total">${fmt(d.total)}</div>
+        <div class="emp-detail">${d.count} compra${d.count!==1?'s':''}</div>
+        <button class="btn-sm" style="margin-top:6px;font-size:11px" onclick="editarCliente(${c.id})">✏️ Editar</button>
+        <button class="btn-danger" style="margin-top:4px;font-size:11px" onclick="eliminarCliente(${c.id})">✕ Eliminar</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function editarCliente(id) {
+  const c = state.clientes.find(x => x.id === id);
+  if(!c) return;
+  document.getElementById('cl-nombre').value = c.nombre;
+  document.getElementById('cl-cedula').value = c.cedula || '';
+  document.getElementById('cl-telefono').value = c.telefono || '';
+  document.getElementById('cl-ciudad').value = c.ciudad || '';
+  document.getElementById('cl-notas').value = c.notas || '';
+  state.clientes = state.clientes.filter(x => x.id !== id);
+  abrirModal('cliente');
 }
 
 function eliminarCliente(id) {
@@ -4086,7 +4444,7 @@ async function cerrarSesion() {
     categoriasResp: [...CATS_RESP_DEFAULT], categoriasDeuda: [...CATS_DEUDA_DEFAULT],
     categoriasCargo: [...CATS_CARGO_DEFAULT],
     meta: 0, adminEmail: 'maranto2912@gmail.com',
-    pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT]
+    pedidos: [], clientes: [], proveedores: [], fiados: [], activos: [], categoriasActivos: [...CATS_ACTIVOS_DEFAULT], citas: []
   };
   await sb.auth.signOut();
   document.getElementById('auth-screen').style.display = 'flex';
@@ -4300,6 +4658,7 @@ function renderConfiguracion() {
   if(cfgMeta) cfgMeta.value = state.meta || '';
   renderCfgEmpleados();
   renderCfgCategorias();
+  renderClientes();
   renderCfgEdiciones();
 }
 
