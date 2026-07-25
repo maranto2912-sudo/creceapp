@@ -4318,7 +4318,7 @@ function aplicarRestricciones(plan) {
   // Tabs bloqueados para plan gratuito — se recalcula siempre (bloquea o desbloquea)
   // para que una carga anterior incorrecta (p.ej. una condición de carrera) no deje
   // los tabs bloqueados permanentemente para un usuario premium/admin.
-  const tabsBloqueados = ['empleados','inventario','calendario','reportes','fiado'];
+  const tabsBloqueados = ['empleados','inventario','calendario','reportes','fiado','facturas','activos'];
   document.querySelectorAll('.tab').forEach(tab => {
     const onclick = tab.getAttribute('onclick') || '';
     const nombre = tabsBloqueados.find(n => onclick.includes("'" + n + "'"));
