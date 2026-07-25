@@ -2295,9 +2295,10 @@ function guardarTx() {
       if(tipo === 'ingreso' && empId) {
         const emp = state.empleados.find(x => String(x.id) === String(empId));
         if(emp) {
-          // Si el item no tiene % de comisión pero el empleado es comisionista, usar su % automáticamente
+          // Respaldo con el % del empleado SOLO para servicios. Los productos nunca
+          // usan este respaldo: solo generan comisión si el producto la tiene configurada.
           let pctItem = item.comisionPct || 0;
-          if(pctItem === 0 && emp.tipoPago === 'comision' && emp.comision > 0) pctItem = emp.comision;
+          if(pctItem === 0 && item.tipo === 'servicio' && emp.tipoPago === 'comision' && emp.comision > 0) pctItem = emp.comision;
           if(pctItem > 0) {
             if(!emp.comisionLog) emp.comisionLog = [];
             const ventaItem = item.precio * item.cantidad;
