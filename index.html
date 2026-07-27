@@ -299,7 +299,7 @@
         <div class="form-group"><label class="auth2-label">Correo electrónico</label><input type="email" id="reg-email" name="new-email" autocomplete="username" placeholder="tucorreo@gmail.com" class="auth2-input" style="margin-bottom:14px"></div>
         <div class="form-group"><label class="auth2-label">Contraseña</label><input type="password" id="reg-pass" name="new-password" autocomplete="new-password" placeholder="Mínimo 6 caracteres" class="auth2-input" style="margin-bottom:18px"></div>
         <button type="submit" id="btn-register-submit" class="auth2-btn">Crear cuenta gratis</button>
-        <div style="text-align:center;margin-top:12px;font-size:12px;color:#5A5A66">Al registrarte aceptas nuestros términos de uso</div>
+        <div style="text-align:center;margin-top:12px;font-size:12px;color:#5A5A66">Al registrarte aceptas nuestros <a href="terminos.html" target="_blank" style="color:#A78BFA">términos de uso</a></div>
       </form>
       <div class="auth2-badges">
         <span class="auth2-badge">🔒 Datos seguros</span>
@@ -784,6 +784,14 @@
         <div><label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Nombre del negocio</label><input type="text" id="cfg-negocio" placeholder="Ej: Salón Bella..." style="width:100%;padding:9px 12px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:14px;background:#F8F7FF"></div>
         <div><label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">🎯 Meta mensual ($)</label><input type="number" id="cfg-meta" placeholder="0" style="width:100%;padding:9px 12px;border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:14px;background:#F8F7FF"></div>
         <button onclick="guardarConfigNegocio()" class="btn-primary" style="width:100%;justify-content:center;padding:10px">Guardar cambios</button>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid rgba(124,58,237,0.12);border-radius:14px;padding:18px;margin-bottom:16px">
+      <div style="font-size:15px;font-weight:600;color:#1a1535;margin-bottom:6px">📥 Respaldo de tus datos</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Descarga una copia de toda la información de tu negocio (transacciones, empleados, inventario, deudas, etc.) para guardarla donde quieras.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="descargarExcel()" class="btn-primary" style="flex:1;justify-content:center;padding:10px;min-width:160px">📊 Descargar en Excel</button>
+        <button onclick="descargarRespaldo()" class="btn-sm" style="flex:1;justify-content:center;padding:10px;min-width:160px">Respaldo técnico (.json)</button>
       </div>
     </div>
   </div>
@@ -1558,6 +1566,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // ─── SUPABASE ─────────────────────────────────────────────
 const SUPABASE_URL = 'https://inerycigoggcdmiavaew.supabase.co';
@@ -1609,6 +1618,12 @@ let miPlan = 'gratuito';
 let miPlanVence = null;
 let miEsAdmin = false;
 const WHATSAPP_NUMERO = '573163034149'; // TODO: actualizar cuando cambie el número
+
+function abrirSoporteWhatsApp(e) {
+  if(e) e.preventDefault();
+  const msg = 'Hola, necesito ayuda con CreceApp 🙋‍♀️';
+  window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, '_blank');
+}
 
 async function guardarLS() {
   try { localStorage.setItem('creceapp_' + (currentUserId||DEVICE_ID), JSON.stringify(state)); } catch(e){}
@@ -5680,6 +5695,71 @@ async function guardarConfigNegocio() {
   setTimeout(function(){ toast.remove(); }, 3000);
 }
 
+function descargarRespaldo() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const fecha = new Date().toISOString().split('T')[0];
+  const negocio = (state.nombreNegocio || 'creceapp').replace(/\s+/g, '-').toLowerCase();
+  link.href = url;
+  link.download = `respaldo-${negocio}-${fecha}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function descargarExcel() {
+  if(typeof XLSX === 'undefined') { alert('No se pudo cargar el generador de Excel. Verifica tu conexión a internet e intenta de nuevo.'); return; }
+  const wb = XLSX.utils.book_new();
+  const empNombre = id => { const e = state.empleados.find(x => String(x.id) === String(id)); return e ? e.nombre : ''; };
+  const cliNombre = id => { const c = (state.clientes||[]).find(x => String(x.id) === String(id)); return c ? (c.nombre + ' ' + (c.apellido||'')).trim() : ''; };
+
+  const hojaTx = state.transacciones.map(t => ({
+    'Fecha': t.fecha, 'Tipo': t.tipo === 'ingreso' ? 'Ingreso' : 'Egreso', 'Categoría': t.cat || '',
+    'Descripción': t.desc || '', 'Monto': t.monto || 0, 'Costo': t.costo || 0, 'Ganancia': t.ganancia || 0,
+    'Método de pago': t.metodo || '', 'Empleado': empNombre(t.empId), 'Cliente': cliNombre(t.clienteId),
+    'IVA %': t.ivaPct || 0, 'N° Factura': t.facturaNum || '', 'Proveedor': t.proveedor || '', 'NIT Proveedor': t.proveedorNit || ''
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaTx.length ? hojaTx : [{'Sin datos':''}]), 'Transacciones');
+
+  const hojaEmp = state.empleados.map(e => ({
+    'Nombre': e.nombre, 'Cargo': e.cargo || '', 'Tipo de pago': e.tipoPago || '',
+    'Comisión %': e.comision || 0, 'Salario': e.salario || 0, 'Valor por hora': e.valorHora || 0
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaEmp.length ? hojaEmp : [{'Sin datos':''}]), 'Empleados');
+
+  const hojaInv = state.inventario.map(p => ({
+    'Nombre': p.nombre, 'Categoría': p.cat || '', 'Stock': p.stock || 0, 'Stock mínimo': p.min || 0,
+    'Precio': p.precio || 0, 'Costo': p.costo || 0, 'Comisión %': p.comision || 0, 'IVA %': p.ivaPct || 0
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaInv.length ? hojaInv : [{'Sin datos':''}]), 'Inventario');
+
+  const hojaDeudas = state.deudas.map(d => ({
+    'Nombre': d.nombre, 'Total': d.total || 0, 'Pagado': d.pagado || 0, 'Pendiente': (d.total||0) - (d.pagado||0),
+    'Cuota': d.cuota || 0, 'Día de pago': d.diaPago || '', 'Categoría': d.cat || ''
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaDeudas.length ? hojaDeudas : [{'Sin datos':''}]), 'Deudas');
+
+  const hojaFiados = state.fiados.map(f => ({
+    'Cliente': f.nombre, 'Monto': f.monto || 0, 'Pagado': f.pagado || 0, 'Pendiente': (f.monto||0) - (f.pagado||0),
+    'Fecha': f.fecha || '', 'Descripción': f.desc || '', 'Teléfono': f.tel || ''
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaFiados.length ? hojaFiados : [{'Sin datos':''}]), 'Cuentas por Cobrar');
+
+  const hojaResp = state.responsabilidades.map(r => ({
+    'Descripción': r.desc, 'Monto': r.monto || 0, 'Día de pago': r.dia || '', 'Pagado este mes': r.pagado ? 'Sí' : 'No'
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaResp.length ? hojaResp : [{'Sin datos':''}]), 'Responsabilidades');
+
+  const hojaActivos = (state.activos||[]).map(a => ({
+    'Nombre': a.nombre, 'Valor': a.valor || 0, 'Categoría': a.cat || ''
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaActivos.length ? hojaActivos : [{'Sin datos':''}]), 'Activos');
+
+  const fecha = new Date().toISOString().split('T')[0];
+  const negocio = (state.nombreNegocio || 'creceapp').replace(/\s+/g, '-').toLowerCase();
+  XLSX.writeFile(wb, `datos-${negocio}-${fecha}.xlsx`);
+}
+
 function renderCfgEmpleados() {
   var el = document.getElementById('cfg-empleados-list');
   if(!el) return;
@@ -5929,5 +6009,15 @@ if('serviceWorker' in navigator) {
   }
 }
 </script>
+
+<a id="whatsapp-float" class="whatsapp-float" href="#" onclick="abrirSoporteWhatsApp(event)" aria-label="Atención al cliente por WhatsApp" title="¿Necesitas ayuda? Escríbenos">
+  <svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m0 1.67c2.2 0 4.27.86 5.82 2.41a8.23 8.23 0 0 1 2.42 5.83c0 4.55-3.7 8.24-8.25 8.24-1.4 0-2.77-.35-3.98-1.02l-.29-.16-2.98.78.79-2.9-.19-.3a8.18 8.18 0 0 1-1.26-4.38c0-4.55 3.7-8.24 8.24-8.24 M8.53 6.98c-.16 0-.43.06-.65.31-.22.25-.86.84-.86 2.05s.88 2.38 1 2.54c.12.17 1.7 2.6 4.14 3.65.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.09.47-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.47-.28-.25-.13-1.44-.71-1.66-.79-.22-.08-.39-.13-.55.13-.16.25-.63.79-.77.95-.14.16-.29.18-.53.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.16-.25.24-.41.08-.16.04-.31-.02-.43-.06-.13-.55-1.33-.76-1.82-.2-.48-.4-.42-.55-.42h-.4z"/></svg>
+</a>
+<style>
+  .whatsapp-float { position:fixed; bottom:22px; right:22px; width:56px; height:56px; border-radius:50%; background:#25D366; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(0,0,0,0.3); z-index:150; text-decoration:none; transition:transform .15s ease; }
+  .whatsapp-float:hover { transform:scale(1.08); }
+  .whatsapp-float svg { width:29px; height:29px; }
+  @media (max-width:700px) { .whatsapp-float { width:50px; height:50px; bottom:16px; right:16px; } .whatsapp-float svg { width:26px; height:26px; } }
+</style>
 </body>
 </html>
