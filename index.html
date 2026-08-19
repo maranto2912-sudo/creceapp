@@ -1030,10 +1030,29 @@
             <option value="tarjeta">Tarjeta</option>
             <option value="nequi">Nequi</option>
             <option value="bancolombia">Bancolombia</option>
+            <option value="dar_soluciones">Crédito Dar Soluciones (CrediDar)</option>
             <option value="mixto">Pago mixto (dos métodos)</option>
           </select>
         </div>
         <div class="form-group" id="campo-paga-con"><label class="form-label">Cliente paga con ($)</label><input type="number" id="tx-paga-con" placeholder="0" min="0" oninput="calcularCambio()"></div>
+      </div>
+      <div id="campo-dar-soluciones" style="display:none;background:#fff;border-radius:8px;padding:10px;margin-bottom:10px;border:1px solid rgba(124,58,237,0.15)">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Plan de pago CrediDar</label>
+            <select id="tx-dar-plan" onchange="calcularDarSoluciones()">
+              <option value="15">15 días — comisión 8% + IVA</option>
+              <option value="30">30 días — comisión 6% + IVA</option>
+              <option value="60">60 días — comisión 4% + IVA</option>
+              <option value="negociable">Negociable (% personalizado)</option>
+            </select>
+          </div>
+          <div class="form-group" id="campo-dar-pct-custom" style="display:none"><label class="form-label">% comisión acordado</label><input type="number" id="tx-dar-pct-custom" placeholder="0" min="0" max="100" oninput="calcularDarSoluciones()"></div>
+        </div>
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.9">
+          <div style="display:flex;justify-content:space-between"><span>Comisión CrediDar:</span><strong id="dar-comision-val">$0</strong></div>
+          <div style="display:flex;justify-content:space-between"><span>IVA sobre la comisión (19%):</span><strong id="dar-iva-val">$0</strong></div>
+          <div style="display:flex;justify-content:space-between;color:#7C3AED"><span>Recibes neto:</span><strong id="dar-neto-val">$0</strong></div>
+        </div>
       </div>
       <div id="campo-mixto" style="display:none">
         <div class="form-row">
@@ -2111,6 +2130,7 @@ function calcularTotalTx() {
   if(elServ) elServ.textContent = fmt(totalServ);
   if(elFilaServ) elFilaServ.style.display = totalServ > 0 ? 'flex' : 'none';
   if(elMonto) elMonto.value = total;
+  calcularDarSoluciones();
 
   if(elComRes && tipo === 'ingreso') {
     if(comisionTotal > 0) {
@@ -2128,6 +2148,7 @@ function sincronizarMonto() {
   const elMonto = document.getElementById('tx-monto-principal');
   if(elMonto) elMonto.value = val;
   calcComisionTx();
+  calcularDarSoluciones();
 }
 
 function calcComisionTx() {
@@ -2230,12 +2251,35 @@ function toggleEfectivo() {
   const metodo = document.getElementById('tx-metodo').value;
   const esEfectivo = metodo === 'efectivo';
   const esMixto = metodo === 'mixto';
+  const esDarSoluciones = metodo === 'dar_soluciones';
   const campoPaga = document.getElementById('campo-paga-con');
   const campoCambio = document.getElementById('cambio-display');
   const campoMixto = document.getElementById('campo-mixto');
+  const campoDar = document.getElementById('campo-dar-soluciones');
   if(campoPaga) campoPaga.style.display = esEfectivo ? 'block' : 'none';
   if(campoCambio) campoCambio.style.display = esEfectivo ? 'flex' : 'none';
   if(campoMixto) campoMixto.style.display = esMixto ? 'block' : 'none';
+  if(campoDar) campoDar.style.display = esDarSoluciones ? 'block' : 'none';
+  if(esDarSoluciones) calcularDarSoluciones();
+}
+
+function calcularDarSoluciones() {
+  const plan = document.getElementById('tx-dar-plan')?.value;
+  const campoCustom = document.getElementById('campo-dar-pct-custom');
+  if(campoCustom) campoCustom.style.display = plan === 'negociable' ? 'block' : 'none';
+  const pctPorPlan = { '15': 8, '30': 6, '60': 4 };
+  let pct = pctPorPlan[plan];
+  if(plan === 'negociable') pct = parseFloat(document.getElementById('tx-dar-pct-custom')?.value) || 0;
+  const monto = parseFloat(document.getElementById('tx-monto-principal')?.value) || 0;
+  const comision = monto * (pct / 100);
+  const ivaComision = comision * 0.19;
+  const neto = monto - comision - ivaComision;
+  const elCom = document.getElementById('dar-comision-val');
+  const elIva = document.getElementById('dar-iva-val');
+  const elNeto = document.getElementById('dar-neto-val');
+  if(elCom) elCom.textContent = fmt(comision);
+  if(elIva) elIva.textContent = fmt(ivaComision);
+  if(elNeto) elNeto.textContent = fmt(neto);
 }
 
 function calcularGanancia() {
@@ -2275,6 +2319,14 @@ function guardarTx() {
   const pagaConEl = document.getElementById('tx-paga-con');
   const pagaCon = pagaConEl ? (parseFloat(pagaConEl.value) || 0) : 0;
   const cambio = metodo === 'efectivo' && pagaCon > 0 ? pagaCon - parseFloat(document.getElementById('tx-monto-principal')?.value||0) : 0;
+
+  // Crédito Dar Soluciones (CrediDar): comisión + IVA sobre la comisión, según el plan elegido
+  let darSolucionesPlan = '', darSolucionesPct = 0, darSolucionesComision = 0, darSolucionesIva = 0, darSolucionesNeto = 0;
+  if(metodo === 'dar_soluciones') {
+    darSolucionesPlan = document.getElementById('tx-dar-plan')?.value || '';
+    const pctPorPlan = { '15': 8, '30': 6, '60': 4 };
+    darSolucionesPct = pctPorPlan[darSolucionesPlan] != null ? pctPorPlan[darSolucionesPlan] : (parseFloat(document.getElementById('tx-dar-pct-custom')?.value) || 0);
+  }
 
   // Obtener monto — de la sección de productos o del manual
   const seccionProductos = document.getElementById('tx-productos-section');
@@ -2341,10 +2393,16 @@ function guardarTx() {
     });
 
     // Guardar items en la transacción para historial
-    const ganancia = monto - costo;
+    if(metodo === 'dar_soluciones') {
+      darSolucionesComision = monto * (darSolucionesPct / 100);
+      darSolucionesIva = darSolucionesComision * 0.19;
+      darSolucionesNeto = monto - darSolucionesComision - darSolucionesIva;
+    }
+    const ganancia = metodo === 'dar_soluciones' ? (monto - costo - darSolucionesComision - darSolucionesIva) : (monto - costo);
     state.transacciones.unshift({
       tipo, monto, desc, cat, empId, clienteId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas,
       ivaPct, facturaNum, facturaSubidaDian: false, proveedor, proveedorNit, deudaId: deudaId || null,
+      darSolucionesPlan, darSolucionesPct, darSolucionesComision, darSolucionesIva, darSolucionesNeto,
       items: txItems.map(i => ({...i})),
       editado: false, id: Date.now()
     });
@@ -2356,8 +2414,13 @@ function guardarTx() {
     const montoManualEl = document.getElementById('tx-monto-manual-val');
     monto = parseFloat(montoManualEl?.value) || 0;
     if(!monto || !desc) { alert('Por favor ingresa la descripción y el monto.'); return; }
-    const ganancia = monto - costo;
-    state.transacciones.unshift({ tipo, monto, desc, cat, empId, clienteId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas, ivaPct, facturaNum, facturaSubidaDian: false, proveedor, proveedorNit, deudaId: deudaId || null, editado: false, id: Date.now() });
+    if(metodo === 'dar_soluciones') {
+      darSolucionesComision = monto * (darSolucionesPct / 100);
+      darSolucionesIva = darSolucionesComision * 0.19;
+      darSolucionesNeto = monto - darSolucionesComision - darSolucionesIva;
+    }
+    const ganancia = metodo === 'dar_soluciones' ? (monto - costo - darSolucionesComision - darSolucionesIva) : (monto - costo);
+    state.transacciones.unshift({ tipo, monto, desc, cat, empId, clienteId, fecha, costo, ganancia, metodo, pagaCon, cambio, notas, ivaPct, facturaNum, facturaSubidaDian: false, proveedor, proveedorNit, deudaId: deudaId || null, darSolucionesPlan, darSolucionesPct, darSolucionesComision, darSolucionesIva, darSolucionesNeto, editado: false, id: Date.now() });
 
     // Comisión simple
     const comPctEl = document.getElementById('tx-comision-pct');
@@ -6010,6 +6073,9 @@ if('serviceWorker' in navigator) {
 }
 </script>
 
+<a id="credidar-float" class="whatsapp-float credidar-float" href="https://app.credidar.com/login-comercios/" target="_blank" aria-label="Financiación con CrediDar" title="Financiación para tus clientes — CrediDar">
+  <img src="data:image/png;base64,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" alt="CrediDar">
+</a>
 <a id="whatsapp-float" class="whatsapp-float" href="#" onclick="abrirSoporteWhatsApp(event)" aria-label="Atención al cliente por WhatsApp" title="¿Necesitas ayuda? Escríbenos">
   <svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2m0 1.67c2.2 0 4.27.86 5.82 2.41a8.23 8.23 0 0 1 2.42 5.83c0 4.55-3.7 8.24-8.25 8.24-1.4 0-2.77-.35-3.98-1.02l-.29-.16-2.98.78.79-2.9-.19-.3a8.18 8.18 0 0 1-1.26-4.38c0-4.55 3.7-8.24 8.24-8.24 M8.53 6.98c-.16 0-.43.06-.65.31-.22.25-.86.84-.86 2.05s.88 2.38 1 2.54c.12.17 1.7 2.6 4.14 3.65.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.09.47-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.47-.28-.25-.13-1.44-.71-1.66-.79-.22-.08-.39-.13-.55.13-.16.25-.63.79-.77.95-.14.16-.29.18-.53.06-.25-.13-1.05-.39-2-1.23-.74-.66-1.24-1.47-1.39-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.16-.25.24-.41.08-.16.04-.31-.02-.43-.06-.13-.55-1.33-.76-1.82-.2-.48-.4-.42-.55-.42h-.4z"/></svg>
 </a>
@@ -6017,7 +6083,13 @@ if('serviceWorker' in navigator) {
   .whatsapp-float { position:fixed; bottom:22px; right:22px; width:56px; height:56px; border-radius:50%; background:#25D366; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(0,0,0,0.3); z-index:150; text-decoration:none; transition:transform .15s ease; }
   .whatsapp-float:hover { transform:scale(1.08); }
   .whatsapp-float svg { width:29px; height:29px; }
-  @media (max-width:700px) { .whatsapp-float { width:50px; height:50px; bottom:16px; right:16px; } .whatsapp-float svg { width:26px; height:26px; } }
+  .credidar-float { bottom:90px; background:#1a1210; padding:6px; }
+  .credidar-float img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+  @media (max-width:700px) {
+    .whatsapp-float { width:50px; height:50px; bottom:16px; right:16px; }
+    .whatsapp-float svg { width:26px; height:26px; }
+    .credidar-float { bottom:76px; font-size:21px; }
+  }
 </style>
 </body>
 </html>
