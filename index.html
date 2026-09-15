@@ -1633,7 +1633,7 @@ let currentUserId = null;
 let miPlan = 'gratuito';
 let miPlanVence = null;
 let miEsAdmin = false;
-const WHATSAPP_NUMERO = '573163034149'; // TODO: actualizar cuando cambie el número
+const WHATSAPP_NUMERO = '573009430691';
 
 function abrirSoporteWhatsApp(e) {
   if(e) e.preventDefault();
@@ -1642,7 +1642,7 @@ function abrirSoporteWhatsApp(e) {
     mostrarUpgrade('💬 Atención al cliente VIP', 'Habla directo con nuestro equipo de soporte por WhatsApp cuando lo necesites. Esta función es exclusiva del plan <strong style="color:#7C3AED">Premium</strong>.');
     return;
   }
-  const msg = 'Hola, necesito ayuda con CreceApp 🙋‍♀️';
+  const msg = 'Necesito ayuda con mi cuenta CreceApp';
   window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
