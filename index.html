@@ -1188,7 +1188,6 @@
   </div>
   <div class="modal-actions">
     <button class="btn-sm" onclick="cerrarModal('catalogo')">Cerrar</button>
-    <button class="btn-primary" onclick="descargarCatalogo()">⬇️ Descargar imagen</button>
   </div>
 </div></div>
 
@@ -1583,9 +1582,7 @@
   <div class="modal-actions"><button class="btn-sm" onclick="cerrarModal('resp')">Cancelar</button><button class="btn-primary" onclick="guardarResp()">Guardar</button></div>
 </div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // ─── SUPABASE ─────────────────────────────────────────────
 const SUPABASE_URL = 'https://inerycigoggcdmiavaew.supabase.co';
@@ -3385,17 +3382,6 @@ function abrirCatalogo() {
       </div>`).join('');
   }
   document.getElementById('overlay-catalogo').style.display = 'flex';
-}
-
-function descargarCatalogo() {
-  const el = document.getElementById('catalogo-contenido');
-  if(!el || typeof html2canvas === 'undefined') return;
-  html2canvas(el, { backgroundColor: '#ffffff', scale: 2 }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'catalogo-' + (state.nombreNegocio || 'productos').replace(/\s+/g,'-').toLowerCase() + '.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-  }).catch(e => { console.error('Error generando catálogo:', e); alert('No se pudo generar la imagen del catálogo.'); });
 }
 
 function eliminarProducto(id) {
